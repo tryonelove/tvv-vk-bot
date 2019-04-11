@@ -1,0 +1,3 @@
+commands = {}
+users = {}
+config = {}
