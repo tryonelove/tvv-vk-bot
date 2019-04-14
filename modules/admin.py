@@ -17,8 +17,6 @@ class Admin:
         :param user_id: айди добавляемого пользователя
         :param donation_sum: сумма доната (кратная 25)
         """
-        if not isAdmin(self.from_id):
-            raise exceptions.NoAdminPermissions
         donation_sum = int(donation_sum)
         user_id = str(user_id)
         now = datetime.datetime.now()
@@ -34,44 +32,38 @@ class Admin:
                 now += datetime.timedelta(days=+31)
             glob.config["donators"][user_id] = str(now.strftime("%Y-%m-%d %H:%M:%S"))
         config_update()
-        return f"Пользователь {user_id} получил роль донатера\n" \
+        return "Пользователь {} получил роль донатера\n" \
                 "Не забудьте привязать осу акк с помощью команды" \
-                "!osuset bancho/gatari никнейм"
+                "!osuset bancho/gatari никнейм".format(user_id)
 
     def remove_donator(self, user_id):
         """
         Удаляет пользователя из донатеров
         :param user_id: айди пользователя
         """
-        if not isAdmin(self.from_id):
-            raise exceptions.NoAdminPermissions
         if user_id in glob.config["donators"]:
             del glob.config["donators"][user_id]
             config_update()
-            return f"Пользователь {user_id} был успешно удалён."
-        return f"Пользователь {user_id} не является донатером."
+            return "Пользователь {} был успешно удалён.".format(user_id)
+        return "Пользователь {} не является донатером.".format(user_id)
 
     def op(self, user_id):
         """
         Добавляет пользователя как админа
         :param user_id: айди пользователя
         """
-        if not isAdmin(self.from_id):
-            raise exceptions.NoAdminPermissions
         glob.config["admin"].append(user_id)
         config_update()
-        return f"Чел {user_id} был добавлен как админ!"
+        return "Чел {} был добавлен как админ!".format(user_id)
     
     def deop(self, user_id):
         """
         Удаляет пользователя из админов
         :param user_id: айди пользователя
         """
-        if not isAdmin(self.from_id):
-            raise exceptions.NoAdminPermissions
         glob.config["admin"].remove(user_id)
         config_update()
-        return f"Чел {user_id} был удалён из админов!"
+        return "Чел {user_id} был удалён из админов!".format(user_id)
 
     def bot_help(self):
         text = "Команды для донатеров/админов:\npic\nlast\ntop\nosuset\n\n \

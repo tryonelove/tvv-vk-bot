@@ -25,7 +25,7 @@ class CommandsHandler:
         self.request = requests.Session()
         self.level = LevelSystem(self.vk)
         self.upload = VkUpload(self.vk)
-        self.osu = Osu(glob.config["osu_api_key"], self.event.from_id)
+        self.osu = Osu(glob.config["osu_api_key"], self.event.from_id, self.upload)
 
     def process_message(self):
         """
@@ -39,8 +39,8 @@ class CommandsHandler:
             data = self.process_command()
             if isinstance(data, tuple):
                 message, attach = data[0], data[1]
-                return { "messageText" : message , "attach" : attach }
-            return { "messageText" : message , "attach" : None }
+                return { "messageText" : message , "attachment" : attach }
+            return { "messageText" : data , "attachment" : None }
 
     def process_command(self):
         # ---- Built-in ----
@@ -103,18 +103,30 @@ class CommandsHandler:
         if self.key in ["osu", "осу"]:
             if not checks.hasPrivileges(self.event.from_id):
                 raise exceptions.NoPrivilegesPermissions
-            return self.osu.lemmyPicture(self.value)
+            return self.osu.lemmyPicture(self.value, 0)
         if self.key in ["taiko", "тайко"]:
-            pass
+            if not checks.hasPrivileges(self.event.from_id):
+                raise exceptions.NoPrivilegesPermissions
+            return self.osu.lemmyPicture(self.value, 1)
         if self.key in ["ctb", "ктб"]:
-            pass
+            if not checks.hasPrivileges(self.event.from_id):
+                raise exceptions.NoPrivilegesPermissions
+            return self.osu.lemmyPicture(self.value, 2)
         if self.key in ["mania", "мания"]:
-            pass
+            if not checks.hasPrivileges(self.event.from_id):
+                raise exceptions.NoPrivilegesPermissions
+            return self.osu.lemmyPicture(self.value, 3)
         # ---- osu! stats ----
-        if self.key == "top":
-            pass
+        if self.key in ["top", "топ"]:
+            if not checks.hasPrivileges(self.event.from_id):
+                raise exceptions.NoPrivilegesPermissions
+            userData = utils.getServerUsername(self.value, self.event.from_id)
+            return self.osu.getUserBest(userData)
         if self.key in ["last", "recent", "ласт"]:
-            pass
+            if not checks.hasPrivileges(self.event.from_id):
+                raise exceptions.NoPrivilegesPermissions
+            userData = utils.getServerUsername(self.value, self.event.from_id)
+            return self.osu.getUserRecent(userData)
         # ---- Fun ----
         if self.key in ["weather", "погода"]:
             return fun.weather(self.value)
@@ -140,13 +152,10 @@ class CommandsHandler:
         """
         attachment = None
         message = None
-        msg = glob.commands[self.key].split(" ")
-        if "photo" in msg[-1]:
-            attachment = msg[-1]
-            if len(msg) > 1:
-                message = " ".join(msg[:-1]).replace("&quot;", '"')
-            return message, attachment
-        message = " ".join(msg).replace("&quot;", '"')
+        message = glob.commands[self.key].get("message", None)
+        attachment = glob.commands[self.key].get("attachment", None)
+        if message is not None:        
+            message = message.replace("&quot;", '"')
         return message, attachment
 
     def getRole(self, user_id):

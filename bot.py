@@ -49,9 +49,16 @@ class Bot:
                 handler = CommandsHandler(self.vk, event)
                 try:
                     data = handler.process_message()
-                except Exception as e:
+                except (exceptions.ArgumentError,
+                        exceptions.CustomException,
+                        exceptions.NoAdminPermissions,
+                        exceptions.NoDonorPermissions,
+                        exceptions.NoPrivilegesPermissions) as e:
                     data = ("Ошибка: {}".format(e.args[0]), None)
+                except Exception as e:
+                    logging.error(e)
                 if data is not None:
                     self.send_msg(peer_id=event.obj.peer_id,
                                 message=data["messageText"],
                                 attachment=data["attachment"])
+                

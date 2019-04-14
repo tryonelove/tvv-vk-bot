@@ -1,8 +1,8 @@
 import json
 import requests
 from constants import exceptions
-import logging
 from objects import glob
+import re
 
 def config_update():
     """
@@ -25,11 +25,12 @@ def users_update():
     with open('users.json', 'w') as f:
         json.dump(glob.users, f, indent=4)
 
-def upload_pic(upload, url):
+def uploadPicture(upload, url, decode_content = False):
     session = requests.Session()
-    image = session.get(url, stream=True)
-    photo = upload.photo_messages(photos=image.raw)[0]
-    return f"photo{photo['owner_id']}_{photo['id']}"
+    image = session.get(url, stream=True).raw
+    image.decode_content = True
+    photo = upload.photo_messages(photos=image)[0]
+    return "photo{}_{}".format(photo['owner_id'], photo['id'])
 
 def findLargestPic(data):
     """
@@ -50,18 +51,20 @@ def messageToCommand(message):
     value = " ".join(message[1:])
     return key, value
 
-def addcom(text):
+def addcom(text = None, attachment = None):
     """
     Функция добавления текстовой команды
     :param key: название команды
     :param value: значение команды
     """
     key, value = messageToCommand(text)
-    if not(key and value):
+    key = key.lower()
+    if not(key):
         raise exceptions.ArgumentError
-    glob.commands[key.lower()] = value
+    cmd = {"message": value, "attachment": attachment}
+    glob.commands[key] = cmd
     commands_update()
-    return f"Команда {key} была успешно добавлена!"
+    return "Команда {} была успешно добавлена!".format(key)
 
 def delcom(key):
     """
@@ -72,7 +75,7 @@ def delcom(key):
         raise exceptions.CustomException("Нет такой команды")
     del glob.commands[key.lower()]
     commands_update()
-    return f"Команда {key} была успешно удалена!"
+    return "Команда {} была успешно удалена!".format(key)
 
 def editcom(text):
     """
@@ -83,9 +86,10 @@ def editcom(text):
     key, value = messageToCommand(text)
     if not(key and value):
         raise exceptions.ArgumentError
-    glob.commands[key.lower()] = value
+    cmd = {"message": value, "attachment": None}
+    glob.commands[key.lower()] = cmd
     commands_update()
-    return f"Команда {key} была успешно изменена!"
+    return "Команда {} была успешно изменена!".format(key)
 
 def addpic(upload, text, attachments):
     """
@@ -97,34 +101,51 @@ def addpic(upload, text, attachments):
     if not (len(attachments)>=1 and attachments[0]["type"]=="photo"):
         raise exceptions.CustomException("Должна быть прикреплена хотя бы одна пикча.")
     image_url = findLargestPic(attachments[0]['photo']["sizes"])
-    addcom(text+" "+ upload_pic(upload, image_url))
-    message = 'Пикча '+text.split()[0]+' была успешно добавлена!'
+    addcom(text = text, attachment = uploadPicture(upload, image_url))
+    message = 'Пикча {} была успешно добавлена!'.format(text.split()[0])
     return message
     
 def osuset(from_id, user_id, text):
     text = text.split(" ")
+    if text[1] not in ('bancho', 'gatari'): 
+        raise exceptions.ArgumentError('Доступные сервера: bancho, gatari')
+    args = " ".join(text[2:])
+    glob.users[str(from_id)]['server'] = text[1]
+    glob.users[str(from_id)]['osu_username'] = args
+    users_update()
+    return 'Аккаунт '+args+' был успешно привязан к вашему айди'
+    
 
-    if text[1] in ('bancho', 'gatari'): 
-        args = " ".join(text[2:])
-        glob.users[str(from_id)]['server'] = text[1]
-        glob.users[str(from_id)]['osu_username'] = args
-        users_update()
-        return 'Аккаунт '+args+' был успешно привязан к вашему айди'
-    return 'Доступные сервера: bancho, gatari'
+def checkArgs(text):
+    return text if text!="" else None
 
-
-def user_in_db(content = None, user_id = None):
-    if content is None:
-        server = glob.users[str(user_id)].get('server', None)
-        username = glob.users[str(user_id)].get('osu_username', None)
-    else:
-        content = content.split()
-        if content[0] not in ("bancho", "gatari"):
-            username = ' '.join(content)
+def getServerUsername(text, from_id):
+    text = checkArgs(text)
+    if text is None:
+        text = "1"
+    if text.isdigit():
+        text = " " + text
+    r = re.search(r'(bancho|gatari)?(.*?)(\s\d+)?$', text)
+    if r:
+        server = r.group(1) if r.group(1) in ('bancho','gatari') else 'bancho'
+        username = r.group(2)
+        limit = r.group(3)
+        if server is None:
             server = 'bancho'
+        if username == "":
+            username = glob.users[str(from_id)].get('osu_username')
+        if limit is not None:
+            limit = int(limit.strip())
         else:
-            username = ' '.join(content[1:])
-            server = content[0]
-    return server, username
+            limit = 1
+        return { "server" : server, "username" : username , "limit" : limit}
+
+def getUserFromDB(from_id):
+    server = glob.users[str(from_id)].get('server')
+    username = glob.users[str(from_id)].get('osu_username')
+    return { "server" : server, "username" : username }
+        
+        
+    
 
     
