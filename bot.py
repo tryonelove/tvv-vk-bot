@@ -54,11 +54,17 @@ class Bot:
                         exceptions.NoAdminPermissions,
                         exceptions.NoDonorPermissions,
                         exceptions.NoPrivilegesPermissions) as e:
-                    data = ("Ошибка: {}".format(e.args[0]), None)
+                    data = {
+                            "messageText": "Ошибка: {}".format(e.args[0]), 
+                            "attachment": None
+                    }
                 except Exception as e:
                     logging.error(e)
                 if data is not None:
-                    self.send_msg(peer_id=event.obj.peer_id,
+                        try:
+                            self.send_msg(peer_id=event.obj.peer_id,
                                 message=data["messageText"],
                                 attachment=data["attachment"])
+                        except Exception as e:
+                            logging.error(e)
                 

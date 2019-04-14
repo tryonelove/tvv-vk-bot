@@ -25,22 +25,27 @@ class CommandsHandler:
         self.request = requests.Session()
         self.level = LevelSystem(self.vk)
         self.upload = VkUpload(self.vk)
+        self.admin = Admin(self.event.from_id)
         self.osu = Osu(glob.config["osu_api_key"], self.event.from_id, self.upload)
 
     def process_message(self):
         """
         Функция, обрабатывающая сообщение
-        :return : значение команды в формате text, attachment
+        :return : значение команды в формате text, attachment, если это tuple,
+                    иначе None
         """
         self.level.levelCheck(self.event.peer_id,
                               self.event.from_id,
                               self.event.text)
+        self.donatorCheck()
         if self.event.text.startswith("!"):
             data = self.process_command()
-            if isinstance(data, tuple):
-                message, attach = data[0], data[1]
-                return { "messageText" : message , "attachment" : attach }
-            return { "messageText" : data , "attachment" : None }
+            if data is not None:
+                if isinstance(data, tuple):
+                    message, attach = data[0], data[1]
+                    return { "messageText" : message , "attachment" : attach }
+                return { "messageText" : data , "attachment" : None }
+            return None
 
     def process_command(self):
         # ---- Built-in ----
@@ -52,41 +57,53 @@ class CommandsHandler:
             return self.getRole(self.event.from_id)
         if self.key == "osuset":
             if not checks.hasPrivileges(self.event.from_id):
-                raise exceptions.NoPrivilegesPermissions
+                raise exceptions.NoPrivilegesPermissions(
+                    "Недостаточно прав, однако ты можешь задонатить и взамен получить возможность юзать эту команду"
+                    )
             return self.osu.osuset(self.parsed_msg["value"])
         # ---- Commands managing ----
         if self.key == "addpic":
             if not checks.hasPrivileges(self.event.from_id):
-                raise exceptions.NoDonorPermissions
+                raise exceptions.NoPrivilegesPermissions(
+                    "Недостаточно прав, однако ты можешь задонатить и взамен получить возможность юзать эту команду"
+                    )
             return utils.addpic(self.upload,
                                 self.value,
                                 self.event.attachments)
         if self.key == "delpic":
             if not checks.hasPrivileges(self.event.from_id):
-                raise exceptions.NoDonorPermissions
+                raise exceptions.NoPrivilegesPermissions(
+                    "Недостаточно прав, однако ты можешь задонатить и взамен получить возможность юзать эту команду"
+                    )
             return utils.delcom(self.value)
         if self.key == "addcom":
             if not checks.hasPrivileges(self.event.from_id):
-                raise exceptions.NoDonorPermissions
+                raise exceptions.NoPrivilegesPermissions(
+                    "Недостаточно прав, однако ты можешь задонатить и взамен получить возможность юзать эту команду"
+                    )
             return utils.addcom(self.value)
         if self.key == "delcom":
             if not checks.hasPrivileges(self.event.from_id):
-                raise exceptions.NoDonorPermissions
+                raise exceptions.NoPrivilegesPermissions(
+                    "Недостаточно прав, однако ты можешь задонатить и взамен получить возможность юзать эту команду"
+                    )
             return utils.delcom(self.value)
         if self.key == "editcom":
             if not checks.hasPrivileges(self.event.from_id):
-                raise exceptions.NoDonorPermissions
+                raise exceptions.NoPrivilegesPermissions(
+                    "Недостаточно прав, однако ты можешь задонатить и взамен получить возможность юзать эту команду"
+                    )
             return utils.editcom(self.value)
         # ---- Donators ----
         if self.key == "add_donator":
             if not checks.isAdmin(self.event.from_id):
-                raise exceptions.NoAdminPermissions
+                raise exceptions.NoAdminPermissions("Нет прав, команда для админов")
             text = self.value.split(" ")
-            return Admin(self.event.from_id).add_donator(text[0], text[1] if text[1] else 25)
+            return self.admin.add_donator(text[0], text[1] if text[1] else 25)
         if self.key == "rm_donator":
             if not checks.isAdmin(self.event.from_id):
-                raise exceptions.NoAdminPermissions
-            return Admin(self.event.from_id).remove_donator(self.parsed_msg['value'])
+                raise exceptions.NoAdminPermissions("Нет прав, команда для админов")
+            return self.admin.remove_donator(self.parsed_msg['value'])
         # ---- Tracking ----
         if self.key == "track":
             pass
@@ -101,30 +118,26 @@ class CommandsHandler:
             return self.level.show_leaderboard()
         #  ---- osu!lemmy ----
         if self.key in ["osu", "осу"]:
-            if not checks.hasPrivileges(self.event.from_id):
-                raise exceptions.NoPrivilegesPermissions
             return self.osu.lemmyPicture(self.value, 0)
         if self.key in ["taiko", "тайко"]:
-            if not checks.hasPrivileges(self.event.from_id):
-                raise exceptions.NoPrivilegesPermissions
             return self.osu.lemmyPicture(self.value, 1)
         if self.key in ["ctb", "ктб"]:
-            if not checks.hasPrivileges(self.event.from_id):
-                raise exceptions.NoPrivilegesPermissions
             return self.osu.lemmyPicture(self.value, 2)
         if self.key in ["mania", "мания"]:
-            if not checks.hasPrivileges(self.event.from_id):
-                raise exceptions.NoPrivilegesPermissions
             return self.osu.lemmyPicture(self.value, 3)
         # ---- osu! stats ----
         if self.key in ["top", "топ"]:
             if not checks.hasPrivileges(self.event.from_id):
-                raise exceptions.NoPrivilegesPermissions
+                raise exceptions.NoPrivilegesPermissions(
+                    "Недостаточно прав, однако ты можешь задонатить и взамен получить возможность юзать эту команду"
+                    )
             userData = utils.getServerUsername(self.value, self.event.from_id)
             return self.osu.getUserBest(userData)
         if self.key in ["last", "recent", "ласт"]:
             if not checks.hasPrivileges(self.event.from_id):
-                raise exceptions.NoPrivilegesPermissions
+                raise exceptions.NoPrivilegesPermissions(
+                    "Недостаточно прав, однако ты можешь задонатить и взамен получить возможность юзать эту команду"
+                    )
             userData = utils.getServerUsername(self.value, self.event.from_id)
             return self.osu.getUserRecent(userData)
         # ---- Fun ----
@@ -132,6 +145,19 @@ class CommandsHandler:
             return fun.weather(self.value)
         if self.key in ["roll", "ролл"]:
             return fun.roll(self.value)
+
+    def donatorCheck(self):
+        if not self.admin.stillDonator():
+            self.admin.remove_donator(self.event.from_id)
+            vk_api_name = self.vk.users.get(
+                    user_ids = self.event.from_id, 
+                    name_case = 'gen')[0]
+            self.vk.messages.send(
+                chat_id= 1,
+                message = "Минус донатер у *id{}({} {})".format(
+                    self.event.from_id,
+                    vk_api_name['first_name'],
+                    vk_api_name['Чупринова']))
 
     def parse_command(self, event):
         """
