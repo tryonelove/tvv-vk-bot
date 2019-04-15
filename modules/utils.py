@@ -127,11 +127,11 @@ def getServerUsername(text, from_id):
         text = " " + text
     r = re.search(r'(bancho|gatari)?(.*?)(\s\d+)?$', text)
     if r:
-        server = r.group(1) if r.group(1) in ('bancho','gatari') else 'bancho'
+        server = r.group(1)
         username = r.group(2)
         limit = r.group(3)
         if server is None:
-            server = 'bancho'
+            server = glob.users[str(from_id)].get('server')
         if username == "":
             username = glob.users[str(from_id)].get('osu_username')
         if limit is not None:
@@ -145,7 +145,7 @@ def getUserFromDB(from_id):
     username = glob.users[str(from_id)].get('osu_username')
     return { "server" : server, "username" : username }
         
-        
+
     
 
     

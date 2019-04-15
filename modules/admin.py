@@ -11,6 +11,14 @@ class Admin:
     def __init__(self, from_id):
         self.from_id = from_id
     
+    def stillDonator(self):
+        if str(self.from_id) in glob.config["donators"]:
+            date = datetime.datetime.strptime(glob.config["donators"][str(self.from_id)], "%Y-%m-%d %H:%M:%S")
+            date_now = datetime.datetime.now()
+            delta = date - date_now
+            return True if delta.days > 0 else False
+        return True
+
     def add_donator(self, user_id, donation_sum = 25):
         """
         Функция добавления донатера

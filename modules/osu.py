@@ -39,8 +39,8 @@ class Osu:
         if str(self.from_id) in glob.config["donators"] or self.from_id in glob.config["admin"]:
             if len(text)>1 and data["server"] in ('bancho', 'gatari'):
                 from_id = str(self.from_id)
-                glob.users[from_id]['server'] = data["server"]
-                glob.users[from_id]['osu_username'] = data["username"]
+                glob.users[from_id]['server'] = data["server"].strip()
+                glob.users[from_id]['osu_username'] = data["username"].strip()
                 utils.users_update()
                 return "Аккаунт {} был успешно привязан к вашему айди.".format(text)
             raise exceptions.ArgumentError("Доступные сервера: bancho, gatari")
@@ -60,6 +60,12 @@ class Osu:
         return self.maps.get(beatmapSet_id, None)
 
     def getBeatmapFromDB(self, beatmap_id):
+        """Функция поиска карты в базе
+        
+        :param beatmap_id: айди карты
+        :return: информация osu!api по beatmap_id, иначе None
+        """
+
         for _, value in self.maps.items():
             if beatmap_id in value:
                 return value.get(beatmap_id)
@@ -95,7 +101,7 @@ class Osu:
         return url
 
     def getGatariLemmyLink(self, mode, username):
-        url = 'https://lemmmy.pw/osusig/sig.php?colour={}&uname={}&xpbar&xpbarhex&darktriangles&pp=1&mode={}'.format(random.choice(sig_colors), username, mode)
+        url = 'http://sig.gatari.pw/sig.php?colour={}&uname={}&xpbar&xpbarhex&darktriangles&pp=1&mode={}'.format(random.choice(sig_colors), username, mode)
         return url
 
     def getBeatmapBG(self, beatmapSet_id):

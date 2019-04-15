@@ -126,7 +126,7 @@ class CommandsHandler:
         if self.key in ["mania", "мания"]:
             return self.osu.lemmyPicture(self.value, 3)
         # ---- osu! stats ----
-        if self.key in ["top", "топ"]:
+        if self.key in ["top"]:
             if not checks.hasPrivileges(self.event.from_id):
                 raise exceptions.NoPrivilegesPermissions(
                     "Недостаточно прав, однако ты можешь задонатить и взамен получить возможность юзать эту команду"

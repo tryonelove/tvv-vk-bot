@@ -25,7 +25,8 @@ def weather(city):
     return text
 
 
-def roll(limit):
-    if limit.isdigit():
-        return random.randint(1, int(limit))
+def roll(text):
+    lim = text.split()
+    if lim[0].isdigit():
+        return random.randint(1, int(lim[0]))
     return random.randint(1, 100)
