@@ -6,7 +6,8 @@ import logging
 from objects import glob
 import json
 from constants import exceptions
-
+from modules.tracking import Tracking
+from time import sleep
 
 class VkBotLongPollFix(VkBotLongPoll):
     def listen(self):
@@ -25,6 +26,7 @@ class Bot:
         self.vk_session = vk_api.VkApi(token=api_token, api_version='5.89')
         self.longpoll = VkBotLongPollFix(self.vk_session, group_id)
         self.vk = self.vk_session.get_api()
+        self.upload = VkUpload(self.vk)
         with open("commands.json", "r", encoding="utf-8") as f:
             glob.commands = json.load(f)
         with open("config.json", "r", encoding="utf-8") as f:
@@ -43,10 +45,21 @@ class Bot:
                               message=message,
                               attachment=attachment)
 
-    def start(self):
+    def trackingStart(self):
+        tracking = Tracking(
+            self.upload, 
+            self.vk, 
+            [])
+        for score in tracking.start():  
+            logging.info(score)    
+            yield        
+            
+
+    def botStart(self):
         for event in self.longpoll.listen():
             if event.type == VkBotEventType.MESSAGE_NEW:
-                handler = CommandsHandler(self.vk, event)
+                handler = CommandsHandler(self.vk, self.upload, event)
+                data = None
                 try:
                     data = handler.process_message()
                 except (exceptions.ArgumentError,
@@ -58,13 +71,13 @@ class Bot:
                             "messageText": "Ошибка: {}".format(e.args[0]), 
                             "attachment": None
                     }
-                except Exception as e:
-                    logging.error(e)
+                # except Exception as e:
+                    # logging.error(e)
                 if data is not None:
-                        try:
-                            self.send_msg(peer_id=event.obj.peer_id,
-                                message=data["messageText"],
-                                attachment=data["attachment"])
-                        except Exception as e:
-                            logging.error(e)
-                
+                    try:
+                        self.send_msg(peer_id=event.obj.peer_id,
+                        message=data["messageText"],
+                        attachment=data["attachment"])
+                    except Exception as e:
+                        logging.error(e)
+                    
