@@ -8,23 +8,44 @@ from . import utils
 from constants.osuConst import *  
 import re
 from helpers import osuHelpers
+import logging
+import pyttanko
+from .api import BanchoApi, GatariApi
+import time
 
 class Osu:
     def __init__(self, key, from_id, upload):
-        self.key = key
+        self.banchoApi = BanchoApi(key)
+        self.gatariApi = GatariApi()
         self.from_id = from_id
         self.upload = upload
         self.session = requests.Session()
-        self.OFFICIAL_API = "https://osu.ppy.sh/api"
-        self.GATARI_API = "https://api.gatari.pw"
         with open("maps.json", 'r', encoding= "UTF-8") as maps:
             self.maps = json.load(maps)
+
+    def getBeatmap(self, beatmap_id):
+        if isinstance(beatmap_id, str):
+            beatmap_id = int(beatmap_id)
+        r = self.session.get("https://osu.ppy.sh/osu/%d" % beatmap_id)
+        open("temp.osu", 'wb').write(r.content)
+        f = open("temp.osu")
+        return f
+
+    def calculatePP(self, osuFile, **kwargs):
+        p = pyttanko.parser()
+        bmap = p.map(osuFile)
+        stars = pyttanko.diff_calc().calc(bmap, kwargs.get("mods", 0))
+        pp,_,_,_,_ = pyttanko.ppv2(stars.aim, stars.speed, **kwargs, bmap=bmap)
+        return round(pp, 2)
+    
+    def getPP(self, beatmap_id, **kwargs):
+        f = self.getBeatmap(beatmap_id)
+        return self.calculatePP(f, **kwargs)
 
     def mapsUpdate(self):
         """
         Обновление базы
         """
-
         with open('maps.json', 'w') as f:
             json.dump(self.maps, f, indent=4)
 
@@ -45,6 +66,7 @@ class Osu:
                 return "Аккаунт {} был успешно привязан к вашему айди.".format(text)
             raise exceptions.ArgumentError("Доступные сервера: bancho, gatari")
 
+
     def addBeatmapToDB(self, beatmapData):
         """Добавляет карту в базу
         
@@ -52,6 +74,7 @@ class Osu:
         """
         beatmapSet_id = beatmapData["beatmapset_id"]
         beatmap_id = beatmapData["beatmap_id"]
+        beatmapData["background_url"] = self.getBeatmapBG(beatmapSet_id)
         beatmap = { beatmap_id : beatmapData }
         self.maps[beatmapSet_id] = beatmap
         self.mapsUpdate()
@@ -65,7 +88,6 @@ class Osu:
         :param beatmap_id: айди карты
         :return: информация osu!api по beatmap_id, иначе None
         """
-
         for _, value in self.maps.items():
             if beatmap_id in value:
                 return value.get(beatmap_id)
@@ -105,6 +127,11 @@ class Osu:
         return url
 
     def getBeatmapBG(self, beatmapSet_id):
+        """Загрузка бг карты в вк
+        
+        :param beatmapSet_id: айди сета
+        :return: vk_background_url
+        """
         try:
             bgUrl = "https://assets.ppy.sh/beatmaps/{}/covers/cover.jpg".format(beatmapSet_id)
             bgPicture = utils.uploadPicture(self.upload, bgUrl)
@@ -182,13 +209,8 @@ class Osu:
             return self.getGatariUserRecent(username, limit)
 
     def getOfficialUserRecent(self, username, limit):
+        js = self.banchoApi.get_user_recent(u=username, limit=limit)
         limit -= 1 
-        r = self.session.get(self.OFFICIAL_API + '/get_user_recent', params={
-            'k': self.key, 
-            'u': username, 
-            'limit': limit + 1
-            })
-        js = r.json()
         if not js:
             return "Пользователь не найден"
         beatmap_id = js[limit]['beatmap_id']
@@ -198,11 +220,10 @@ class Osu:
         count300 = js[limit]['count300']
         misses = js[limit]['countmiss']
         m = js[limit]['enabled_mods']
+        ranking = js[limit]['rank']
         accuracy = osuHelpers.acc_calc(int(misses),int(count50),int(count100),int(count300))
         if self.getBeatmapFromDB(beatmap_id) is None:
-            r = self.session.get(self.OFFICIAL_API + '/get_beatmaps', params={'k': self.key, 'b' : beatmap_id})
-            js = r.json()
-            beatmapInfo = js[0]
+            beatmapInfo = self.banchoApi.get_beatmaps(b=beatmap_id)[0]
             self.addBeatmapToDB(beatmapInfo)
         else:
             beatmapInfo = self.getBeatmapFromDB(beatmap_id)
@@ -211,8 +232,9 @@ class Osu:
         songTitle = beatmapInfo['title']
         version = beatmapInfo['version']
         title = "{} - {} [{}]".format(artist, songTitle, version)
-        r = self.session.get(self.OFFICIAL_API + '/get_user', params={'k': self.key, 'u': username})
-        js = r.json()[0]
+        js = self.banchoApi.get_user(u=username)[0]
+        pp = self.getPP(beatmap_id = beatmap_id, mods=int(m), n300=int(count300), 
+            n100=int(count100), n50=int(count50),combo=int(combo), nmiss=int(misses))
         text = osuHelpers.scoreFormat(
             username = js["username"], 
             m = m,
@@ -220,25 +242,22 @@ class Osu:
             combo = combo, 
             accuracy = accuracy,
             max_combo = beatmapInfo['max_combo'],
-            pp = None, 
+            pp = str(pp), 
             misses = misses, 
             beatmap_id = beatmap_id
         )
-        bgPicture = self.getBeatmapBG(beatmapSet_id)
+        bgPicture = beatmapInfo.get("background_url", None)
+        if bgPicture is None:
+            bgPicture = self.getBeatmapBG(beatmapSet_id)
+        if ranking == 'F':
+            text = "UNSUBMITTED\n" + text
         return text, bgPicture
 
     def getGatariUserRecent(self, username, limit):
-        r = self.session.get(self.GATARI_API + "/users/get", params = { 
-            'u' : username
-        })
-        user_id = r.json()['users'][0]['id']
-        r = self.session.get(self.GATARI_API + "/user/scores/recent", params = {
-            'id' : user_id,
-            'l' : limit,
-            'f': '1'
-            })
         limit -= 1
-        js = r.json()['scores'][limit]
+        text = ""
+        user_id = self.gatariApi.get_user(username)["users"][0]["id"]
+        js = self.gatariApi.get_user_recent(user_id, limit)['scores'][limit]
         beatmapSet_id = js['beatmap']['beatmapset_id']
         beatmap_id = js['beatmap']['beatmap_id']
         max_combo =  js['beatmap']['fc']
@@ -250,7 +269,9 @@ class Osu:
         pp = str(js['pp'])
         ranking = js['ranking']
         bgPicture = self.getBeatmapBG(beatmapSet_id)
-        text = osuHelpers.scoreFormat(
+        if ranking == 'F':
+            text += "UNSUBMITTED\n"
+        text += osuHelpers.scoreFormat(
             username = username,
             title = title,
             m = m,
@@ -261,18 +282,15 @@ class Osu:
             pp = pp,
             beatmap_id = beatmap_id
         )
-        if ranking == 'F':
-            text = "UNSUBMITTED\n" + text
         return text, bgPicture
         
     def getOfficialUserBest(self, username, limit = 1):
         if limit > 50:
             return "Слишком большой предел, максимум 50"
+        js = self.banchoApi.get_user_best(u=username, limit=limit)
         limit -= 1 
-        r = self.session.get(self.OFFICIAL_API + '/get_user_best', params={'k': self.key, 'u': username, 'limit': limit + 1})
-        js = r.json()
         if not js:
-            return "Пользователь не найден"
+            return "Нет данных, возможно, что пользователь в бане, либо нет скоров за последние 24 часа"
         beatmap_id = js[limit]['beatmap_id']
         pp = js[limit]['pp']
         combo =  js[limit]['maxcombo']
@@ -283,9 +301,7 @@ class Osu:
         m = js[limit]['enabled_mods']
         accuracy = osuHelpers.acc_calc(int(misses),int(count50),int(count100),int(count300))
         if self.getBeatmapFromDB(beatmap_id) is None:
-            r = self.session.get(self.OFFICIAL_API + '/get_beatmaps', params={'k': self.key, 'b' : beatmap_id})
-            js = r.json()
-            beatmapInfo = js[0]
+            beatmapInfo = self.banchoApi.get_beatmaps(b=beatmap_id)[0]
             self.addBeatmapToDB(beatmapInfo)
         else:
             beatmapInfo = self.getBeatmapFromDB(beatmap_id)
@@ -294,8 +310,7 @@ class Osu:
         songTitle = beatmapInfo['title']
         version = beatmapInfo['version']
         title = "{} - {} [{}]".format(artist, songTitle, version)
-        r = self.session.get(self.OFFICIAL_API + '/get_user', params={'k': self.key, 'u': username})
-        js = r.json()[0]
+        js = self.banchoApi.get_user(u=username)[0]
         text = osuHelpers.scoreFormat(
             username = js["username"], 
             m = m,
@@ -307,20 +322,16 @@ class Osu:
             pp = pp, 
             beatmap_id = beatmap_id
         )
-        bgPicture = self.getBeatmapBG(beatmapSet_id)
+        bgPicture = beatmapInfo.get("background_url", None)
+        if bgPicture is None:
+            bgPicture = self.getBeatmapBG(beatmapSet_id)
         return text, bgPicture
 
     def getGatariUserBest(self, username, limit = 1):
-        r = self.session.get(self.GATARI_API + "/users/get", params = { 
-            'u' : username
-        })
-        user_id = r.json()['users'][0]['id']
-        r = self.session.get(self.GATARI_API + "/user/scores/best", params = { 
-            'id' : user_id,
-            'l': limit
-        })
+        user_id = self.gatariApi.get_user(username=username)["users"][0]["id"]
+        js = self.gatariApi.get_user_best(user_id, limit)
         limit -= 1
-        js = r.json()['scores'][limit]
+        js = js['scores'][limit]
         beatmapSet_id = js['beatmap']['beatmapset_id']
         beatmap_id = js['beatmap']['beatmap_id']
         max_combo =  js['beatmap']['fc']
@@ -330,7 +341,6 @@ class Osu:
         accuracy = js['accuracy']
         title = js['beatmap']['song_name']
         pp = js['pp']
-        bgPicture = self.getBeatmapBG(beatmapSet_id)
         text = osuHelpers.scoreFormat(
             username = username,
             title = title,
@@ -342,4 +352,6 @@ class Osu:
             pp = str(pp),
             beatmap_id = beatmap_id
         )
+        bgPicture = self.getBeatmapBG(beatmapSet_id)
+        # bgPicture = self.getBeatmapBG(beatmapSet_id)
         return text, bgPicture

@@ -1,11 +1,16 @@
 from bot import Bot
-
+from threading import Thread
 import json
 
 
 with open("config.json", "r") as f:
     config = json.load(f)
 
-bot = Bot(api_token=config["token"], group_id=176954825)
-
-bot.start()
+    
+if __name__ == "__main__":
+    bot = Bot(config["test_token"], 178909901)
+    bot.botStart()
+    # a.start()
+    # b.start()
+    # a.join()
+    # b.join()

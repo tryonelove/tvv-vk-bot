@@ -28,7 +28,7 @@ def users_update():
 def uploadPicture(upload, url, decode_content = False):
     session = requests.Session()
     image = session.get(url, stream=True).raw
-    image.decode_content = True
+    image.decode_content = decode_content
     photo = upload.photo_messages(photos=image)[0]
     return "photo{}_{}".format(photo['owner_id'], photo['id'])
 
@@ -131,20 +131,19 @@ def getServerUsername(text, from_id):
         username = r.group(2)
         limit = r.group(3)
         if server is None:
-            server = glob.users[str(from_id)].get('server')
+            server = glob.users[str(from_id)].get('server', "bancho")
         if username == "":
             username = glob.users[str(from_id)].get('osu_username')
         if limit is not None:
-            limit = int(limit.strip())
+            limit = int(limit)
         else:
             limit = 1
-        return { "server" : server, "username" : username , "limit" : limit}
+        return { "server" : server.strip(), "username" : username.strip(), "limit" : limit}
 
 def getUserFromDB(from_id):
     server = glob.users[str(from_id)].get('server')
     username = glob.users[str(from_id)].get('osu_username')
     return { "server" : server, "username" : username }
-        
 
     
 

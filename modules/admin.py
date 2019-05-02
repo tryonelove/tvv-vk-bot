@@ -44,16 +44,17 @@ class Admin:
                 "Не забудьте привязать осу акк с помощью команды" \
                 "!osuset bancho/gatari никнейм".format(user_id)
 
-    def remove_donator(self, user_id):
+    def remove_donator(self, from_id):
         """
         Удаляет пользователя из донатеров
         :param user_id: айди пользователя
         """
-        if user_id in glob.config["donators"]:
-            del glob.config["donators"][user_id]
+        from_id = str(from_id)
+        if from_id in glob.config["donators"]:
+            del glob.config["donators"][from_id]
             config_update()
-            return "Пользователь {} был успешно удалён.".format(user_id)
-        return "Пользователь {} не является донатером.".format(user_id)
+            return "Пользователь {} был успешно удалён.".format(from_id)
+        return "Пользователь {} не является донатером.".format(from_id)
 
     def op(self, user_id):
         """

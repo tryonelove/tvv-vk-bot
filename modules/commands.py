@@ -16,15 +16,15 @@ from objects import glob
 
 
 class CommandsHandler:
-    def __init__(self, vk, event):
+    def __init__(self, vk, upload, event):
         self.vk = vk
+        self.upload = upload
         self.event = event.obj
         self.parsed_msg = self.parse_command(self.event)
         self.key = self.parsed_msg.get("key").lower()
         self.value = self.parsed_msg.get("value")
         self.request = requests.Session()
         self.level = LevelSystem(self.vk)
-        self.upload = VkUpload(self.vk)
         self.admin = Admin(self.event.from_id)
         self.osu = Osu(glob.config["osu_api_key"], self.event.from_id, self.upload)
 
@@ -48,19 +48,6 @@ class CommandsHandler:
             return None
 
     def process_command(self):
-        # ---- Built-in ----
-        if self.key in ["help", "хелп"]:
-            return "\n".join(glob.commands.keys())
-        if self.key in glob.commands:
-            return self.static_cmd()
-        if self.key in ["role", "роль"]:
-            return self.getRole(self.event.from_id)
-        if self.key == "osuset":
-            if not checks.hasPrivileges(self.event.from_id):
-                raise exceptions.NoPrivilegesPermissions(
-                    "Недостаточно прав, однако ты можешь задонатить и взамен получить возможность юзать эту команду"
-                    )
-            return self.osu.osuset(self.parsed_msg["value"])
         # ---- Commands managing ----
         if self.key == "addpic":
             if not checks.hasPrivileges(self.event.from_id):
@@ -94,6 +81,19 @@ class CommandsHandler:
                     "Недостаточно прав, однако ты можешь задонатить и взамен получить возможность юзать эту команду"
                     )
             return utils.editcom(self.value)
+        # ---- Built-in ----
+        if self.key in ["help", "хелп"]:
+            return "\n".join(glob.commands.keys())
+        if self.key in glob.commands:
+            return self.static_cmd()
+        if self.key in ["role", "роль"]:
+            return self.getRole(self.event.from_id)
+        if self.key == "osuset":
+            if not checks.hasPrivileges(self.event.from_id):
+                raise exceptions.NoPrivilegesPermissions(
+                    "Недостаточно прав, однако ты можешь задонатить и взамен получить возможность юзать эту команду"
+                    )
+            return self.osu.osuset(self.parsed_msg["value"])
         # ---- Donators ----
         if self.key == "add_donator":
             if not checks.isAdmin(self.event.from_id):
@@ -153,12 +153,12 @@ class CommandsHandler:
                     user_ids = self.event.from_id, 
                     name_case = 'gen')[0]
             self.vk.messages.send(
-                chat_id= 1,
+                peer_id= self.event.peer_id,
                 message = "Минус донатер у *id{}({} {})".format(
                     self.event.from_id,
                     vk_api_name['first_name'],
-                    vk_api_name['Чупринова']))
-
+                    vk_api_name['last_name']))
+            
     def parse_command(self, event):
         """
         Функция парсит сообщение на словарь, 

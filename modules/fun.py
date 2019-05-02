@@ -1,7 +1,7 @@
 import requests
 from constants.weather import weather_state
 import random
-
+import re
 
 def weather(city):
     emoji = ''
@@ -26,7 +26,9 @@ def weather(city):
 
 
 def roll(text):
-    lim = text.split()
-    if lim[0].isdigit():
-        return random.randint(1, int(lim[0]))
+    if text!="":
+        text = text.split()
+    if len(text) >= 1:
+        if text[0].isdigit() and int(text[0]) > 0:
+            return random.randint(1, int(text[0]))
     return random.randint(1, 100)
