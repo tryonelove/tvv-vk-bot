@@ -27,6 +27,11 @@ class CommandsHandler:
         self.level = LevelSystem(self.vk)
         self.admin = Admin(self.event.from_id)
         self.osu = Osu(glob.config["osu_api_key"], self.event.from_id, self.upload)
+        self.data = {
+            "peer_id" : self.event.peer_id,
+            "message": None,
+            "attachment": None
+        }
 
     def process_message(self):
         """
@@ -39,12 +44,14 @@ class CommandsHandler:
                               self.event.text)
         self.donatorCheck()
         if self.event.text.startswith("!"):
-            data = self.process_command()
-            if data is not None:
-                if isinstance(data, tuple):
-                    message, attach = data[0], data[1]
-                    return { "messageText" : message , "attachment" : attach }
-                return { "messageText" : data , "attachment" : None }
+            value = self.process_command()
+            if value is not None:
+                if isinstance(value, tuple):
+                    self.data["message"] = value[0]
+                    self.data["attachment"] = value[1]
+                else:
+                    self.data["message"] = value
+                return self.data
             return None
 
     def process_command(self):
@@ -83,6 +90,7 @@ class CommandsHandler:
             return utils.editcom(self.value)
         # ---- Built-in ----
         if self.key in ["help", "хелп"]:
+            self.data["peer_id"] = self.event.from_id
             return "\n".join(glob.commands.keys())
         if self.key in glob.commands:
             return self.static_cmd()

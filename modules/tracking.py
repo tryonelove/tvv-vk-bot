@@ -46,8 +46,8 @@ class Tracking:
     def __init__(self, upload, vk, trackingList):
         self.upload = upload
         self.vk = vk
-        self.connect()
         self.trackingList = trackingList
+        self.connect()
 
     def scoreHandler(self, data):
         logging.info(data)

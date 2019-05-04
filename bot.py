@@ -6,7 +6,6 @@ import logging
 from objects import glob
 import json
 from constants import exceptions
-from modules.tracking import Tracking
 from time import sleep
 
 class VkBotLongPollFix(VkBotLongPoll):
@@ -45,17 +44,7 @@ class Bot:
                               message=message,
                               attachment=attachment)
 
-    def trackingStart(self):
-        tracking = Tracking(
-            self.upload, 
-            self.vk, 
-            [])
-        for score in tracking.start():  
-            logging.info(score)    
-            yield        
-            
-
-    def botStart(self):
+    def start(self):
         for event in self.longpoll.listen():
             if event.type == VkBotEventType.MESSAGE_NEW:
                 handler = CommandsHandler(self.vk, self.upload, event)
@@ -68,16 +57,15 @@ class Bot:
                         exceptions.NoDonorPermissions,
                         exceptions.NoPrivilegesPermissions) as e:
                     data = {
-                            "messageText": "Ошибка: {}".format(e.args[0]), 
+                            "peer_id": event.obj.peer_id,
+                            "message": "Ошибка: {}".format(e.args[0]), 
                             "attachment": None
                     }
                 # except Exception as e:
                     # logging.error(e)
                 if data is not None:
                     try:
-                        self.send_msg(peer_id=event.obj.peer_id,
-                        message=data["messageText"],
-                        attachment=data["attachment"])
+                        self.send_msg(**data)
                     except Exception as e:
                         logging.error(e)
                     
