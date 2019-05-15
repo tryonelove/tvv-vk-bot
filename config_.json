@@ -1,0 +1,12 @@
+{
+    "weather_api": "",
+    "gatari_tracking": [],
+    "osu_api_key": "",
+    "admin": [],
+    "bancho_tracking": [],
+    "token": "",
+    "test_token":"",
+    "streams": [],
+    "prefix": "!",
+    "donators": {"id":"datetime date"}
+}
