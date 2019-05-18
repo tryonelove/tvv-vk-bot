@@ -61,7 +61,9 @@ class CommandsHandler:
                 raise exceptions.NoPrivilegesPermissions(
                     "Недостаточно прав, однако ты можешь задонатить и взамен получить возможность юзать эту команду"
                     )
-            return utils.addpic(self.upload,
+            return utils.addpic(
+                                self.event.from_id,
+                                self.upload,
                                 self.value,
                                 self.event.attachments)
         if self.key == "delpic":
@@ -69,25 +71,31 @@ class CommandsHandler:
                 raise exceptions.NoPrivilegesPermissions(
                     "Недостаточно прав, однако ты можешь задонатить и взамен получить возможность юзать эту команду"
                     )
+            if not checks.commandAdder(self.event.from_id, self.value):
+                raise exceptions.NoPrivilegesPermissions("Удалять команды могут их создатели или админы")
             return utils.delcom(self.value)
         if self.key == "addcom":
             if not checks.hasPrivileges(self.event.from_id):
                 raise exceptions.NoPrivilegesPermissions(
                     "Недостаточно прав, однако ты можешь задонатить и взамен получить возможность юзать эту команду"
                     )
-            return utils.addcom(self.value)
+            return utils.addcom(self.event.from_id, self.value)
         if self.key == "delcom":
             if not checks.hasPrivileges(self.event.from_id):
                 raise exceptions.NoPrivilegesPermissions(
                     "Недостаточно прав, однако ты можешь задонатить и взамен получить возможность юзать эту команду"
                     )
+            if not checks.commandAdder(self.event.from_id, self.value):
+                raise exceptions.NoPrivilegesPermissions("Удалять команды могут их создатели или админы")
             return utils.delcom(self.value)
         if self.key == "editcom":
             if not checks.hasPrivileges(self.event.from_id):
                 raise exceptions.NoPrivilegesPermissions(
                     "Недостаточно прав, однако ты можешь задонатить и взамен получить возможность юзать эту команду"
                     )
-            return utils.editcom(self.value)
+            if not checks.commandAdder(self.event.from_id, self.value):
+                raise exceptions.NoPrivilegesPermissions("Изменять команды могут их создатели или админы")
+            return utils.editcom(self.event.from_id, self.value)
         # ---- Built-in ----
         if self.key in ["help", "хелп"]:
             self.data["peer_id"] = self.event.from_id
@@ -135,17 +143,9 @@ class CommandsHandler:
             return self.osu.lemmyPicture(self.value, 3)
         # ---- osu! stats ----
         if self.key in ["top"]:
-            if not checks.hasPrivileges(self.event.from_id):
-                raise exceptions.NoPrivilegesPermissions(
-                    "Недостаточно прав, однако ты можешь задонатить и взамен получить возможность юзать эту команду"
-                    )
             userData = utils.getServerUsername(self.value, self.event.from_id)
             return self.osu.getUserBest(userData)
         if self.key in ["last", "recent", "ласт"]:
-            if not checks.hasPrivileges(self.event.from_id):
-                raise exceptions.NoPrivilegesPermissions(
-                    "Недостаточно прав, однако ты можешь задонатить и взамен получить возможность юзать эту команду"
-                    )
             userData = utils.getServerUsername(self.value, self.event.from_id)
             return self.osu.getUserRecent(userData)
         # ---- Fun ----

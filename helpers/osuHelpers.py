@@ -35,17 +35,25 @@ def readableMods(m):
         r += "V2"
     return r
 
-def scoreFormat(username, title, m, accuracy, combo, max_combo, misses, pp, beatmap_id):
-    if str(misses) == "0": 
+def scoreFormat(
+    username: str, title: str, m: int, accuracy: float, 
+    combo: int, max_combo: int, misses:int, _pp: float, beatmap_id: int, pp_if_fc: float):
+    if misses == 0: 
         misses = "" 
     else:
         misses = str(misses)+"xMiss"
     accuracy = str(round(float(accuracy), 2))
-    mods = "" if str(m)=="0" else "+" + readableMods(int(m))
-    if pp is not None:
-        pp += 'pp'
+    mods = "" if m == 0 else "+" + readableMods(m)
+    if _pp is not None:
+        pp = str(_pp) + 'pp'
+        if _pp != pp_if_fc:
+            pp += " ({}pp if FC)".format(pp_if_fc)
     else:
-        pp = ""
-    text = '{} | {} {} ({}%) {}/{} {} | {}\nhttps://osu.ppy.sh/b/{}'.format(
-        username, title,mods,accuracy,combo,max_combo,misses,pp, beatmap_id)
+        pp = "" 
+    if int(combo) == int(max_combo):
+        combo = ""
+    else:
+        combo = str(combo) + '/' + str(max_combo)
+    text = '{} | {} {} ({}%) {} {} | {}\nhttps://osu.ppy.sh/b/{}'.format(
+        username, title,mods,accuracy,combo,misses,pp, beatmap_id)
     return text

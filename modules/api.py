@@ -104,10 +104,11 @@ class GatariApi:
         })
         return data
 
-    def get_user_recent(self, user_id, limit = 1):
+    def get_user_recent(self, user_id, limit = 1, show_failed = False):
         data = self.make_request(self.NEW_API, "user/scores/recent", params = { 
             'id' : user_id,
-            'l': limit
+            'l': limit,
+            'f': int(show_failed)
         })
         return data
     

@@ -3,6 +3,7 @@ import requests
 from constants import exceptions
 from objects import glob
 import re
+from helpers import checks
 
 def config_update():
     """
@@ -51,7 +52,7 @@ def messageToCommand(message):
     value = " ".join(message[1:])
     return key, value
 
-def addcom(text = None, attachment = None):
+def addcom(from_id, text = None, attachment = None):
     """
     Функция добавления текстовой команды
     :param key: название команды
@@ -60,15 +61,15 @@ def addcom(text = None, attachment = None):
     key, value = messageToCommand(text)
     key = key.lower()
     if not(key):
-        raise exceptions.ArgumentError
-    cmd = {"message": value, "attachment": attachment}
+        raise exceptions.ArgumentError("Проверьте правильность аргументов")
+    cmd = {"author": from_id, "message": value, "attachment": attachment}
     glob.commands[key] = cmd
     commands_update()
     return "Команда {} была успешно добавлена!".format(key)
 
 def delcom(key):
     """
-    Функция добавления текстовой команды
+    Функция удаления команды
     :param key: название команды
     """
     if key not in glob.commands:
@@ -77,7 +78,7 @@ def delcom(key):
     commands_update()
     return "Команда {} была успешно удалена!".format(key)
 
-def editcom(text):
+def editcom(from_id, text):
     """
     Функция редактирования текстовой команды
     :param key: название команды
@@ -86,12 +87,14 @@ def editcom(text):
     key, value = messageToCommand(text)
     if not(key and value):
         raise exceptions.ArgumentError
-    cmd = {"message": value, "attachment": None}
+    if not checks.commandAdder(from_id, key):
+        raise exceptions.NoPrivilegesPermissions("Изменять команды могут их создатели или админы")
+    cmd = {"author":from_id,"message": value, "attachment": None}
     glob.commands[key.lower()] = cmd
     commands_update()
     return "Команда {} была успешно изменена!".format(key)
 
-def addpic(upload, text, attachments):
+def addpic(from_id, upload, text, attachments):
     """
     Функция добавления пикчи
     :param upload: VK API класс VkUpload
@@ -101,7 +104,7 @@ def addpic(upload, text, attachments):
     if not (len(attachments)>=1 and attachments[0]["type"]=="photo"):
         raise exceptions.CustomException("Должна быть прикреплена хотя бы одна пикча.")
     image_url = findLargestPic(attachments[0]['photo']["sizes"])
-    addcom(text = text, attachment = uploadPicture(upload, image_url))
+    addcom(from_id=from_id, text = text, attachment = uploadPicture(upload, image_url))
     message = 'Пикча {} была успешно добавлена!'.format(text.split()[0])
     return message
     

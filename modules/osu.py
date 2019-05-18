@@ -36,7 +36,10 @@ class Osu:
         bmap = p.map(osuFile)
         stars = pyttanko.diff_calc().calc(bmap, kwargs.get("mods", 0))
         pp,_,_,_,_ = pyttanko.ppv2(stars.aim, stars.speed, **kwargs, bmap=bmap)
-        return round(pp, 2)
+        kwargs["nmiss"] = 0
+        kwargs["combo"] = bmap.max_combo()
+        pp_if_fc,_,_,_,_ = pyttanko.ppv2(stars.aim, stars.speed, **kwargs, bmap=bmap)
+        return round(pp, 2), round(pp_if_fc, 2)
     
     def getPP(self, beatmap_id, **kwargs):
         f = self.getBeatmap(beatmap_id)
@@ -88,6 +91,7 @@ class Osu:
         :param beatmap_id: айди карты
         :return: информация osu!api по beatmap_id, иначе None
         """
+        beatmap_id = str(beatmap_id)
         for _, value in self.maps.items():
             if beatmap_id in value:
                 return value.get(beatmap_id)
@@ -213,15 +217,15 @@ class Osu:
         limit -= 1 
         if not js:
             return "Пользователь не найден"
-        beatmap_id = js[limit]['beatmap_id']
-        combo =  js[limit]['maxcombo']
-        count50 = js[limit]['count50']
-        count100 = js[limit]['count100']
-        count300 = js[limit]['count300']
-        misses = js[limit]['countmiss']
-        m = js[limit]['enabled_mods']
+        beatmap_id = int(js[limit]['beatmap_id'])
+        combo =  int(js[limit]['maxcombo'])
+        count50 = int(js[limit]['count50'])
+        count100 = int(js[limit]['count100'])
+        count300 = int(js[limit]['count300'])
+        misses = int(js[limit]['countmiss'])
+        m = int(js[limit]['enabled_mods'])
         ranking = js[limit]['rank']
-        accuracy = osuHelpers.acc_calc(int(misses),int(count50),int(count100),int(count300))
+        accuracy = osuHelpers.acc_calc(misses,count50,count100,count300)
         if self.getBeatmapFromDB(beatmap_id) is None:
             beatmapInfo = self.banchoApi.get_beatmaps(b=beatmap_id)[0]
             self.addBeatmapToDB(beatmapInfo)
@@ -233,8 +237,8 @@ class Osu:
         version = beatmapInfo['version']
         title = "{} - {} [{}]".format(artist, songTitle, version)
         js = self.banchoApi.get_user(u=username)[0]
-        pp = self.getPP(beatmap_id = beatmap_id, mods=int(m), n300=int(count300), 
-            n100=int(count100), n50=int(count50),combo=int(combo), nmiss=int(misses))
+        pp, pp_if_fc = self.getPP(beatmap_id = beatmap_id, mods=m, n300=count300, 
+            n100=count100, n50=count50,combo=combo, nmiss=misses)
         text = osuHelpers.scoreFormat(
             username = js["username"], 
             m = m,
@@ -242,7 +246,8 @@ class Osu:
             combo = combo, 
             accuracy = accuracy,
             max_combo = beatmapInfo['max_combo'],
-            pp = str(pp), 
+            _pp = pp,
+            pp_if_fc=pp_if_fc, 
             misses = misses, 
             beatmap_id = beatmap_id
         )
@@ -254,19 +259,24 @@ class Osu:
         return text, bgPicture
 
     def getGatariUserRecent(self, username, limit):
-        limit -= 1
         text = ""
         user_id = self.gatariApi.get_user(username)["users"][0]["id"]
-        js = self.gatariApi.get_user_recent(user_id, limit)['scores'][limit]
+        js = self.gatariApi.get_user_recent(user_id, limit, show_failed=True)['scores']
+        limit -= 1
+        js = js[limit]
         beatmapSet_id = js['beatmap']['beatmapset_id']
         beatmap_id = js['beatmap']['beatmap_id']
         max_combo =  js['beatmap']['fc']
         combo = js['max_combo']
+        count50 = js['count_50']
+        count100 = js['count_100']
+        count300 = js['count_300']
         misses = js['count_miss']
         m = js['mods']
         accuracy = js['accuracy']
         title = js['beatmap']['song_name']
-        pp = str(js['pp'])
+        pp, pp_if_fc = self.getPP(beatmap_id = beatmap_id, mods=m, n300=count300, 
+        n100=count100, n50=count50,combo=combo, nmiss=misses)
         ranking = js['ranking']
         bgPicture = self.getBeatmapBG(beatmapSet_id)
         if ranking == 'F':
@@ -279,7 +289,8 @@ class Osu:
             max_combo = max_combo,
             combo = combo,
             misses = misses,
-            pp = pp,
+            _pp = pp,
+            pp_if_fc = pp_if_fc,
             beatmap_id = beatmap_id
         )
         return text, bgPicture
@@ -291,15 +302,14 @@ class Osu:
         limit -= 1 
         if not js:
             return "Нет данных, возможно, что пользователь в бане, либо нет скоров за последние 24 часа"
-        beatmap_id = js[limit]['beatmap_id']
-        pp = js[limit]['pp']
-        combo =  js[limit]['maxcombo']
-        count50 = js[limit]['count50']
-        count100 = js[limit]['count100']
-        count300 = js[limit]['count300']
-        misses = js[limit]['countmiss']
-        m = js[limit]['enabled_mods']
-        accuracy = osuHelpers.acc_calc(int(misses),int(count50),int(count100),int(count300))
+        beatmap_id = int(js[limit]['beatmap_id'])
+        combo =  int(js[limit]['maxcombo'])
+        count50 = int(js[limit]['count50'])
+        count100 = int(js[limit]['count100'])
+        count300 = int(js[limit]['count300'])
+        misses = int(js[limit]['countmiss'])
+        m = int(js[limit]['enabled_mods'])
+        accuracy = osuHelpers.acc_calc(misses,count50,count100,count300)
         if self.getBeatmapFromDB(beatmap_id) is None:
             beatmapInfo = self.banchoApi.get_beatmaps(b=beatmap_id)[0]
             self.addBeatmapToDB(beatmapInfo)
@@ -311,6 +321,8 @@ class Osu:
         version = beatmapInfo['version']
         title = "{} - {} [{}]".format(artist, songTitle, version)
         js = self.banchoApi.get_user(u=username)[0]
+        pp, pp_if_fc = self.getPP(beatmap_id = beatmap_id, mods=m, n300=count300, 
+        n100=count100, n50=count50,combo=combo, nmiss=misses)
         text = osuHelpers.scoreFormat(
             username = js["username"], 
             m = m,
@@ -319,7 +331,8 @@ class Osu:
             accuracy = accuracy,
             max_combo = beatmapInfo['max_combo'], 
             misses = misses, 
-            pp = pp, 
+            _pp = pp,
+            pp_if_fc=pp_if_fc,
             beatmap_id = beatmap_id
         )
         bgPicture = beatmapInfo.get("background_url", None)
@@ -328,7 +341,10 @@ class Osu:
         return text, bgPicture
 
     def getGatariUserBest(self, username, limit = 1):
-        user_id = self.gatariApi.get_user(username=username)["users"][0]["id"]
+        try:
+            user_id = self.gatariApi.get_user(username=username)["users"][0]["id"]
+        except:
+            return "Нет данных, возможно, что пользователь в бане, либо нет скоров за последние 24 часа"
         js = self.gatariApi.get_user_best(user_id, limit)
         limit -= 1
         js = js['scores'][limit]
@@ -339,8 +355,13 @@ class Osu:
         misses = js['count_miss']
         m = js['mods']
         accuracy = js['accuracy']
+        count50 = js['count_50']
+        count100 = js['count_100']
+        count300 = js['count_300']
+        misses = js['count_miss']
         title = js['beatmap']['song_name']
-        pp = js['pp']
+        pp, pp_if_fc = self.getPP(beatmap_id = beatmap_id, mods=m, n300=count300, 
+        n100=count100, n50=count50,combo=combo, nmiss=misses)
         text = osuHelpers.scoreFormat(
             username = username,
             title = title,
@@ -349,7 +370,8 @@ class Osu:
             max_combo = max_combo,
             combo = combo,
             misses = misses,
-            pp = str(pp),
+            _pp = pp,
+            pp_if_fc=pp_if_fc,
             beatmap_id = beatmap_id
         )
         bgPicture = self.getBeatmapBG(beatmapSet_id)
