@@ -216,7 +216,7 @@ class Osu:
         js = self.banchoApi.get_user_recent(u=username, limit=limit)
         limit -= 1 
         if not js:
-            return "Пользователь не найден"
+            return "Нет данных, возможно, что пользователь в бане, либо нет скоров за последние 24 часа"
         beatmap_id = int(js[limit]['beatmap_id'])
         combo =  int(js[limit]['maxcombo'])
         count50 = int(js[limit]['count50'])
@@ -342,7 +342,9 @@ class Osu:
 
     def getGatariUserBest(self, username, limit = 1):
         try:
-            user_id = self.gatariApi.get_user(username=username)["users"][0]["id"]
+            js = self.gatariApi.get_user(username=username)
+            user_id = js["users"][0]["id"]
+            username = js["users"][0]["username"]
         except:
             return "Нет данных, возможно, что пользователь в бане, либо нет скоров за последние 24 часа"
         js = self.gatariApi.get_user_best(user_id, limit)

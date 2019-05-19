@@ -1,7 +1,10 @@
 from objects import glob
 
-def isAdmin(user_id):
+def isOwner(user_id):
     return user_id == 236965366
+
+def isAdmin(user_id):
+    return user_id in glob.config["admin"]
 
 def isDonator(user_id):
     return str(user_id) in glob.config["donators"]

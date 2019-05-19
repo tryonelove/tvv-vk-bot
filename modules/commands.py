@@ -110,6 +110,18 @@ class CommandsHandler:
                     "Недостаточно прав, однако ты можешь задонатить и взамен получить возможность юзать эту команду"
                     )
             return self.osu.osuset(self.parsed_msg["value"])
+        if self.key == "op":
+            if not checks.isOwner(self.event.from_id):
+                raise exceptions.NoPrivilegesPermissions(
+                    "Недостаточно прав"
+                    )
+            return self.admin.op(self.value)
+        if self.key == "deop":
+            if not checks.isOwner(self.event.from_id):
+                raise exceptions.NoPrivilegesPermissions(
+                    "Недостаточно прав"
+                    )
+            return self.admin.deop(self.value)
         # ---- Donators ----
         if self.key == "add_donator":
             if not checks.isAdmin(self.event.from_id):

@@ -72,7 +72,7 @@ class Admin:
         """
         glob.config["admin"].remove(user_id)
         config_update()
-        return "Чел {user_id} был удалён из админов!".format(user_id)
+        return "Чел {} был удалён из админов!".format(user_id)
 
     def bot_help(self):
         text = "Команды для донатеров/админов:\npic\nlast\ntop\nosuset\n\n \
