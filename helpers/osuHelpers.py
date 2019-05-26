@@ -31,6 +31,8 @@ def readableMods(m):
         r += "RX"
     if m & mods.RELAX2 > 0:
         r += "AP"	
+    if m & mods.PERFECT > 0:
+        r += "PF"
     if m & mods.SCOREV2 > 0:
         r += "V2"
     return r

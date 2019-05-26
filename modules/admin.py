@@ -13,13 +13,13 @@ class Admin:
     
     def stillDonator(self):
         if str(self.from_id) in glob.config["donators"]:
-            date = datetime.datetime.strptime(glob.config["donators"][str(self.from_id)], "%Y-%m-%d %H:%M:%S")
+            date = datetime.datetime.strptime(glob.config["donators"][str(self.from_id)]["expires"], "%Y-%m-%d %H:%M:%S")
             date_now = datetime.datetime.now()
             delta = date - date_now
             return True if delta.days > 0 else False
         return True
 
-    def add_donator(self, user_id, donation_sum = 25):
+    def add_donator(self, user_id, donation_sum, role_name):
         """
         Функция добавления донатера
         :param user_id: айди добавляемого пользователя
@@ -30,15 +30,17 @@ class Admin:
         now = datetime.datetime.now()
         donator_duration = donation_sum // 25
         if user_id in glob.config["donators"]:
-            date = datetime.datetime.strptime(glob.config["donators"][user_id], "%Y-%m-%d %H:%M:%S")
+            date = datetime.datetime.strptime(glob.config["donators"][user_id]["expires"], "%Y-%m-%d %H:%M:%S")
             date += datetime.timedelta(days=+31*donator_duration)
-            glob.config["donators"][user_id] = str(date.strftime("%Y-%m-%d %H:%M:%S"))
+            glob.config["donators"][user_id]["expires"] = str(date.strftime("%Y-%m-%d %H:%M:%S"))
         else:
             if donation_sum != 25:
                 now += datetime.timedelta(days=+31*donator_duration)
             else:
                 now += datetime.timedelta(days=+31)
-            glob.config["donators"][user_id] = str(now.strftime("%Y-%m-%d %H:%M:%S"))
+            glob.config["donators"][user_id] = {}
+            glob.config["donators"][user_id]["expires"] = str(now.strftime("%Y-%m-%d %H:%M:%S"))
+            glob.config["donators"][user_id]["role_name"] = role_name
         config_update()
         return "Пользователь {} получил роль донатера\n" \
                 "Не забудьте привязать осу акк с помощью команды" \

@@ -377,5 +377,14 @@ class Osu:
             beatmap_id = beatmap_id
         )
         bgPicture = self.getBeatmapBG(beatmapSet_id)
-        # bgPicture = self.getBeatmapBG(beatmapSet_id)
         return text, bgPicture
+
+    def compare(self, messages_history, username: str = None):
+        # TODO
+        if username is None:
+            username = utils.getUserFromDB(self.from_id)
+        for message in messages_history:
+            if title_re.findall(message.text):
+                beatmap_id = beatmap_id_re.findall(message.text)
+                break
+        pass

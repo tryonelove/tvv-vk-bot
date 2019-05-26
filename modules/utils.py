@@ -60,7 +60,7 @@ def addcom(from_id, text = None, attachment = None):
     """
     key, value = messageToCommand(text)
     key = key.lower()
-    if not(key):
+    if not key or (value == "" and not attachment):
         raise exceptions.ArgumentError("Проверьте правильность аргументов")
     cmd = {"author": from_id, "message": value, "attachment": attachment}
     glob.commands[key] = cmd
@@ -101,8 +101,6 @@ def addpic(from_id, upload, text, attachments):
     :param key: название команды
     :param value: значение
     """
-    if not (len(attachments)>=1 and attachments[0]["type"]=="photo"):
-        raise exceptions.CustomException("Должна быть прикреплена хотя бы одна пикча.")
     image_url = findLargestPic(attachments[0]['photo']["sizes"])
     addcom(from_id=from_id, text = text, attachment = uploadPicture(upload, image_url))
     message = 'Пикча {} была успешно добавлена!'.format(text.split()[0])
@@ -148,6 +146,13 @@ def getUserFromDB(from_id):
     username = glob.users[str(from_id)].get('osu_username')
     return { "server" : server, "username" : username }
 
-    
 
-    
+def getRole(user_id):
+    user_id = str(user_id)
+    if int(user_id) in glob.config['admin']:
+        return 'Роль: админ'
+    elif user_id in glob.config["donators"]:
+        role_name = glob.config["donators"][user_id].get("role_name", "донатер")
+        return 'Роль: {}\nВы будете донатером до {} (-2 от мск)'.format(
+            role_name, glob.config["donators"][user_id]["expires"])
+    return 'Роль: юзер'

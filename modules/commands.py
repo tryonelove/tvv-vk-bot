@@ -56,29 +56,17 @@ class CommandsHandler:
 
     def process_command(self):
         # ---- Commands managing ----
-        if self.key == "addpic":
-            if not checks.hasPrivileges(self.event.from_id):
-                raise exceptions.NoPrivilegesPermissions(
-                    "Недостаточно прав, однако ты можешь задонатить и взамен получить возможность юзать эту команду"
-                    )
-            return utils.addpic(
-                                self.event.from_id,
-                                self.upload,
-                                self.value,
-                                self.event.attachments)
-        if self.key == "delpic":
-            if not checks.hasPrivileges(self.event.from_id):
-                raise exceptions.NoPrivilegesPermissions(
-                    "Недостаточно прав, однако ты можешь задонатить и взамен получить возможность юзать эту команду"
-                    )
-            if not checks.commandAdder(self.event.from_id, self.value):
-                raise exceptions.NoPrivilegesPermissions("Удалять команды могут их создатели или админы")
-            return utils.delcom(self.value)
         if self.key == "addcom":
             if not checks.hasPrivileges(self.event.from_id):
                 raise exceptions.NoPrivilegesPermissions(
                     "Недостаточно прав, однако ты можешь задонатить и взамен получить возможность юзать эту команду"
                     )
+            if self.event.attachments:
+                return utils.addpic(
+                                    self.event.from_id,
+                                    self.upload,
+                                    self.value,
+                                    self.event.attachments)
             return utils.addcom(self.event.from_id, self.value)
         if self.key == "delcom":
             if not checks.hasPrivileges(self.event.from_id):
@@ -95,15 +83,26 @@ class CommandsHandler:
                     )
             if not checks.commandAdder(self.event.from_id, self.value):
                 raise exceptions.NoPrivilegesPermissions("Изменять команды могут их создатели или админы")
-            return utils.editcom(self.event.from_id, self.value)
+            if self.event.attachments:
+                return utils.addpic(
+                                    self.event.from_id,
+                                    self.upload,
+                                    self.value,
+                                    self.event.attachments)
         # ---- Built-in ----
         if self.key in ["help", "хелп"]:
             self.data["peer_id"] = self.event.from_id
+            text = "osu \ taiko \ mania \ ctb\n"
+            text+= "top\n"
+            text+= "last \ recent \ rs \ ласт\n"
+            text+= "погода \ weather\n"
+            text+= "roll \ ролл"
+            text+= "----------------------------"
             return "\n".join(glob.commands.keys())
         if self.key in glob.commands:
             return self.static_cmd()
         if self.key in ["role", "роль"]:
-            return self.getRole(self.event.from_id)
+            return utils.getRole(self.event.from_id)
         if self.key == "osuset":
             if not checks.hasPrivileges(self.event.from_id):
                 raise exceptions.NoPrivilegesPermissions(
@@ -124,12 +123,12 @@ class CommandsHandler:
             return self.admin.deop(self.value)
         # ---- Donators ----
         if self.key == "add_donator":
-            if not checks.isAdmin(self.event.from_id):
+            if not checks.isOwner(self.event.from_id):
                 raise exceptions.NoAdminPermissions("Нет прав, команда для админов")
             text = self.value.split(" ")
-            return self.admin.add_donator(text[0], text[1] if text[1] else 25)
+            return self.admin.add_donator(text[0], text[1], " ".join(text[2:]) if len(text)>2 else "донатер")
         if self.key == "rm_donator":
-            if not checks.isAdmin(self.event.from_id):
+            if not checks.isOwner(self.event.from_id):
                 raise exceptions.NoAdminPermissions("Нет прав, команда для админов")
             return self.admin.remove_donator(self.parsed_msg['value'])
         # ---- Tracking ----
@@ -157,7 +156,7 @@ class CommandsHandler:
         if self.key in ["top"]:
             userData = utils.getServerUsername(self.value, self.event.from_id)
             return self.osu.getUserBest(userData)
-        if self.key in ["last", "recent", "ласт"]:
+        if self.key in ["last", "recent", "ласт", "rs"]:
             userData = utils.getServerUsername(self.value, self.event.from_id)
             return self.osu.getUserRecent(userData)
         # ---- Fun ----
@@ -203,18 +202,3 @@ class CommandsHandler:
         if message is not None:        
             message = message.replace("&quot;", '"')
         return message, attachment
-
-    def getRole(self, user_id):
-        if user_id in glob.config['admin']:
-            return 'Роль: админ'
-        elif str(user_id) in glob.config['donators']:
-            date = datetime.datetime.strptime(
-                glob.config['donators'][str(user_id)], "%Y-%m-%d %H:%M:%S")
-            date_now = datetime.datetime.now()
-            delta = date.year - date_now.year
-            if delta >= 1:
-                return 'Роль: супердонатер\nВы будете гением до ' \
-                    + glob.config['donators'][str(user_id)]+" (-2 от мск)"
-            return 'Роль: донатер\nВы будете донатером до ' \
-                + glob.config['donators'][str(user_id)]+" (-2 от мск)"
-        return 'Роль: юзер'
