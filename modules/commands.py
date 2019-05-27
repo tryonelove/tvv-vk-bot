@@ -159,6 +159,10 @@ class CommandsHandler:
         if self.key in ["last", "recent", "ласт", "rs"]:
             userData = utils.getServerUsername(self.value, self.event.from_id)
             return self.osu.getUserRecent(userData)
+        if self.key in ["c", "compare", "с"]:
+            if not self.event["fwd_messages"]:
+                raise exceptions.ArgumentError("Необходимо переслать сообщение со скором")
+            return self.osu.compare(self.event["fwd_messages"][-1], self.value)            
         # ---- Fun ----
         if self.key in ["weather", "погода"]:
             return fun.weather(self.value)
