@@ -22,6 +22,12 @@ class ArgumentError(Exception):
     """
     pass
 
+class ApiError(Exception):
+    """
+    Ошибка при запросе к апи
+    """
+    pass
+
 class CustomException(Exception):
     pass
     

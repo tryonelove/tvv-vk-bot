@@ -74,7 +74,7 @@ def dataHandler(data):
                 accuracy = round(float(data.get("accuracy")), 2)
                 combo = data.get("max_combo")
                 mods = data.get("mods")
-                r = session.get("https://osu.ppy.sh/api/get_beatmaps", params = {"k": "5beebba6ca8a4ba4a95cb2993117424a401df550", "b": beatmapID})
+                r = session.get("https://osu.ppy.sh/api/get_beatmaps", params = {"k": "", "b": beatmapID})
                 js = r.json()[0]
                 title = js["artist"] + " - " + js["title"] + " [" + js["version"] + "]"
                 max_combo = js["max_combo"]

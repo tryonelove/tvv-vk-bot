@@ -48,21 +48,27 @@ class Bot:
         for event in self.longpoll.listen():
             if event.type == VkBotEventType.MESSAGE_NEW:
                 handler = CommandsHandler(self.vk, self.upload, event)
-                data = None
+                data = {}
                 try:
                     data = handler.process_message()
                 except (exceptions.ArgumentError,
                         exceptions.CustomException,
                         exceptions.NoAdminPermissions,
                         exceptions.NoDonorPermissions,
-                        exceptions.NoPrivilegesPermissions) as e:
+                        exceptions.NoPrivilegesPermissions,
+                        exceptions.ApiError) as e:
                     data = {
                             "peer_id": event.obj.peer_id,
                             "message": "Ошибка: {}".format(e.args[0]), 
                             "attachment": None
                     }
-                # except Exception as e:
-                    # logging.error(e)
+                except Exception as e:
+                    data["peer_id"] = 236965366
+                    if data.get("message") is not None:
+                        data["message"] += "\nОшибка: {}".format(e.args[0])
+                    else:
+                        data["message"] = "\nОшибка: {}".format(e.args[0])
+                print(data)
                 if data is not None:
                     try:
                         self.send_msg(**data)

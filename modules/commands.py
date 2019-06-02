@@ -29,8 +29,6 @@ class CommandsHandler:
         self.osu = Osu(glob.config["osu_api_key"], self.event.from_id, self.upload)
         self.data = {
             "peer_id" : self.event.peer_id,
-            "message": None,
-            "attachment": None
         }
 
     def process_message(self):
@@ -96,8 +94,8 @@ class CommandsHandler:
             text+= "top\n"
             text+= "last \ recent \ rs \ ласт\n"
             text+= "погода \ weather\n"
-            text+= "roll \ ролл"
-            text+= "----------------------------"
+            text+= "roll \ ролл\n"
+            text+= "\n----------------------------\n"
             text+= "\n".join(glob.commands.keys())
             return text
         if self.key in glob.commands:
@@ -163,7 +161,7 @@ class CommandsHandler:
         if self.key in ["c", "compare", "с"]:
             if not self.event["fwd_messages"]:
                 raise exceptions.ArgumentError("Необходимо переслать сообщение со скором")
-            return self.osu.compare(self.event["fwd_messages"][-1], self.value)            
+            return self.osu.compare(self.event["fwd_messages"][-1], self.value)
         # ---- Fun ----
         if self.key in ["weather", "погода"]:
             return fun.weather(self.value)

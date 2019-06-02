@@ -62,6 +62,8 @@ def addcom(from_id, text = None, attachment = None):
     key = key.lower()
     if not key or (value == "" and not attachment):
         raise exceptions.ArgumentError("Проверьте правильность аргументов")
+    if key in glob.commands and not checks.commandAdder(from_id, key):
+        raise exceptions.NoPrivilegesPermissions("Изменять команды могут их создатели или админы")
     cmd = {"author": from_id, "message": value, "attachment": attachment}
     glob.commands[key] = cmd
     commands_update()

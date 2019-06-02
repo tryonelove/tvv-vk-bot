@@ -1,5 +1,6 @@
 import requests
 import json
+from constants import exceptions
 
 class BanchoApi:
     def __init__(self, key):
@@ -72,9 +73,10 @@ class BanchoApi:
         del params['self']
         params["k"] = self.key
         r = self.session.get(
-            self.API + endpoint, params = params)
+            self.API + endpoint, params = params, timeout=1.0)
         if r.status_code == 200:
             return r.json()
+        raise exceptions.ApiError("Ошибка при запросе, возможно, что серваки сдохли")
         # else:
             # raise requests.exceptions.UnrewindableBodyError
 
@@ -87,9 +89,12 @@ class GatariApi:
 
     def make_request(self, API_VERSION ,endpoint, params):
         r = self.session.get(
-            API_VERSION + endpoint, params = params)
+            API_VERSION + endpoint, params = params, timeout=1)
         if r.status_code == 200:
-            return r.json()
+            js = r.json()
+            if js:
+                return js
+        raise exceptions.ApiError("Ошибка при запросе, возможно, что серваки сдохли")        
 
     def get_user(self, username):
         data = self.make_request(self.NEW_API, "users/get", params = {

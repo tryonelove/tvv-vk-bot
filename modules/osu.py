@@ -341,12 +341,9 @@ class Osu:
         return text, bgPicture
 
     def getGatariUserBest(self, username, limit = 1):
-        try:
-            js = self.gatariApi.get_user(username=username)
-            user_id = js["users"][0]["id"]
-            username = js["users"][0]["username"]
-        except:
-            return "Нет данных, пользователь не найден"
+        js = self.gatariApi.get_user(username=username)
+        user_id = js["users"][0]["id"]
+        username = js["users"][0]["username"]
         js = self.gatariApi.get_user_best(user_id, limit)
         limit -= 1
         js = js['scores'][limit]
