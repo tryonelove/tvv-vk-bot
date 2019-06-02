@@ -98,7 +98,8 @@ class CommandsHandler:
             text+= "погода \ weather\n"
             text+= "roll \ ролл"
             text+= "----------------------------"
-            return "\n".join(glob.commands.keys())
+            text+= "\n".join(glob.commands.keys())
+            return text
         if self.key in glob.commands:
             return self.static_cmd()
         if self.key in ["role", "роль"]:
