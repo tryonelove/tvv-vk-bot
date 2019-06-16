@@ -158,3 +158,7 @@ def getRole(user_id):
         return 'Роль: {}\nВы будете донатером до {} (-2 от мск)'.format(
             role_name, glob.config["donators"][user_id]["expires"])
     return 'Роль: юзер'
+
+def isRestricted(user_id):
+    user_id = str(user_id)
+    return user_id in glob.config["restricted"]

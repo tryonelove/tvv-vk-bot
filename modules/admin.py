@@ -76,6 +76,24 @@ class Admin:
         config_update()
         return "Чел {} был удалён из админов!".format(user_id)
 
+    def restrict(self, user_id):
+        """
+        Запрещает доступ пользователя к командам
+        :param user_id: айди пользователя
+        """
+        glob.config["restricted"].append(user_id)
+        config_update()
+        return "{} теперь не может юзать бота. бб очередняра".format(user_id)
+
+    def unrestrict(self, user_id):
+        """
+        Разрешает доступ пользователя к командам
+        :param user_id: айди пользователя
+        """
+        glob.config["restricted"].remove(user_id)
+        config_update()
+        return "{} теперь может юзать бота".format(user_id)
+
     def bot_help(self):
         text = "Команды для донатеров/админов:\npic\nlast\ntop\nosuset\n\n \
                 Дефолтные команды:\nпогода\nosu\nmania\ntaiko" \

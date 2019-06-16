@@ -31,7 +31,7 @@ class CommandsHandler:
             "peer_id" : self.event.peer_id,
         }
 
-    def process_message(self):
+    def processMessage(self):
         """
         Функция, обрабатывающая сообщение
         :return : значение команды в формате text, attachment, если это tuple,
@@ -42,7 +42,9 @@ class CommandsHandler:
                               self.event.text)
         self.donatorCheck()
         if self.event.text.startswith("!"):
-            value = self.process_command()
+            if utils.isRestricted(self.event.from_id):
+                return None
+            value = self.processCommand()
             if value is not None:
                 if isinstance(value, tuple):
                     self.data["message"] = value[0]
@@ -52,7 +54,7 @@ class CommandsHandler:
                 return self.data
             return None
 
-    def process_command(self):
+    def processCommand(self):
         # ---- Commands managing ----
         if self.key == "addcom":
             if not checks.hasPrivileges(self.event.from_id):
@@ -90,11 +92,11 @@ class CommandsHandler:
         # ---- Built-in ----
         if self.key in ["help", "хелп"]:
             self.data["peer_id"] = self.event.from_id
-            text = "osu \ taiko \ mania \ ctb\n"
+            text = "osu | taiko | mania | ctb\n"
             text+= "top\n"
-            text+= "last \ recent \ rs \ ласт\n"
-            text+= "погода \ weather\n"
-            text+= "roll \ ролл\n"
+            text+= "last | recent | rs | ласт\n"
+            text+= "погода | weather\n"
+            text+= "roll | ролл\n"
             text+= "\n----------------------------\n"
             text+= "\n".join(glob.commands.keys())
             return text
@@ -120,6 +122,18 @@ class CommandsHandler:
                     "Недостаточно прав"
                     )
             return self.admin.deop(self.value)
+        if self.key == "restrict":
+            if not checks.isOwner(self.event.from_id):
+                raise exceptions.NoPrivilegesPermissions(
+                    "Недостаточно прав"
+                    )
+            return self.admin.restrict(self.value)   
+        if self.key == "unrestrict":
+            if not checks.isOwner(self.event.from_id):
+                raise exceptions.NoPrivilegesPermissions(
+                    "Недостаточно прав"
+                    )
+            return self.admin.unrestrict(self.value)         
         # ---- Donators ----
         if self.key == "add_donator":
             if not checks.isOwner(self.event.from_id):

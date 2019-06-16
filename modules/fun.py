@@ -2,6 +2,8 @@ import requests
 from constants.weather import weather_state
 import random
 import re
+from objects import glob
+from constants import exceptions
 
 def weather(city):
     emoji = ''
@@ -32,3 +34,4 @@ def roll(text):
         if text[0].isdigit() and int(text[0]) > 0:
             return random.randint(1, int(text[0]))
     return random.randint(1, 100)
+

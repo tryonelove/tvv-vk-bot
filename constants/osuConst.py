@@ -25,7 +25,8 @@ modToInt = {
 
 intToMod = { v: k for k, v in modToInt.items() }
 
-# score regex
+# osu! regex
 beatmap_id_re = re.compile(".*\/b/(\d+)")
 title_re = re.compile(".+[\|丨].+-.+\[.+\]")
 mods_re = re.compile("\+[^\s]+")
+screenshots_re = re.compile(".*.jpg")
