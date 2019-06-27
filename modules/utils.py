@@ -19,12 +19,17 @@ def commands_update():
     with open('commands.json', 'w', encoding='UTF-8') as f:
         json.dump(glob.commands, f, indent=4, ensure_ascii=False)
 
-def users_update():
+def updateUsers():
     """
     Функция перезаписи users.json
     """
-    with open('users.json', 'w') as f:
-        json.dump(glob.users, f, indent=4)
+    glob.db.commit()
+
+def insertUsers(cursor, user_id, name=None, server=None, osu_username=None):
+    cursor.execute("INSERT OR REPLACE INTO users VALUES(?, ?, ?, ?)", (user_id, name, None, None))
+
+def insertLevels(cursor, user_id, experience=None, level=None):
+    cursor.execute("INSERT OR REPLACE INTO levels VALUES(?, ?, ?)", (user_id, experience, level))
 
 def uploadPicture(upload, url, decode_content = False):
     session = requests.Session()
@@ -108,21 +113,18 @@ def addpic(from_id, upload, text, attachments):
     message = 'Пикча {} была успешно добавлена!'.format(text.split()[0])
     return message
     
-def osuset(from_id, user_id, text):
+def osuset(cursor, from_id, user_id, text):
     text = text.split(" ")
     if text[1] not in ('bancho', 'gatari'): 
         raise exceptions.ArgumentError('Доступные сервера: bancho, gatari')
     args = " ".join(text[2:])
-    glob.users[str(from_id)]['server'] = text[1]
-    glob.users[str(from_id)]['osu_username'] = args
-    users_update()
+    insertUsers(cursor, from_id, server=text[1], osu_username=args)
     return 'Аккаунт '+args+' был успешно привязан к вашему айди'
     
-
 def checkArgs(text):
     return text if text!="" else None
 
-def getServerUsername(text, from_id):
+def getServerUsername(cursor, text, from_id):
     text = checkArgs(text)
     if text is None:
         text = "1"
@@ -134,18 +136,19 @@ def getServerUsername(text, from_id):
         username = r.group(2)
         limit = r.group(3)
         if server is None:
-            server = glob.users[str(from_id)].get('server', "bancho")
+            server = cursor.execute("SELECT server FROM users WHERE id=?", (from_id,)).fetchone()[0]
         if username == "":
-            username = glob.users[str(from_id)].get('osu_username')
+            username = cursor.execute("SELECT osu_username FROM users WHERE id=?", (from_id,)).fetchone()[0]
         if limit is not None:
             limit = int(limit)
         else:
             limit = 1
-        return { "server" : server.strip(), "username" : username.strip(), "limit" : limit}
+        if username is None:
+            raise exceptions.CustomException("Не удалось найти аккаунт в базе, попробуйте указать сервер и ник.\n Например: !last bancho cookiezi")
+        return { "server" : server, "username" : username.strip(), "limit" : limit}
 
-def getUserFromDB(from_id):
-    server = glob.users[str(from_id)].get('server')
-    username = glob.users[str(from_id)].get('osu_username')
+def getUserFromDB(cursor, from_id):
+    server, username = cursor.execute("SELECT server, osu_username FROM users WHERE id=?", (from_id)).fetchone()
     return { "server" : server, "username" : username }
 
 

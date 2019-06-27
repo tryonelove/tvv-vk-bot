@@ -17,12 +17,13 @@ from .api import BanchoApi, GatariApi
 
 
 class Osu:
-    def __init__(self, key, from_id, upload):
+    def __init__(self, key, dbCursor, from_id, upload):
         self.banchoApi = BanchoApi(key)
         self.gatariApi = GatariApi()
         self.from_id = from_id
         self.upload = upload
         self.session = requests.Session()
+        self.c = dbCursor
         with open("maps.json", 'r', encoding="UTF-8") as maps:
             self.maps = json.load(maps)
 
@@ -64,13 +65,12 @@ class Osu:
         :raises exceptions.ArgumentError: [description]
         :return: 
         """
-        data = utils.getServerUsername(text, self.from_id)
+        data = utils.getServerUsername(self.c, text, self.from_id)
         if str(self.from_id) in glob.config["donators"] or self.from_id in glob.config["admin"]:
             if len(text) > 1 and data["server"] in ('bancho', 'gatari'):
-                from_id = str(self.from_id)
-                glob.users[from_id]['server'] = data["server"].strip()
-                glob.users[from_id]['osu_username'] = data["username"].strip()
-                utils.users_update()
+                self.c.execute("INSERT OR IGNORE INTO users(id) VALUES (?)",(self.from_id,))
+                self.c.execute("UPDATE users SET server=?, osu_username=? WHERE id=?",(data["server"].strip(), data["username"].strip(), self.from_id))
+                glob.db.commit()
                 return "Аккаунт {} был успешно привязан к вашему айди.".format(text)
             raise exceptions.ArgumentError("Доступные сервера: bancho, gatari")
 
@@ -109,9 +109,9 @@ class Osu:
         :param: mode - мод 
         0 = osu!, 1 = Taiko, 2 = CtB, 3 = osu!mania
         """
-        data = utils.getServerUsername(text, self.from_id)
+        data = utils.getServerUsername(self.c, text, self.from_id)
         if data is None:
-            userData = utils.getUserFromDB(self.from_id)
+            userData = utils.getUserFromDB(self.c, self.from_id)
             server = userData.get("server")
             username = userData.get("username")
         else:
@@ -127,7 +127,7 @@ class Osu:
             return None, self.maniaPicture(server, username)
 
     def getOfficialLemmyLink(self, mode, username):
-        url = 'https://lemmmy.pw/osusig/sig.php?colour={}&uname={}&xpbar&xpbarhex&darktriangles&pp=1&mode={}'.format(
+        url = 'https://lemmmy.pw/osusig//sig.php?colour={}&uname={}&xpbar&xpbarhex&darktriangles&pp=1&mode={}'.format(
             random.choice(sig_colors), username, mode)
         return url
 
@@ -210,7 +210,7 @@ class Osu:
 
     def getUserRecent(self, userData):
         if userData is None:
-            userData = utils.getUserFromDB(self.from_id)
+            userData = utils.getUserFromDB(self.c, self.from_id)
         server = userData.get("server", None)
         username = userData.get("username", None)
         limit = userData.get("limit", 1)
@@ -304,8 +304,8 @@ class Osu:
         return text, bgPicture
 
     def getOfficialUserBest(self, username, limit=1):
-        if limit > 50:
-            return "Слишком большой предел, максимум 50"
+        if limit > 100:
+            return "Слишком большой предел, максимум 100"
         js = self.banchoApi.get_user_best(u=username, limit=limit)
         limit -= 1
         if not js:
@@ -387,7 +387,7 @@ class Osu:
     def compare(self, messages, username: str = None):
         limit = 1
         if username == "":
-            username = utils.getUserFromDB(self.from_id).get("username")
+            username = utils.getUserFromDB(self.c, self.from_id).get("username")
         if username is None:
             return "Чё за чел?"
         if title_re.findall(messages["text"]):

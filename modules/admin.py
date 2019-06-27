@@ -94,6 +94,25 @@ class Admin:
         config_update()
         return "{} теперь может юзать бота".format(user_id)
 
+    def add_role(self, text):
+        text = text.split(" ", 1)
+        user_id = text[0]
+        role_name = " ".join(text[1:])
+        user = glob.config["donators"].get(user_id)
+        if user is None:
+            raise exceptions.CustomException("Такого пользователя нет в списке донатеров")
+        glob.config["donators"][user_id]["role_name"] = role_name
+        config_update()
+        return "Роль {} для {} была успешно добавлена".format(user_id, role_name)
+    
+    def rm_role(self, user_id):
+        user = glob.config["donators"].get(user_id)
+        if user is None:
+            raise exceptions.CustomException("Такого пользователя нет в списке донатеров")
+        del glob.config["donators"][user_id]["role_name"]
+        config_update()
+        return "Роль была успешно удалена"
+        
     def bot_help(self):
         text = "Команды для донатеров/админов:\npic\nlast\ntop\nosuset\n\n \
                 Дефолтные команды:\nпогода\nosu\nmania\ntaiko" \

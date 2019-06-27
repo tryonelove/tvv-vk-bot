@@ -16,10 +16,8 @@ def isMainChat(chat_id):
     return chat_id == 2000000001
 
 def hasPrivileges(user_id):
-    return isAdmin(user_id) or isDonator(user_id)
+    return isAdmin(user_id) or isDonator(user_id) or isOwner(user_id)
 
 def commandAdder(user_id, key):
-    if glob.commands[key].get("author") is None:
-        return False
     return isAdmin(user_id) or user_id == glob.commands[key].get("author")
     

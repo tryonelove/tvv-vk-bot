@@ -2,7 +2,7 @@ import datetime
 import json
 import logging
 from vk_api import VkUpload
-
+from imp import reload
 import requests
 
 from . import fun
@@ -13,7 +13,7 @@ from helpers import checks
 from constants import exceptions
 from .osu import Osu
 from objects import glob
-
+import sqlite3
 
 class CommandsHandler:
     def __init__(self, vk, upload, event):
@@ -24,9 +24,11 @@ class CommandsHandler:
         self.key = self.parsed_msg.get("key").lower()
         self.value = self.parsed_msg.get("value")
         self.request = requests.Session()
-        self.level = LevelSystem(self.vk)
+        glob.db = sqlite3.connect("users.db") 
+        self.c = glob.db.cursor()
+        self.level = LevelSystem(self.vk, self.c)
         self.admin = Admin(self.event.from_id)
-        self.osu = Osu(glob.config["osu_api_key"], self.event.from_id, self.upload)
+        self.osu = Osu(glob.config["osu_api_key"],self.c, self.event.from_id, self.upload)
         self.data = {
             "peer_id" : self.event.peer_id,
         }
@@ -133,7 +135,32 @@ class CommandsHandler:
                 raise exceptions.NoPrivilegesPermissions(
                     "Недостаточно прав"
                     )
-            return self.admin.unrestrict(self.value)         
+            return self.admin.unrestrict(self.value)    
+        if self.key == "add_role":
+            if not checks.isOwner(self.event.from_id):
+                raise exceptions.NoPrivilegesPermissions(
+                    "Недостаточно прав"
+                    )
+            return self.admin.add_role(self.value)
+        if self.key == "edit_role":
+            if not checks.isOwner(self.event.from_id):
+                raise exceptions.NoPrivilegesPermissions(
+                    "Недостаточно прав"
+                    )
+            return self.admin.add_role(self.value)
+        if self.key == "rm_role":
+            if not checks.isOwner(self.event.from_id):
+                raise exceptions.NoPrivilegesPermissions(
+                    "Недостаточно прав"
+                    )
+            return self.admin.rm_role(self.value)
+        if self.key == "reload":
+            if not checks.isOwner(self.event.from_id):
+                raise exceptions.NoPrivilegesPermissions(
+                    "Недостаточно прав"
+                    )
+            reload(self.value)
+            return "reloaded "+self.value
         # ---- Donators ----
         if self.key == "add_donator":
             if not checks.isOwner(self.event.from_id):
@@ -167,10 +194,10 @@ class CommandsHandler:
             return self.osu.lemmyPicture(self.value, 3)
         # ---- osu! stats ----
         if self.key in ["top"]:
-            userData = utils.getServerUsername(self.value, self.event.from_id)
+            userData = utils.getServerUsername(self.c, self.value, self.event.from_id)
             return self.osu.getUserBest(userData)
         if self.key in ["last", "recent", "ласт", "rs"]:
-            userData = utils.getServerUsername(self.value, self.event.from_id)
+            userData = utils.getServerUsername(self.c, self.value, self.event.from_id)
             return self.osu.getUserRecent(userData)
         if self.key in ["c", "compare", "с"]:
             if not self.event["fwd_messages"]:

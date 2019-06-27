@@ -1,6 +1,6 @@
 from bot import Bot
 import json
-import configparser
+import threading
 
 def checkConfigs():
     required = {
@@ -14,16 +14,16 @@ def checkConfigs():
                     "restricted": [],
                     "admin": []
                 }, 
-        "maps":{}, 
-        "commands":{}, 
+        "maps": {}, 
+        "commands": {}, 
         "users":{}
         }
-    for filename in required:
+    for filename, value in required.items():
         try:
             open(filename+".json")
         except FileNotFoundError:
             with open(filename+".json", "w+") as f:
-                json.dump({}, f, indent=4)
+                json.dump(value, f, indent=4)
 
 def init():
     # osu!community 176954825
