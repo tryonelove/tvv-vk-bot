@@ -118,16 +118,16 @@ class Osu:
             server = data.get("server")
             username = data.get("username")
         if mode == 0:
-            return None, self.osuPicture(server, username)
+            return None, self.osuPicture(server, 0, username)
         if mode == 1:
-            return None, self.taikoPicture(server, username)
+            return None, self.osuPicture(server, 1, username)
         if mode == 2:
-            return None, self.ctbPicture(server, username)
+            return None, self.osuPicture(server, 2, username)
         if mode == 3:
-            return None, self.maniaPicture(server, username)
+            return None, self.osuPicture(server, 3, username)
 
     def getOfficialLemmyLink(self, mode, username):
-        url = 'https://lemmmy.pw/osusig//sig.php?colour={}&uname={}&xpbar&xpbarhex&darktriangles&pp=1&mode={}'.format(
+        url = 'https://lemmmy.pw/osusig/sig.php?colour={}&uname={}&xpbar&xpbarhex&darktriangles&pp=1&mode={}'.format(
             random.choice(sig_colors), username, mode)
         return url
 
@@ -150,7 +150,7 @@ class Osu:
             bgPicture = "photo-178909901_456239049"
         return bgPicture
 
-    def osuPicture(self, server, username):
+    def osuPicture(self, server, mode, username):
         """
         Пикча osu!lemmy (std)
 
@@ -159,36 +159,13 @@ class Osu:
         :return: image link
         """
         if server == "bancho":
-            image_url = self.getOfficialLemmyLink(0, username)
-            return utils.uploadPicture(upload=self.upload, url=image_url, decode_content=True)
+            raise exceptions.CustomException("https://lemmmy.pw/osusig dead")
+            # image_url = self.getOfficialLemmyLink(mode, username)
+            # return utils.uploadPicture(upload=self.upload, url=image_url, decode_content=True)
         if server == "gatari":
-            image_url = self.getGatariLemmyLink(0, username)
+            image_url = self.getGatariLemmyLink(mode, username)
             return utils.uploadPicture(upload=self.upload, url=image_url, decode_content=True)
-
-    def taikoPicture(self, server, username):
-        if server == "bancho":
-            image_url = self.getOfficialLemmyLink(1, username)
-            return None, utils.uploadPicture(upload=self.upload, url=image_url, decode_content=True)
-        if server == "gatari":
-            image_url = self.getGatariLemmyLink(1, username)
-            return utils.uploadPicture(upload=self.upload, url=image_url, decode_content=True)
-
-    def ctbPicture(self, server, username):
-        if server == "bancho":
-            image_url = self.getOfficialLemmyLink(2, username)
-            return utils.uploadPicture(upload=self.upload, url=image_url, decode_content=True)
-        if server == "gatari":
-            image_url = self.getGatariLemmyLink(2, username)
-            return utils.uploadPicture(upload=self.upload, url=image_url, decode_content=True)
-
-    def maniaPicture(self, server, username):
-        if server == "bancho":
-            image_url = self.getOfficialLemmyLink(3, username)
-            return utils.uploadPicture(upload=self.upload, url=image_url, decode_content=True)
-        if server == "gatari":
-            image_url = self.getGatariLemmyLink(3, username)
-            return utils.uploadPicture(upload=self.upload, url=image_url, decode_content=True)
-
+    
     def getUserBest(self, userData):
         """Топ скор заданного пользователя
 

@@ -29,7 +29,6 @@ class Bot:
         self.vk = self.vk_session.get_api()
         self.upload = VkUpload(self.vk)
         self.set_globals()
-        self.time = time.time()
 
     def set_globals(self):
         with open("commands.json", "r", encoding="utf-8") as f:
@@ -51,39 +50,30 @@ class Bot:
                               message=message,
                               attachment=attachment)
 
-    def updateDB(self):
-        time_diff = time.time() - self.time
-        print(time_diff)
-        if time_diff>10:
-            print("commiting")
-            glob.db.commit()
-            self.time = time.time()
-
     def start(self):
         for event in self.longpoll.listen():
-            # self.updateDB()
             if event.type == VkBotEventType.MESSAGE_NEW:
                 handler = CommandsHandler(self.vk, self.upload, event)
                 data = {}
-                # try:
-                data = handler.processMessage()
-                # except (exceptions.ArgumentError,
-                #         exceptions.CustomException,
-                #         exceptions.NoAdminPermissions,
-                #         exceptions.NoDonorPermissions,
-                #         exceptions.NoPrivilegesPermissions,
-                #         exceptions.ApiError) as e:
-                #     data = {
-                #             "peer_id": event.obj.peer_id,
-                #             "message": "Ошибка: {}".format(e.args[0]), 
-                #             "attachment": None
-                #     }
-                # except Exception as e:
-                #     data["peer_id"] = 236965366
-                #     if data.get("message") is not None:
-                #         data["message"] += "\nОшибка: {}".format(e.args[0])
-                #     else:
-                #         data["message"] = "\nОшибка: {}".format(e.args[0])
+                try:
+                    data = handler.processMessage()
+                except (exceptions.ArgumentError,
+                        exceptions.CustomException,
+                        exceptions.NoAdminPermissions,
+                        exceptions.NoDonorPermissions,
+                        exceptions.NoPrivilegesPermissions,
+                        exceptions.ApiError) as e:
+                    data = {
+                            "peer_id": event.obj.peer_id,
+                            "message": "Ошибка: {}".format(e.args[0]), 
+                            "attachment": None
+                    }
+                except Exception as e:
+                    data["peer_id"] = 236965366
+                    if data.get("message") is not None:
+                        data["message"] += "\nОшибка: {}".format(e.args[0])
+                    else:
+                        data["message"] = "\nОшибка: {}".format(e.args[0])
                 if data is not None:
                     try:
                         self.sendMsg(**data)

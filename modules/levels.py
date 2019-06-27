@@ -70,8 +70,8 @@ class LevelSystem:
         :param peer_id: ID чата с отправителем
         :param from_id: ID пользователя
         """
-        # if not isMainChat(peer_id):
-            # return  
+        if not isMainChat(peer_id):
+            return  
         message = text.split()
         from_id = str(from_id)
         self.update_data(from_id)

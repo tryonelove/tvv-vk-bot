@@ -105,7 +105,8 @@ class CommandsHandler:
         if self.key in glob.commands:
             return self.static_cmd()
         if self.key in ["role", "роль"]:
-            return utils.getRole(self.event.from_id)
+            user = self.event.from_id if not self.value else self.value
+            return utils.getRole(self.vk, user)
         if self.key == "osuset":
             if not checks.hasPrivileges(self.event.from_id):
                 raise exceptions.NoPrivilegesPermissions(

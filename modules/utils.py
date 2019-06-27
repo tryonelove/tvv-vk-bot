@@ -148,12 +148,13 @@ def getServerUsername(cursor, text, from_id):
         return { "server" : server, "username" : username.strip(), "limit" : limit}
 
 def getUserFromDB(cursor, from_id):
-    server, username = cursor.execute("SELECT server, osu_username FROM users WHERE id=?", (from_id)).fetchone()
+    server, username = cursor.execute("SELECT server, osu_username FROM users WHERE id=?", (from_id,)).fetchone()
     return { "server" : server, "username" : username }
 
-
-def getRole(user_id):
+def getRole(vk, user_id):
     user_id = str(user_id)
+    if "id" in user_id:
+        user_id = re.search(r'\d+', user_id).group(0)
     if int(user_id) in glob.config['admin']:
         return 'Роль: админ'
     elif user_id in glob.config["donators"]:
