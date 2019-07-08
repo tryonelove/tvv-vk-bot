@@ -25,11 +25,11 @@ def updateUsers():
     """
     glob.db.commit()
 
-def insertUsers(cursor, user_id, name=None, server=None, osu_username=None):
-    cursor.execute("INSERT OR REPLACE INTO users VALUES(?, ?, ?, ?)", (user_id, name, None, None))
+def insertUser(cursor, user_id, name=None):
+    cursor.execute("INSERT OR REPLACE INTO users(id, name) VALUES(?, ?)", (user_id, name))
 
-def insertLevels(cursor, user_id, experience=None, level=None):
-    cursor.execute("INSERT OR REPLACE INTO levels VALUES(?, ?, ?)", (user_id, experience, level))
+def insertLevels(cursor, chat_id, user_id, experience=None, level=None):
+    cursor.execute("INSERT OR REPLACE INTO konfa_{} VALUES(?, ?, ?)".format(chat_id), (user_id, experience, level))
 
 def uploadPicture(upload, url, decode_content = False):
     session = requests.Session()
@@ -113,18 +113,11 @@ def addpic(from_id, upload, text, attachments):
     message = 'Пикча {} была успешно добавлена!'.format(text.split()[0])
     return message
     
-def osuset(cursor, from_id, user_id, text):
-    text = text.split(" ")
-    if text[1] not in ('bancho', 'gatari'): 
-        raise exceptions.ArgumentError('Доступные сервера: bancho, gatari')
-    args = " ".join(text[2:])
-    insertUsers(cursor, from_id, server=text[1], osu_username=args)
-    return 'Аккаунт '+args+' был успешно привязан к вашему айди'
-    
 def checkArgs(text):
     return text if text!="" else None
 
 def getServerUsername(cursor, text, from_id):
+    # spaghetti
     text = checkArgs(text)
     if text is None:
         text = "1"
@@ -136,15 +129,19 @@ def getServerUsername(cursor, text, from_id):
         username = r.group(2)
         limit = r.group(3)
         if server is None:
-            server = cursor.execute("SELECT server FROM users WHERE id=?", (from_id,)).fetchone()[0]
+            server = cursor.execute("SELECT server FROM users WHERE id=?", (from_id,)).fetchone()
         if username == "":
-            username = cursor.execute("SELECT osu_username FROM users WHERE id=?", (from_id,)).fetchone()[0]
+            username = cursor.execute("SELECT osu_username FROM users WHERE id=?", (from_id,)).fetchone()
         if limit is not None:
             limit = int(limit)
         else:
             limit = 1
-        if username is None:
+        if not server or not username or username is None:
             raise exceptions.CustomException("Не удалось найти аккаунт в базе, попробуйте указать сервер и ник.\n Например: !last bancho cookiezi")
+        if isinstance(server, tuple):
+            server = server[0]
+        if isinstance(username, tuple):
+            username = username[0]            
         return { "server" : server, "username" : username.strip(), "limit" : limit}
 
 def getUserFromDB(cursor, from_id):

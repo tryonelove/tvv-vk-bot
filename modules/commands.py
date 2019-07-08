@@ -26,7 +26,7 @@ class CommandsHandler:
         self.request = requests.Session()
         glob.db = sqlite3.connect("users.db") 
         self.c = glob.db.cursor()
-        self.level = LevelSystem(self.vk, self.c)
+        self.level = LevelSystem(self.vk, self.event.peer_id, self.c)
         self.admin = Admin(self.event.from_id)
         self.osu = Osu(glob.config["osu_api_key"],self.c, self.event.from_id, self.upload)
         self.data = {
@@ -155,13 +155,6 @@ class CommandsHandler:
                     "Недостаточно прав"
                     )
             return self.admin.rm_role(self.value)
-        if self.key == "reload":
-            if not checks.isOwner(self.event.from_id):
-                raise exceptions.NoPrivilegesPermissions(
-                    "Недостаточно прав"
-                    )
-            reload(self.value)
-            return "reloaded "+self.value
         # ---- Donators ----
         if self.key == "add_donator":
             if not checks.isOwner(self.event.from_id):
@@ -184,6 +177,13 @@ class CommandsHandler:
             return self.level.show_lvl(self.event.from_id)
         if self.key in ["leaderboard", "лидерборд"]:
             return self.level.show_leaderboard()
+        if self.key == "edit_exp":
+            if not checks.isOwner(self.event.from_id):
+                raise exceptions.NoPrivilegesPermissions(
+                    "Недостаточно прав"
+                    )
+            user_id, expEdit = self.value.split()
+            return self.level.edit_exp(user_id, expEdit)
         #  ---- osu!lemmy ----
         if self.key in ["osu", "осу"]:
             return self.osu.lemmyPicture(self.value, 0)

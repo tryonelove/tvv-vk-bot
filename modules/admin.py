@@ -103,7 +103,7 @@ class Admin:
             raise exceptions.CustomException("Такого пользователя нет в списке донатеров")
         glob.config["donators"][user_id]["role_name"] = role_name
         config_update()
-        return "Роль {} для {} была успешно добавлена".format(user_id, role_name)
+        return "Роль {} для {} была успешно добавлена".format(role_name, user_id)
     
     def rm_role(self, user_id):
         user = glob.config["donators"].get(user_id)
