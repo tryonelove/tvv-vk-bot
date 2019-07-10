@@ -90,10 +90,7 @@ class LevelSystem:
         return "error?"
     
     def show_leaderboard(self):
-        # print(self.chat_id, type(self.chat_id))
-        # print(self.vk.messages.getChatPreview(peer_id=self.chat_id))
-        # konf_name = self.vk.messages.getConversationsById(peer_id=self.chat_id)["items"][0]["title"]
-        text = "Топ 10 конфы:\n"
+        text = "Топ 10 конфы:\n\n"
         leaderboard = self.c.execute("""
         SELECT name, experience, level FROM konfa_{0} 
         INNER JOIN users ON konfa_{0}.id=users.id ORDER BY experience DESC LIMIT 10 

@@ -73,12 +73,10 @@ class BanchoApi:
         del params['self']
         params["k"] = self.key
         r = self.session.get(
-            self.API + endpoint, params = params, timeout=3.0)
+            self.API + endpoint, params = params)
         if r.status_code == 200:
             return r.json()
         raise exceptions.ApiError("Ошибка при запросе, возможно, что серваки сдохли")
-        # else:
-            # raise requests.exceptions.UnrewindableBodyError
 
 
 class GatariApi:

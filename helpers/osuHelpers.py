@@ -1,46 +1,27 @@
-from constants.osuConst import intToMod, modToInt
+from constants import osuConst
 
 def acc_calc(misses, count50, count100, count300):
     accuracy = str((50*count50+100*count100+300*count300)*100/(300*(misses+count50+count100+count300)))
     return accuracy
 
-def intToMods(m):
-    r = ""
-    if m == 0:
-        r += ""
-    if m & modToInt.get("NF"):
-        r += "NF"
-    if m & modToInt.get("EZ") > 0:
-        r += "EZ"
-    if m & modToInt.get("HD") > 0:
-        r += "HD"
-    if m & modToInt.get("HR") > 0:
-        r += "HR"
-    if m & modToInt.get("DT") > 0:
-        r += "DT"
-    if m & modToInt.get("HT") > 0:
-        r += "HT"
-    if m & modToInt.get("FL") > 0:
-        r += "FL"
-    if m & modToInt.get("SO") > 0:
-        r += "SO"
-    if m & modToInt.get("TD") > 0:
-        r += "TD"
-    if m & modToInt.get("RX") > 0:
-        r += "RX"
-    if m & modToInt.get("AP") > 0:
-        r += "AP"	
-    if m & modToInt.get("PF") > 0:
-        r += "PF"
-    if m & modToInt.get("V2") > 0:
-        r += "V2"
-    return r
+def intToMods(mods):
+    """Convert a mod integer to a mod string."""
+    mods_a = []
+    for k, v in osuConst.modToInt.items():
+        if v & mods == v:
+            mods_a.append(k)
+    ordered_mods = list(filter(lambda m: m in mods_a, osuConst.mod_order))
+    "NC" in ordered_mods and ordered_mods.remove("DT")
+    "PF" in ordered_mods and ordered_mods.remove("SD")
+
+    return "%s" % "".join(ordered_mods) if ordered_mods else ""
+
 
 def modsToInt(mods):
     summ = 0
     for i in range(0, len(mods), 2):
         mod = mods[i:i+2]
-        summ+= modToInt.get(mod)
+        summ+= osuConst.modToInt.get(mod)
     return summ
 
 def scoreFormat(

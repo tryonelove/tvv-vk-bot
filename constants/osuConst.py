@@ -2,6 +2,8 @@ import re
 
 sig_colors = ['black', 'red', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink', 'hex2255ee']
 
+# thanks to reddit osu-bot
+
 modToInt = {
     "": 1 >> 1,
     "NF": 1 << 0,
@@ -24,6 +26,11 @@ modToInt = {
 }
 
 intToMod = { v: k for k, v in modToInt.items() }
+
+mod_order = [
+    "EZ", "HD", "HT", "DT", "NC", "HR", "FL", "NF",
+    "SD", "PF", "RX", "AP", "SO", "AT", "V2", "TD",
+]
 
 # osu! regex
 beatmap_id_re = re.compile(".*\/b/(\d+)")

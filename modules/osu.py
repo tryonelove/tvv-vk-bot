@@ -306,8 +306,11 @@ class Osu:
         version = beatmapInfo['version']
         title = "{} - {} [{}]".format(artist, songTitle, version)
         js = self.banchoApi.get_user(u=username)[0]
-        pp, pp_if_fc = self.getPP(beatmap_id=beatmap_id, mods=m, n300=count300,
+        try:
+            pp, pp_if_fc = self.getPP(beatmap_id=beatmap_id, mods=m, n300=count300,
                                   n100=count100, n50=count50, combo=combo, nmiss=misses)
+        except IndexError:
+            pp, pp_if_fc = (0,0)
         text = osuHelpers.scoreFormat(
             username=js["username"],
             m=m,
@@ -344,8 +347,11 @@ class Osu:
         count300 = js['count_300']
         misses = js['count_miss']
         title = js['beatmap']['song_name']
-        pp, pp_if_fc = self.getPP(beatmap_id=beatmap_id, mods=m, n300=count300,
+        try:
+            pp, pp_if_fc = self.getPP(beatmap_id=beatmap_id, mods=m, n300=count300,
                                   n100=count100, n50=count50, combo=combo, nmiss=misses)
+        except IndexError:
+            pp, pp_if_fc = (0,0)
         text = osuHelpers.scoreFormat(
             username=username,
             title=title,
