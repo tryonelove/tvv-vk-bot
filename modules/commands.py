@@ -2,8 +2,8 @@ import datetime
 import json
 import logging
 from vk_api import VkUpload
-from imp import reload
 import requests
+from math import ceil
 
 from . import fun
 from .levels import LevelSystem
@@ -16,7 +16,7 @@ from objects import glob
 import sqlite3
 
 class CommandsHandler:
-    def __init__(self, vk, upload, event):
+    def __init__(self, vk, upload, event, cursor):
         self.vk = vk
         self.upload = upload
         self.event = event.obj
@@ -24,14 +24,20 @@ class CommandsHandler:
         self.key = self.parsed_msg.get("key").lower()
         self.value = self.parsed_msg.get("value")
         self.request = requests.Session()
-        glob.db = sqlite3.connect("users.db") 
-        self.c = glob.db.cursor()
+        self.c = cursor
         self.level = LevelSystem(self.vk, self.event.peer_id, self.c)
-        self.admin = Admin(self.event.from_id)
+        self.admin = Admin(self.event.from_id, self.c)
         self.osu = Osu(glob.config["osu_api_key"],self.c, self.event.from_id, self.upload)
         self.data = {
             "peer_id" : self.event.peer_id,
         }
+
+    def preProcessor(self):
+        self.level.levelCheck(self.event.peer_id,
+                              self.event.from_id,
+                              self.event.text)
+        self.donatorCheck()
+        # self.osu.findBeatmap(self.vk.messages.send, self.event)
 
     def processMessage(self):
         """
@@ -39,10 +45,7 @@ class CommandsHandler:
         :return : значение команды в формате text, attachment, если это tuple,
                     иначе None
         """
-        self.level.levelCheck(self.event.peer_id,
-                              self.event.from_id,
-                              self.event.text)
-        self.donatorCheck()
+        self.preProcessor()
         if self.event.text.startswith("!"):
             if utils.isRestricted(self.event.from_id):
                 return None
@@ -60,9 +63,7 @@ class CommandsHandler:
         # ---- Commands managing ----
         if self.key == "addcom":
             if not checks.hasPrivileges(self.event.from_id):
-                raise exceptions.NoPrivilegesPermissions(
-                    "Недостаточно прав, однако ты можешь задонатить и взамен получить возможность юзать эту команду"
-                    )
+                raise exceptions.NoPrivilegesPermissions
             if self.event.attachments:
                 return utils.addpic(
                                     self.event.from_id,
@@ -72,19 +73,15 @@ class CommandsHandler:
             return utils.addcom(self.event.from_id, self.value)
         if self.key == "delcom":
             if not checks.hasPrivileges(self.event.from_id):
-                raise exceptions.NoPrivilegesPermissions(
-                    "Недостаточно прав, однако ты можешь задонатить и взамен получить возможность юзать эту команду"
-                    )
+                raise exceptions.NoPrivilegesPermissions
             if not checks.commandAdder(self.event.from_id, self.value):
-                raise exceptions.NoPrivilegesPermissions("Удалять команды могут их создатели или админы")
+                raise exceptions.NoEditPermissions
             return utils.delcom(self.value)
         if self.key == "editcom":
             if not checks.hasPrivileges(self.event.from_id):
-                raise exceptions.NoPrivilegesPermissions(
-                    "Недостаточно прав, однако ты можешь задонатить и взамен получить возможность юзать эту команду"
-                    )
+                raise exceptions.NoPrivilegesPermissions
             if not checks.commandAdder(self.event.from_id, self.value):
-                raise exceptions.NoPrivilegesPermissions("Изменять команды могут их создатели или админы")
+                raise exceptions.NoPrivilegesPermissions
             if self.event.attachments:
                 return utils.addpic(
                                     self.event.from_id,
@@ -93,15 +90,7 @@ class CommandsHandler:
                                     self.event.attachments)
         # ---- Built-in ----
         if self.key in ["help", "хелп"]:
-            self.data["peer_id"] = self.event.from_id
-            text = "osu | taiko | mania | ctb\n"
-            text+= "top\n"
-            text+= "last | recent | rs | ласт\n"
-            text+= "погода | weather\n"
-            text+= "roll | ролл\n"
-            text+= "\n----------------------------\n"
-            text+= "\n".join(glob.commands.keys())
-            return text
+            return self.generateHelp()
         if self.key in glob.commands:
             return self.static_cmd()
         if self.key in ["role", "роль"]:
@@ -109,61 +98,45 @@ class CommandsHandler:
             return utils.getRole(self.vk, user)
         if self.key == "osuset":
             if not checks.hasPrivileges(self.event.from_id):
-                raise exceptions.NoPrivilegesPermissions(
-                    "Недостаточно прав, однако ты можешь задонатить и взамен получить возможность юзать эту команду"
-                    )
+                raise exceptions.NoPrivilegesPermissions
             return self.osu.osuset(self.parsed_msg["value"])
         if self.key == "op":
             if not checks.isOwner(self.event.from_id):
-                raise exceptions.NoPrivilegesPermissions(
-                    "Недостаточно прав"
-                    )
+                raise exceptions.NoPrivilegesPermissions
             return self.admin.op(self.value)
         if self.key == "deop":
             if not checks.isOwner(self.event.from_id):
-                raise exceptions.NoPrivilegesPermissions(
-                    "Недостаточно прав"
-                    )
+                raise exceptions.NoPrivilegesPermissions
             return self.admin.deop(self.value)
         if self.key == "restrict":
             if not checks.isOwner(self.event.from_id):
-                raise exceptions.NoPrivilegesPermissions(
-                    "Недостаточно прав"
-                    )
+                raise exceptions.NoPrivilegesPermissions
             return self.admin.restrict(self.value)   
         if self.key == "unrestrict":
             if not checks.isOwner(self.event.from_id):
-                raise exceptions.NoPrivilegesPermissions(
-                    "Недостаточно прав"
-                    )
+                raise exceptions.NoPrivilegesPermissions
             return self.admin.unrestrict(self.value)    
         if self.key == "add_role":
             if not checks.isOwner(self.event.from_id):
-                raise exceptions.NoPrivilegesPermissions(
-                    "Недостаточно прав"
-                    )
+                raise exceptions.NoPrivilegesPermissions
             return self.admin.add_role(self.value)
         if self.key == "edit_role":
             if not checks.isOwner(self.event.from_id):
-                raise exceptions.NoPrivilegesPermissions(
-                    "Недостаточно прав"
-                    )
+                raise exceptions.NoPrivilegesPermissions
             return self.admin.add_role(self.value)
         if self.key == "rm_role":
             if not checks.isOwner(self.event.from_id):
-                raise exceptions.NoPrivilegesPermissions(
-                    "Недостаточно прав"
-                    )
+                raise exceptions.NoPrivilegesPermissions
             return self.admin.rm_role(self.value)
         # ---- Donators ----
         if self.key == "add_donator":
             if not checks.isOwner(self.event.from_id):
-                raise exceptions.NoAdminPermissions("Нет прав, команда для админов")
+                raise exceptions.NoAdminPermissions
             text = self.value.split(" ")
-            return self.admin.add_donator(text[0], text[1], " ".join(text[2:]) if len(text)>2 else "донатер")
+            return self.admin.add_donator(text[0], text[1], " ".join(text[2:]) if len(text)>2 else None)
         if self.key == "rm_donator":
             if not checks.isOwner(self.event.from_id):
-                raise exceptions.NoAdminPermissions("Нет прав, команда для админов")
+                raise exceptions.NoAdminPermissions
             return self.admin.remove_donator(self.parsed_msg['value'])
         # ---- Tracking ----
         if self.key == "track":
@@ -179,9 +152,7 @@ class CommandsHandler:
             return self.level.show_leaderboard()
         if self.key == "edit_exp":
             if not checks.isOwner(self.event.from_id):
-                raise exceptions.NoPrivilegesPermissions(
-                    "Недостаточно прав"
-                    )
+                raise exceptions.NoAdminPermissions
             user_id, expEdit = self.value.split()
             return self.level.edit_exp(user_id, expEdit)
         #  ---- osu!lemmy ----
@@ -202,16 +173,33 @@ class CommandsHandler:
             return self.osu.getUserRecent(userData)
         if self.key in ["c", "compare", "с"]:
             if not self.event["fwd_messages"]:
-                raise exceptions.ArgumentError("Необходимо переслать сообщение со скором")
+                raise exceptions.ScoreMessageNotFound
             return self.osu.compare(self.event["fwd_messages"][-1], self.value)
+        if self.key in ["newpp"]:
+            self.data["peer_id"] = self.event.from_id
+            return self.osu.rebalancedPP(self.value)
         # ---- Fun ----
         if self.key in ["weather", "погода"]:
             return fun.weather(self.value)
         if self.key in ["roll", "ролл"]:
             return fun.roll(self.value)
 
+    def generateHelp(self):
+        k = 50
+        if self.value == "":
+            page = 0
+        else:
+            page = int(self.value) - 1
+        page_num = ceil(len(glob.commands.keys()) / k)
+        self.data["peer_id"] = self.event.from_id
+        text = "Страница {} из {}\n------------------------\n".format(page+1, page_num)
+        page_start = page*k
+        commands = list(glob.commands.keys())[page_start:page_start+k]
+        text+= "\n".join(commands)
+        return text
+
     def donatorCheck(self):
-        if not self.admin.stillDonator():
+        if not self.admin.stillDonator(self.event.from_id) and self.admin.isDonator(self.event.from_id):
             self.admin.remove_donator(self.event.from_id)
             vk_api_name = self.vk.users.get(
                     user_ids = self.event.from_id, 

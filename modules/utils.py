@@ -21,15 +21,15 @@ def commands_update():
 
 def updateUsers():
     """
-    Функция перезаписи users.json
+    Функция перезаписи users.db
     """
     glob.db.commit()
 
 def insertUser(cursor, user_id, name=None):
-    cursor.execute("INSERT OR REPLACE INTO users(id, name) VALUES(?, ?)", (user_id, name))
+    cursor.execute("INSERT OR IGNORE INTO users(id, name) VALUES(?, ?)", (user_id, name))
 
 def insertLevels(cursor, chat_id, user_id, experience=None, level=None):
-    cursor.execute("INSERT OR REPLACE INTO konfa_{} VALUES(?, ?, ?)".format(chat_id), (user_id, experience, level))
+    cursor.execute("INSERT OR IGNORE INTO konfa_{} VALUES(?, ?, ?)".format(chat_id), (user_id, experience, level))
 
 def uploadPicture(upload, url, decode_content = False):
     session = requests.Session()
@@ -137,7 +137,7 @@ def getServerUsername(cursor, text, from_id):
         else:
             limit = 1
         if not server or not username or username is None:
-            raise exceptions.CustomException("Не удалось найти аккаунт в базе, попробуйте указать сервер и ник.\n Например: !last bancho cookiezi")
+            raise exceptions.dbUserNotFound
         if isinstance(server, tuple):
             server = server[0]
         if isinstance(username, tuple):

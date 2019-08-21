@@ -8,16 +8,25 @@ from .utils import config_update
 from objects import glob
 
 class Admin:
-    def __init__(self, from_id):
+    def __init__(self, from_id, c):
         self.from_id = from_id
+        self.c = c
+
+    def isDonator(self, user_id):
+        self.c.execute("SELECT id FROM donators")
+        donators = [user[0] for user in self.c.fetchall()]
+        return int(user_id) in donators
     
-    def stillDonator(self):
-        if str(self.from_id) in glob.config["donators"]:
-            date = datetime.datetime.strptime(glob.config["donators"][str(self.from_id)]["expires"], "%Y-%m-%d %H:%M:%S")
-            date_now = datetime.datetime.now()
-            delta = date - date_now
-            return True if delta.days > 0 else False
-        return True
+    def stillDonator(self, user_id):
+        date = self.c.execute("SELECT expires FROM donators WHERE id = ?", (self.from_id,)).fetchone()
+        if date is not None:
+            date = date[0]
+        else:
+            return
+        date = datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
+        date_now = datetime.datetime.now()
+        delta = date - date_now
+        return True if delta.days > 0 else False
 
     def add_donator(self, user_id, donation_sum, role_name):
         """
@@ -26,37 +35,34 @@ class Admin:
         :param donation_sum: сумма доната (кратная 25)
         """
         donation_sum = int(donation_sum)
-        user_id = str(user_id)
         now = datetime.datetime.now()
         donator_duration = donation_sum // 25
-        if user_id in glob.config["donators"]:
-            date = datetime.datetime.strptime(glob.config["donators"][user_id]["expires"], "%Y-%m-%d %H:%M:%S")
+        if self.isDonator(user_id):
+            expires = self.c.execute("SELECT expires FROM donators WHERE id=?", (user_id,)).fetchone()[0]
+            date = datetime.datetime.strptime(expires, "%Y-%m-%d %H:%M:%S")
             date += datetime.timedelta(days=+31*donator_duration)
-            glob.config["donators"][user_id]["expires"] = str(date.strftime("%Y-%m-%d %H:%M:%S"))
+            self.c.execute("UPDATE donators SET expires = ?", (date.strftime("%Y-%m-%d %H:%M:%S")))
         else:
             if donation_sum != 25:
                 now += datetime.timedelta(days=+31*donator_duration)
             else:
                 now += datetime.timedelta(days=+31)
-            glob.config["donators"][user_id] = {}
-            glob.config["donators"][user_id]["expires"] = str(now.strftime("%Y-%m-%d %H:%M:%S"))
-            glob.config["donators"][user_id]["role_name"] = role_name
-        config_update()
+                self.c.execute("INSERT INTO donators VALUES(?,?,?)", (user_id, now.strftime("%Y-%m-%d %H:%M:%S"), role_name))
+        glob.db.commit()
         return "Пользователь {} получил роль донатера\n" \
                 "Не забудьте привязать осу акк с помощью команды" \
                 "!osuset bancho/gatari никнейм".format(user_id)
 
-    def remove_donator(self, from_id):
+    def remove_donator(self, user_id):
         """
         Удаляет пользователя из донатеров
         :param user_id: айди пользователя
         """
-        from_id = str(from_id)
-        if from_id in glob.config["donators"]:
-            del glob.config["donators"][from_id]
-            config_update()
-            return "Пользователь {} был успешно удалён.".format(from_id)
-        return "Пользователь {} не является донатером.".format(from_id)
+        if self.isDonator(user_id):
+            self.c.execute("DELETE FROM donators WHERE id=?",(user_id,))
+            glob.db.commit()
+            return "Пользователь {} был успешно удалён.".format(user_id)
+        return "Пользователь {} не является донатером.".format(user_id)
 
     def op(self, user_id):
         """
@@ -98,24 +104,15 @@ class Admin:
         text = text.split(" ", 1)
         user_id = text[0]
         role_name = " ".join(text[1:])
-        user = glob.config["donators"].get(user_id)
-        if user is None:
+        if not self.isDonator(user_id):
             raise exceptions.CustomException("Такого пользователя нет в списке донатеров")
-        glob.config["donators"][user_id]["role_name"] = role_name
-        config_update()
+        self.c.execute("UPDATE donators SET role = ? WHERE id = ?", (role_name, self.from_id))
+        glob.db.commit()
         return "Роль {} для {} была успешно добавлена".format(role_name, user_id)
     
     def rm_role(self, user_id):
-        user = glob.config["donators"].get(user_id)
-        if user is None:
+        if not self.isDonator(user_id):
             raise exceptions.CustomException("Такого пользователя нет в списке донатеров")
-        del glob.config["donators"][user_id]["role_name"]
-        config_update()
+        self.c.execute("UPDATE donators SET role = ? WHERE id = ?", (None, self.from_id))     
+        glob.db.commit()
         return "Роль была успешно удалена"
-        
-    def bot_help(self):
-        text = "Команды для донатеров/админов:\npic\nlast\ntop\nosuset\n\n \
-                Дефолтные команды:\nпогода\nosu\nmania\ntaiko" \
-                + "\n" + "\n".join(glob.commands.keys())
-        return text
-

@@ -18,7 +18,7 @@ class LevelSystem:
         :param peer_id: ID чата с отправителем
         :param from_id: ID пользователя
         """
-        if from_id<0:
+        if from_id < 0 or peer_id < 2000000000:
             return
         self.c.execute("""
         CREATE TABLE IF NOT EXISTS konfa_{} 
@@ -54,7 +54,7 @@ class LevelSystem:
     
     def edit_exp(self, user_id ,exp):
         q = "SELECT experience FROM konfa_{} WHERE id=?".format(self.chat_id)
-        q_update = "UPDATE konfa_{} SET experience=? WHERE id=?".format(self.chat_id)
+        q_update = "UPDATE konfa_{} SET experience=?, level=1 WHERE id=?".format(self.chat_id)
         self.c.execute(q, (user_id,))
         old = self.c.fetchone()[0]
         new_exp = old + int(exp)

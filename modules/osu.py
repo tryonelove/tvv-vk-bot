@@ -35,21 +35,34 @@ class Osu:
         f = open("temp.osu")
         return f
 
-    def calculatePP(self, osuFile, **kwargs):
-        p = pyttanko.parser()
-        bmap = p.map(osuFile)
+    def calculatePP(self, bmap, **kwargs):
         stars = pyttanko.diff_calc().calc(bmap, kwargs.get("mods", 0))
-        pp, _, _, _, _ = pyttanko.ppv2(
-            stars.aim, stars.speed, **kwargs, bmap=bmap)
+        try:
+            pp, _, _, _, _ = pyttanko.ppv2(
+                stars.aim, stars.speed, **kwargs, bmap=bmap)
+        except:
+            pp = 0
         kwargs["nmiss"] = 0
         kwargs["combo"] = bmap.max_combo()
-        pp_if_fc, _, _, _, _ = pyttanko.ppv2(
-            stars.aim, stars.speed, **kwargs, bmap=bmap)
+        try:
+            pp_if_fc, _, _, _, _ = pyttanko.ppv2(
+                stars.aim, stars.speed, **kwargs, bmap=bmap)
+        except:
+            pp_if_fc = 0
         return round(pp, 2), round(pp_if_fc, 2)
 
     def getPP(self, beatmap_id, **kwargs):
         f = self.getBeatmap(beatmap_id)
-        return self.calculatePP(f, **kwargs)
+        p = pyttanko.parser()
+        bmap = p.map(f)
+        accuracy = kwargs.get("accuracy")
+        if accuracy is not None:
+            objcount = bmap.ncircles + bmap.nsliders + bmap.nspinners
+            n300, n100, n50 = pyttanko.acc_round(accuracy, objcount, 0)
+            kwargs["n300"] = n300
+            kwargs["n100"] = n100
+            kwargs["n50"] = n50
+        return self.calculatePP(bmap, **kwargs)
 
     def mapsUpdate(self):
         """
@@ -127,7 +140,7 @@ class Osu:
             return None, self.osuPicture(server, 3, username)
 
     def getOfficialLemmyLink(self, mode, username):
-        url = 'https://lemmmy.pw/osusig/sig.php?colour={}&uname={}&xpbar&xpbarhex&darktriangles&pp=1&mode={}'.format(
+        url = 'http://134.209.249.44:5000/sig?{}&colour={}&uname={}&xpbar&xpbarhex&darktriangles&pp=1&mode={}'.format(random.randint(1, 1000),
             random.choice(sig_colors), username, mode)
         return url
 
@@ -159,9 +172,8 @@ class Osu:
         :return: image link
         """
         if server == "bancho":
-            raise exceptions.CustomException("https://lemmmy.pw/osusig dead")
-            # image_url = self.getOfficialLemmyLink(mode, username)
-            # return utils.uploadPicture(upload=self.upload, url=image_url, decode_content=True)
+            image_url = self.getOfficialLemmyLink(mode, username)
+            return utils.uploadPicture(upload=self.upload, url=image_url, decode_content=True)
         if server == "gatari":
             image_url = self.getGatariLemmyLink(mode, username)
             return utils.uploadPicture(upload=self.upload, url=image_url, decode_content=True)
@@ -191,6 +203,8 @@ class Osu:
         server = userData.get("server", None)
         username = userData.get("username", None)
         limit = userData.get("limit", 1)
+        if server is None or username is None:
+            raise exceptions.dbUserNotFound
         if server == "bancho":
             return self.getOfficialUserRecent(username, limit)
         if server == "gatari":
@@ -200,7 +214,7 @@ class Osu:
         js = self.banchoApi.get_user_recent(u=username, limit=limit)
         limit -= 1
         if not js:
-            return "Нет данных, возможно, что пользователь в бане, либо нет скоров за последние 24 часа"
+            raise exceptions.UserNotFound
         beatmap_id = int(js[limit]['beatmap_id'])
         combo = int(js[limit]['maxcombo'])
         count50 = int(js[limit]['count50'])
@@ -248,6 +262,8 @@ class Osu:
         js = self.gatariApi.get_user_recent(
             user_id, limit, show_failed=True)['scores']
         limit -= 1
+        if not js:
+            raise exceptions.UserNotFound
         js = js[limit]
         beatmapSet_id = js['beatmap']['beatmapset_id']
         beatmap_id = js['beatmap']['beatmap_id']
@@ -380,7 +396,7 @@ class Osu:
         js = self.banchoApi.get_scores(b=beatmap_id, u=username, limit=limit)
         limit -= 1
         if not js:
-            return "Нет данных, возможно, что пользователь не найден, либо нет скоров на мапе"
+            raise exceptions.CustomException("Нет данных, возможно, что пользователь не найден, либо нет скоров на мапе")
         combo = int(js[limit]['maxcombo'])
         count50 = int(js[limit]['count50'])
         count100 = int(js[limit]['count100'])
@@ -388,11 +404,10 @@ class Osu:
         misses = int(js[limit]['countmiss'])
         m = int(js[limit]['enabled_mods'])
         accuracy = osuHelpers.acc_calc(misses, count50, count100, count300)
-        if self.getBeatmapFromDB(beatmap_id) is None:
+        beatmapInfo = self.getBeatmapFromDB(beatmap_id)
+        if beatmapInfo is None:
             beatmapInfo = self.banchoApi.get_beatmaps(b=beatmap_id)[0]
             self.addBeatmapToDB(beatmapInfo)
-        else:
-            beatmapInfo = self.getBeatmapFromDB(beatmap_id)
         beatmapSet_id = beatmapInfo["beatmapset_id"]
         artist = beatmapInfo['artist']
         songTitle = beatmapInfo['title']
@@ -418,3 +433,73 @@ class Osu:
             bgPicture = self.getBeatmapBG(beatmapSet_id)
         return text, bgPicture
     
+    def findBeatmap(self, send, event):
+        result = beatmap_id_re.findall(event.text)
+        if result:
+            beatmap_type = result[0][0]
+            beatmap_link = result[0][1]
+            if beatmap_type == "b":
+                text, bg = self.processBeatmap(beatmap_link)
+            elif beatmap_type == "s":
+                text, bg = self.processBeatmapSet(beatmap_link)
+            send(peer_id = event.peer_id, message=text, attachment=bg)
+
+    def processBeatmap(self, beatmap_id):
+        text = ""
+        beatmapInfo = self.getBeatmapFromDB(beatmap_id)
+        if beatmapInfo is None:
+            beatmapInfo = self.banchoApi.get_beatmaps(b=beatmap_id)[0]
+            self.addBeatmapToDB(beatmapInfo)
+        text += "{} - {} [{}]  ★{}".format(beatmapInfo["artist"], beatmapInfo["title"], 
+            beatmapInfo["version"], round(float(beatmapInfo["difficultyrating"]), 2))
+        text+= "\nBeatmap by {} -- BPM: {} -- Combo: {}".format(
+            beatmapInfo["creator"], beatmapInfo["bpm"], 
+            beatmapInfo["max_combo"])
+        # acc_base = [95, 98, 99, 100]
+        # pp_for_acc = {}
+        # for i in acc_base:
+            # pp_for_acc[i] = self.getPP(beatmap_id)
+        # text+= "95% {}pp | 98% {}pp |99% {}pp | 100% {}pp"
+        bgPicture = beatmapInfo.get("background_url", None)
+        # if bgPicture is None:
+            # bgPicture = self.getBeatmapBG(beatmapSet_id)
+        return text, bgPicture
+        
+    def processBeatmapSet(self, beatmap_id):
+        text = ""
+        beatmapInfo = self.getBeatmapFromDB(beatmap_id)
+        if beatmapInfo is None:
+            beatmapInfo = self.banchoApi.get_beatmaps(b=beatmap_id)[0]
+            self.addBeatmapToDB(beatmapInfo)
+        text += "{} - {} [{}]  ★{}".format(beatmapInfo["artist"], beatmapInfo["title"], 
+            beatmapInfo["version"], round(float(beatmapInfo["difficultyrating"]), 2))
+        text+= "\nBeatmap by {} -- BPM: {} -- Combo: {}".format(
+            beatmapInfo["creator"], beatmapInfo["bpm"], 
+            beatmapInfo["max_combo"])
+        # acc_base = [95, 98, 99, 100]
+        # pp_for_acc = {}
+        # for i in acc_base:
+            # pp_for_acc[i] = self.getPP(beatmap_id)
+        # text+= "95% {}pp | 98% {}pp |99% {}pp | 100% {}pp"
+        bgPicture = beatmapInfo.get("background_url", None)
+        # if bgPicture is None:
+            # bgPicture = self.getBeatmapBG(beatmapSet_id)
+        return text, bgPicture
+
+    def rebalancedPP(self, username):
+        req = self.session.get("http://osusr.glitch.me/c", params= {"user":username})
+        if req.status_code == 200:
+            newPP = req.json()
+        else:
+            raise exceptions.CustomException("error")
+        text = "Rebalanced pp for {}".format(username)
+        text+= "\nLive pp: {} Rebalanced pp: {} -- {} bonus pp\n----------------------------".format(newPP["LivePP"], 
+            round(newPP["LocalPP"], 2), round(newPP["BonusPP"], 2))
+        for i in range(10):
+            text+= "\n"
+            text+= "{}. {}".format(i+1, newPP["DisplayPlays"][i]["BeatmapName"])
+            text+= "\n{}pp -> ".format(round(newPP["DisplayPlays"][i]["LivePP"], 2))
+            text+= str(round(newPP["DisplayPlays"][i]["LocalPP"], 2)) + "pp"
+            text+= " ({}pp diff)".format(round(newPP["DisplayPlays"][i]["PPDelta"], 2))
+        return text
+        
