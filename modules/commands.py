@@ -61,7 +61,7 @@ class CommandsHandler:
 
     def processCommand(self):
         # ---- Commands managing ----
-        if self.key == "addcom":
+        if self.key in ["addcom", "editcom"]:
             if not checks.hasPrivileges(self.event.from_id):
                 raise exceptions.NoPrivilegesPermissions
             if self.event.attachments:
@@ -77,17 +77,6 @@ class CommandsHandler:
             if not checks.commandAdder(self.event.from_id, self.value):
                 raise exceptions.NoEditPermissions
             return utils.delcom(self.value)
-        if self.key == "editcom":
-            if not checks.hasPrivileges(self.event.from_id):
-                raise exceptions.NoPrivilegesPermissions
-            if not checks.commandAdder(self.event.from_id, self.value):
-                raise exceptions.NoPrivilegesPermissions
-            if self.event.attachments:
-                return utils.addpic(
-                                    self.event.from_id,
-                                    self.upload,
-                                    self.value,
-                                    self.event.attachments)
         # ---- Built-in ----
         if self.key in ["help", "хелп"]:
             return self.generateHelp()
@@ -115,12 +104,8 @@ class CommandsHandler:
         if self.key == "unrestrict":
             if not checks.isOwner(self.event.from_id):
                 raise exceptions.NoPrivilegesPermissions
-            return self.admin.unrestrict(self.value)    
-        if self.key == "add_role":
-            if not checks.isOwner(self.event.from_id):
-                raise exceptions.NoPrivilegesPermissions
-            return self.admin.add_role(self.value)
-        if self.key == "edit_role":
+            return self.admin.unrestrict(self.value)
+        if self.key == ["add_role", "edit_role"]:
             if not checks.isOwner(self.event.from_id):
                 raise exceptions.NoPrivilegesPermissions
             return self.admin.add_role(self.value)
