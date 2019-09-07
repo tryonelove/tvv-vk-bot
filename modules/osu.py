@@ -322,11 +322,8 @@ class Osu:
         version = beatmapInfo['version']
         title = "{} - {} [{}]".format(artist, songTitle, version)
         js = self.banchoApi.get_user(u=username)[0]
-        try:
-            pp, pp_if_fc = self.getPP(beatmap_id=beatmap_id, mods=m, n300=count300,
+        pp, pp_if_fc = self.getPP(beatmap_id=beatmap_id, mods=m, n300=count300,
                                   n100=count100, n50=count50, combo=combo, nmiss=misses)
-        except IndexError:
-            pp, pp_if_fc = (0,0)
         text = osuHelpers.scoreFormat(
             username=js["username"],
             m=m,
@@ -363,11 +360,8 @@ class Osu:
         count300 = js['count_300']
         misses = js['count_miss']
         title = js['beatmap']['song_name']
-        try:
-            pp, pp_if_fc = self.getPP(beatmap_id=beatmap_id, mods=m, n300=count300,
+        pp, pp_if_fc = self.getPP(beatmap_id=beatmap_id, mods=m, n300=count300,
                                   n100=count100, n50=count50, combo=combo, nmiss=misses)
-        except IndexError:
-            pp, pp_if_fc = (0,0)
         text = osuHelpers.scoreFormat(
             username=username,
             title=title,
@@ -383,16 +377,28 @@ class Osu:
         bgPicture = self.getBeatmapBG(beatmapSet_id)
         return text, bgPicture
 
-    def compare(self, messages, username: str = None):
+    def compare(self, messages, userData):
+        if userData is None:
+            userData = utils.getUserFromDB(self.c, self.from_id)
+        server = userData.get("server", None)
+        username = userData.get("username", None)
+        if server is None or username is None:
+            raise exceptions.dbUserNotFound
+        if title_re.findall(messages["text"]):
+            beatmap_id = int(beatmap_id_re.findall(messages["text"])[0])
+        else:
+            raise exceptions.CustomException("Карта не найдена")
+        if server == "bancho":
+            return self.compareBancho(beatmap_id, username)
+        if server == "gatari":
+            return self.compareGatari(beatmap_id, username)
+
+    def compareBancho(self, beatmap_id, username: str = None):
         limit = 1
         if username == "":
             username = utils.getUserFromDB(self.c, self.from_id).get("username")
         if username is None:
-            return "Чё за чел?"
-        if title_re.findall(messages["text"]):
-            beatmap_id = int(beatmap_id_re.findall(messages["text"])[0])
-        else:
-            return "хз"
+            raise exceptions.dbUserNotFound
         js = self.banchoApi.get_scores(b=beatmap_id, u=username, limit=limit)
         limit -= 1
         if not js:
@@ -432,74 +438,68 @@ class Osu:
         if bgPicture is None:
             bgPicture = self.getBeatmapBG(beatmapSet_id)
         return text, bgPicture
-    
-    def findBeatmap(self, send, event):
-        result = beatmap_id_re.findall(event.text)
-        if result:
-            beatmap_type = result[0][0]
-            beatmap_link = result[0][1]
-            if beatmap_type == "b":
-                text, bg = self.processBeatmap(beatmap_link)
-            elif beatmap_type == "s":
-                text, bg = self.processBeatmapSet(beatmap_link)
-            send(peer_id = event.peer_id, message=text, attachment=bg)
 
-    def processBeatmap(self, beatmap_id):
-        text = ""
+    def compareGatari(self, beatmap_id, username: str = None):
+        if username == "":
+            username = utils.getUserFromDB(self.c, self.from_id).get("username")
+        if username is None:
+            raise exceptions.dbUserNotFound
+        js = self.gatariApi.get_user(username)['users'][0]
+        username = js['username']
+        user_id = js['id']
+        js = self.gatariApi.get_user_score(beatmap_id=beatmap_id, user_id=user_id)
+        if not js or js.get('error') is not None:
+            raise exceptions.CustomException("Нет данных, возможно, что пользователь не найден, либо нет скоров на мапе")
+        js = js["score"]
+        combo = js['max_combo']
+        count50 = js['count_50']
+        count100 = js['count_100']
+        count300 = js['count_300']
+        misses = js['count_miss']
+        m = js['mods']
+        accuracy = round(js['accuracy'], 2)
         beatmapInfo = self.getBeatmapFromDB(beatmap_id)
         if beatmapInfo is None:
             beatmapInfo = self.banchoApi.get_beatmaps(b=beatmap_id)[0]
             self.addBeatmapToDB(beatmapInfo)
-        text += "{} - {} [{}]  ★{}".format(beatmapInfo["artist"], beatmapInfo["title"], 
-            beatmapInfo["version"], round(float(beatmapInfo["difficultyrating"]), 2))
-        text+= "\nBeatmap by {} -- BPM: {} -- Combo: {}".format(
-            beatmapInfo["creator"], beatmapInfo["bpm"], 
-            beatmapInfo["max_combo"])
-        # acc_base = [95, 98, 99, 100]
-        # pp_for_acc = {}
-        # for i in acc_base:
-            # pp_for_acc[i] = self.getPP(beatmap_id)
-        # text+= "95% {}pp | 98% {}pp |99% {}pp | 100% {}pp"
+        beatmapSet_id = beatmapInfo["beatmapset_id"]
+        artist = beatmapInfo['artist']
+        songTitle = beatmapInfo['title']
+        version = beatmapInfo['version']
+        title = "{} - {} [{}]".format(artist, songTitle, version)
+        pp, pp_if_fc = self.getPP(beatmap_id=beatmap_id, mods=m, n300=count300,
+                                  n100=count100, n50=count50, combo=combo, nmiss=misses)
+        text = osuHelpers.scoreFormat(
+            username=username,
+            m=m,
+            title=title,
+            combo=combo,
+            accuracy=accuracy,
+            max_combo=beatmapInfo['max_combo'],
+            misses=misses,
+            _pp=pp,
+            pp_if_fc=pp_if_fc,
+            beatmap_id=beatmap_id
+        )
         bgPicture = beatmapInfo.get("background_url", None)
-        # if bgPicture is None:
-            # bgPicture = self.getBeatmapBG(beatmapSet_id)
-        return text, bgPicture
-        
-    def processBeatmapSet(self, beatmap_id):
-        text = ""
-        beatmapInfo = self.getBeatmapFromDB(beatmap_id)
-        if beatmapInfo is None:
-            beatmapInfo = self.banchoApi.get_beatmaps(b=beatmap_id)[0]
-            self.addBeatmapToDB(beatmapInfo)
-        text += "{} - {} [{}]  ★{}".format(beatmapInfo["artist"], beatmapInfo["title"], 
-            beatmapInfo["version"], round(float(beatmapInfo["difficultyrating"]), 2))
-        text+= "\nBeatmap by {} -- BPM: {} -- Combo: {}".format(
-            beatmapInfo["creator"], beatmapInfo["bpm"], 
-            beatmapInfo["max_combo"])
-        # acc_base = [95, 98, 99, 100]
-        # pp_for_acc = {}
-        # for i in acc_base:
-            # pp_for_acc[i] = self.getPP(beatmap_id)
-        # text+= "95% {}pp | 98% {}pp |99% {}pp | 100% {}pp"
-        bgPicture = beatmapInfo.get("background_url", None)
-        # if bgPicture is None:
-            # bgPicture = self.getBeatmapBG(beatmapSet_id)
+        if bgPicture is None:
+            bgPicture = self.getBeatmapBG(beatmapSet_id)
         return text, bgPicture
 
-    def rebalancedPP(self, username):
-        req = self.session.get("http://osusr.glitch.me/c", params= {"user":username})
-        if req.status_code == 200:
-            newPP = req.json()
-        else:
-            raise exceptions.CustomException("error")
-        text = "Rebalanced pp for {}".format(username)
-        text+= "\nLive pp: {} Rebalanced pp: {} -- {} bonus pp\n----------------------------".format(newPP["LivePP"], 
-            round(newPP["LocalPP"], 2), round(newPP["BonusPP"], 2))
-        for i in range(10):
-            text+= "\n"
-            text+= "{}. {}".format(i+1, newPP["DisplayPlays"][i]["BeatmapName"])
-            text+= "\n{}pp -> ".format(round(newPP["DisplayPlays"][i]["LivePP"], 2))
-            text+= str(round(newPP["DisplayPlays"][i]["LocalPP"], 2)) + "pp"
-            text+= " ({}pp diff)".format(round(newPP["DisplayPlays"][i]["PPDelta"], 2))
-        return text
+    # def rebalancedPP(self, username):
+    #     req = self.session.get("http://osusr.glitch.me/c", params= {"user":username})
+    #     if req.status_code == 200:
+    #         newPP = req.json()
+    #     # else:
+    #         # raise exceptions.CustomException("error")
+    #     text = "Rebalanced pp for {}".format(username)
+    #     text+= "\nLive pp: {} Rebalanced pp: {} -- {} bonus pp\n----------------------------".format(newPP["LivePP"], 
+    #         round(newPP["LocalPP"], 2), round(newPP["BonusPP"], 2))
+    #     for i in range(10):
+    #         text+= "\n"
+    #         text+= "{}. {}".format(i+1, newPP["DisplayPlays"][i]["BeatmapName"])
+    #         text+= "\n{}pp -> ".format(round(newPP["DisplayPlays"][i]["LivePP"], 2))
+    #         text+= str(round(newPP["DisplayPlays"][i]["LocalPP"], 2)) + "pp"
+    #         text+= " ({}pp diff)".format(round(newPP["DisplayPlays"][i]["PPDelta"], 2))
+    #     return text
         

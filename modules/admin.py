@@ -28,6 +28,17 @@ class Admin:
         delta = date - date_now
         return True if delta.days > 0 else False
 
+    def getRole(self, user_id):
+        role = "Роль: {}"
+        if user_id in glob.config["admin"]:
+            return role.format("админ")
+        elif self.isDonator(user_id):
+            user = self.c.execute("SELECT expires, role_name FROM donators WHERE id=?", (user_id,)).fetchone()
+            role+="\nВы будете донатером до {} (-2 от мск)"
+            return role.format(user[1], user[0])
+        else:
+            return role.format("юзер")
+
     def add_donator(self, user_id, donation_sum, role_name):
         """
         Функция добавления донатера
@@ -41,7 +52,7 @@ class Admin:
             expires = self.c.execute("SELECT expires FROM donators WHERE id=?", (user_id,)).fetchone()[0]
             date = datetime.datetime.strptime(expires, "%Y-%m-%d %H:%M:%S")
             date += datetime.timedelta(days=+31*donator_duration)
-            self.c.execute("UPDATE donators SET expires = ?", (date.strftime("%Y-%m-%d %H:%M:%S")))
+            self.c.execute("UPDATE donators SET expires = ? WHERE id = ?", (date.strftime("%Y-%m-%d %H:%M:%S"), user_id))
         else:
             if donation_sum != 25:
                 now += datetime.timedelta(days=+31*donator_duration)
@@ -106,13 +117,13 @@ class Admin:
         role_name = " ".join(text[1:])
         if not self.isDonator(user_id):
             raise exceptions.CustomException("Такого пользователя нет в списке донатеров")
-        self.c.execute("UPDATE donators SET role = ? WHERE id = ?", (role_name, self.from_id))
+        self.c.execute("UPDATE donators SET role_name = ? WHERE id = ?", (role_name, self.from_id))
         glob.db.commit()
         return "Роль {} для {} была успешно добавлена".format(role_name, user_id)
     
     def rm_role(self, user_id):
         if not self.isDonator(user_id):
             raise exceptions.CustomException("Такого пользователя нет в списке донатеров")
-        self.c.execute("UPDATE donators SET role = ? WHERE id = ?", (None, self.from_id))     
+        self.c.execute("UPDATE donators SET role_name = ? WHERE id = ?", (None, self.from_id))     
         glob.db.commit()
         return "Роль была успешно удалена"

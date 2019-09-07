@@ -66,9 +66,9 @@ def addcom(from_id, text = None, attachment = None):
     key, value = messageToCommand(text)
     key = key.lower()
     if not key or (value == "" and not attachment):
-        raise exceptions.ArgumentError("Проверьте правильность аргументов")
+        raise exceptions.ArgumentError
     if key in glob.commands and not checks.commandAdder(from_id, key):
-        raise exceptions.NoPrivilegesPermissions("Изменять команды могут их создатели или админы")
+        raise exceptions.NoEditPermissions
     cmd = {"author": from_id, "message": value, "attachment": attachment}
     glob.commands[key] = cmd
     commands_update()
@@ -95,7 +95,7 @@ def editcom(from_id, text):
     if not(key and value):
         raise exceptions.ArgumentError
     if not checks.commandAdder(from_id, key):
-        raise exceptions.NoPrivilegesPermissions("Изменять команды могут их создатели или админы")
+        raise exceptions.NoEditPermissions
     cmd = {"author":from_id,"message": value, "attachment": None}
     glob.commands[key.lower()] = cmd
     commands_update()
@@ -148,7 +148,7 @@ def getUserFromDB(cursor, from_id):
     server, username = cursor.execute("SELECT server, osu_username FROM users WHERE id=?", (from_id,)).fetchone()
     return { "server" : server, "username" : username }
 
-def getRole(vk, user_id):
+def getRole(cursor, user_id):
     user_id = str(user_id)
     if "id" in user_id:
         user_id = re.search(r'\d+', user_id).group(0)

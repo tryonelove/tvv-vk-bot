@@ -62,7 +62,7 @@ class CommandsHandler:
     def processCommand(self):
         # ---- Commands managing ----
         if self.key in ["addcom", "editcom"]:
-            if not checks.hasPrivileges(self.event.from_id):
+            if not checks.hasPrivileges(self.c, self.event.from_id):
                 raise exceptions.NoPrivilegesPermissions
             if self.event.attachments:
                 return utils.addpic(
@@ -72,7 +72,7 @@ class CommandsHandler:
                                     self.event.attachments)
             return utils.addcom(self.event.from_id, self.value)
         if self.key == "delcom":
-            if not checks.hasPrivileges(self.event.from_id):
+            if not checks.hasPrivileges(self.c, self.event.from_id):
                 raise exceptions.NoPrivilegesPermissions
             if not checks.commandAdder(self.event.from_id, self.value):
                 raise exceptions.NoEditPermissions
@@ -83,10 +83,10 @@ class CommandsHandler:
         if self.key in glob.commands:
             return self.static_cmd()
         if self.key in ["role", "роль"]:
-            user = self.event.from_id if not self.value else self.value
-            return utils.getRole(self.vk, user)
+            user = self.value or self.event.from_id
+            return self.admin.getRole(user)
         if self.key == "osuset":
-            if not checks.hasPrivileges(self.event.from_id):
+            if not checks.hasPrivileges(self.c, self.event.from_id):
                 raise exceptions.NoPrivilegesPermissions
             return self.osu.osuset(self.parsed_msg["value"])
         if self.key == "op":
@@ -159,10 +159,11 @@ class CommandsHandler:
         if self.key in ["c", "compare", "с"]:
             if not self.event["fwd_messages"]:
                 raise exceptions.ScoreMessageNotFound
-            return self.osu.compare(self.event["fwd_messages"][-1], self.value)
-        if self.key in ["newpp"]:
-            self.data["peer_id"] = self.event.from_id
-            return self.osu.rebalancedPP(self.value)
+            userData = utils.getServerUsername(self.c, self.value, self.event.from_id)
+            return self.osu.compare(self.event["fwd_messages"][-1], userData)
+        # if self.key in ["newpp"]:
+        #     self.data["peer_id"] = self.event.from_id
+        #     return self.osu.rebalancedPP(self.value)
         # ---- Fun ----
         if self.key in ["weather", "погода"]:
             return fun.weather(self.value)

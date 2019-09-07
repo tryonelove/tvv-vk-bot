@@ -90,6 +90,7 @@ class GatariApi:
             API_VERSION + endpoint, params = params, timeout=3.0)
         if r.status_code == 200:
             js = r.json()
+            print(js)
             if js:
                 return js
         raise exceptions.ApiError("Ошибка при запросе, возможно, что серваки сдохли")        
@@ -112,6 +113,14 @@ class GatariApi:
             'id' : user_id,
             'l': limit,
             'f': int(show_failed)
+        })
+        return data
+
+    def get_user_score(self, user_id, beatmap_id, mode = 0):
+        data = self.make_request(self.NEW_API, "beatmap/user/score", params = {
+            "u" : user_id,
+            "b" : beatmap_id,
+            "mode" : mode
         })
         return data
     

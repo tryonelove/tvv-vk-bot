@@ -107,16 +107,14 @@ class LevelSystem:
     @staticmethod
     def calc_exp(message):
         k = 0
-        if len(message)<100:
-            for word in message:
-                length = len(word)
-                if length<=4:
-                    k += 0.25
-                    continue
-                if length<=7:
-                    k += 0.5
-                    continue
-                if length>7:
-                    k += 1
-                    continue
+        if len(message)>100:
+            return 0
+        for word in message:
+            length = len(word)
+            if length<=4:
+                k += 0.25
+            elif length<=7:
+                k += 0.5
+            elif length>7:
+                k += 1
         return k
