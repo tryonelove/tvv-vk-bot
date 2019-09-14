@@ -78,7 +78,7 @@ class Osu:
         :raises exceptions.ArgumentError: [description]
         :return: 
         """
-        data = utils.getServerUsername(self.c, text, self.from_id)
+        data = utils.formatServerUsername(self.c, self.from_id, text)
         if str(self.from_id) in glob.config["donators"] or self.from_id in glob.config["admin"]:
             if len(text) > 1 and data["server"] in ('bancho', 'gatari'):
                 self.c.execute("INSERT OR IGNORE INTO users(id) VALUES (?)",(self.from_id,))
@@ -122,7 +122,7 @@ class Osu:
         :param: mode - мод 
         0 = osu!, 1 = Taiko, 2 = CtB, 3 = osu!mania
         """
-        data = utils.getServerUsername(self.c, text, self.from_id)
+        data = utils.formatServerUsername(self.c, self.from_id, text)
         if data is None:
             userData = utils.getUserFromDB(self.c, self.from_id)
             server = userData.get("server")

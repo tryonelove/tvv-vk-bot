@@ -151,15 +151,15 @@ class CommandsHandler:
             return self.osu.lemmyPicture(self.value, 3)
         # ---- osu! stats ----
         if self.key in ["top"]:
-            userData = utils.getServerUsername(self.c, self.value, self.event.from_id)
+            userData = utils.formatServerUsername(self.c, self.event.from_id, self.value)
             return self.osu.getUserBest(userData)
         if self.key in ["last", "recent", "ласт", "rs"]:
-            userData = utils.getServerUsername(self.c, self.value, self.event.from_id)
+            userData = utils.formatServerUsername(self.c, self.event.from_id, self.value)
             return self.osu.getUserRecent(userData)
         if self.key in ["c", "compare", "с"]:
             if not self.event["fwd_messages"]:
                 raise exceptions.ScoreMessageNotFound
-            userData = utils.getServerUsername(self.c, self.value, self.event.from_id)
+            userData = utils.formatServerUsername(self.c, self.event.from_id, self.value)
             return self.osu.compare(self.event["fwd_messages"][-1], userData)
         # if self.key in ["newpp"]:
         #     self.data["peer_id"] = self.event.from_id

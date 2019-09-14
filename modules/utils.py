@@ -116,37 +116,31 @@ def addpic(from_id, upload, text, attachments):
 def checkArgs(text):
     return text if text!="" else None
 
-def getServerUsername(cursor, text, from_id):
-    # spaghetti
-    text = checkArgs(text)
-    if text is None:
-        text = "1"
-    if text.isdigit():
-        text = " " + text
-    r = re.search(r'(bancho|gatari)?(.*?)(\s\d+)?$', text)
-    if r:
-        server = r.group(1)
-        username = r.group(2)
-        limit = r.group(3)
-        if server is None:
-            server = cursor.execute("SELECT server FROM users WHERE id=?", (from_id,)).fetchone()
-        if username == "":
-            username = cursor.execute("SELECT osu_username FROM users WHERE id=?", (from_id,)).fetchone()
-        if limit is not None:
-            limit = int(limit)
-        else:
-            limit = 1
-        if not server or not username or username is None:
-            raise exceptions.dbUserNotFound
-        if isinstance(server, tuple):
-            server = server[0]
-        if isinstance(username, tuple):
-            username = username[0]            
-        return { "server" : server, "username" : username.strip(), "limit" : limit}
-
 def getUserFromDB(cursor, from_id):
     server, username = cursor.execute("SELECT server, osu_username FROM users WHERE id=?", (from_id,)).fetchone()
     return { "server" : server, "username" : username }
+
+def setServerUsername(src, text):
+    text = checkArgs(text)
+    server = username = limit = None
+    if text is not None:
+        r = re.search(r'(bancho|gatari)?(.*?)(\s\d+)?$', text)
+        if r:
+            server = r.group(1)
+            username = r.group(2)
+            limit = r.group(3)
+    if server:
+        src["server"] = server
+    if username:
+        src["username"] = username
+    if limit:
+        src["limit"] = limit
+    if None in src.values():
+        raise exceptions.dbUserNotFound
+    return src
+
+def formatServerUsername(cursor, from_id, text):
+    return setServerUsername(getUserFromDB(cursor, from_id), text)
 
 def getRole(cursor, user_id):
     user_id = str(user_id)
