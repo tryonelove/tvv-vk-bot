@@ -92,12 +92,14 @@ class LevelSystem:
     def show_leaderboard(self):
         text = "Топ 10 конфы:\n\n"
         leaderboard = self.c.execute("""
-        SELECT name, experience, level FROM konfa_{0} 
-        INNER JOIN users ON konfa_{0}.id=users.id ORDER BY experience DESC LIMIT 10 
+        SELECT id, experience, level FROM konfa_{0} 
+        ORDER BY experience DESC LIMIT 10 
         """.format(self.chat_id)).fetchall()
+        user_ids = [user[0] for user in leaderboard]
+        users = self.vk.users.get(user_ids=user_ids)
         for i, user in enumerate(leaderboard):
             rank = i+1
-            full_name = leaderboard[i][0]
+            full_name = "{} {}".format(users[i]["first_name"], users[i]["last_name"])
             exp = leaderboard[i][1]
             level = leaderboard[i][2]
             text+= '#{rank} {full_name} {experience}XP ({level}lvl)\n'.format(rank=rank,full_name = full_name, experience = exp, level=level)
