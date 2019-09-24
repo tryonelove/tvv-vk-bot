@@ -16,7 +16,7 @@ from objects import glob
 import sqlite3
 
 class CommandsHandler:
-    def __init__(self, vk, upload, event, cursor):
+    def __init__(self, vk, upload, event):
         self.vk = vk
         self.upload = upload
         self.event = event.obj
@@ -24,10 +24,9 @@ class CommandsHandler:
         self.key = self.parsed_msg.get("key").lower()
         self.value = self.parsed_msg.get("value")
         self.request = requests.Session()
-        self.c = cursor
-        self.level = LevelSystem(self.vk, self.event.peer_id, self.c)
-        self.admin = Admin(self.event.from_id, self.c)
-        self.osu = Osu(glob.config["osu_api_key"],self.c, self.event.from_id, self.upload)
+        self.level = LevelSystem(self.vk, self.event.peer_id)
+        self.admin = Admin(self.event.from_id)
+        self.osu = Osu(glob.config["osu_api_key"], self.event.from_id, self.upload)
         self.data = {
             "peer_id" : self.event.peer_id,
         }
@@ -62,7 +61,7 @@ class CommandsHandler:
     def processCommand(self):
         # ---- Commands managing ----
         if self.key in ["addcom", "editcom"]:
-            if not checks.hasPrivileges(self.c, self.event.from_id):
+            if not checks.hasPrivileges(self.event.from_id):
                 raise exceptions.NoPrivilegesPermissions
             if self.event.attachments:
                 return utils.addpic(
@@ -72,7 +71,7 @@ class CommandsHandler:
                                     self.event.attachments)
             return utils.addcom(self.event.from_id, self.value)
         if self.key == "delcom":
-            if not checks.hasPrivileges(self.c, self.event.from_id):
+            if not checks.hasPrivileges(self.event.from_id):
                 raise exceptions.NoPrivilegesPermissions
             if not checks.commandAdder(self.event.from_id, self.value):
                 raise exceptions.NoEditPermissions
@@ -84,9 +83,9 @@ class CommandsHandler:
             return self.static_cmd()
         if self.key in ["role", "роль"]:
             user = self.value or self.event.from_id
-            return self.admin.getRole(user)
+            return utils.getRole(user)
         if self.key == "osuset":
-            if not checks.hasPrivileges(self.c, self.event.from_id):
+            if not checks.hasPrivileges(self.event.from_id):
                 raise exceptions.NoPrivilegesPermissions
             return self.osu.osuset(self.parsed_msg["value"])
         if self.key == "op":
@@ -105,9 +104,9 @@ class CommandsHandler:
             if not checks.isOwner(self.event.from_id):
                 raise exceptions.NoPrivilegesPermissions
             return self.admin.unrestrict(self.value)
-        if self.key == ["add_role", "edit_role"]:
+        if self.key in ["add_role", "edit_role"]:
             if not checks.isOwner(self.event.from_id):
-                raise exceptions.NoPrivilegesPermissions
+                raise exceptions.NoPrivilegesPermissions          
             return self.admin.add_role(self.value)
         if self.key == "rm_role":
             if not checks.isOwner(self.event.from_id):
@@ -151,15 +150,15 @@ class CommandsHandler:
             return self.osu.lemmyPicture(self.value, 3)
         # ---- osu! stats ----
         if self.key in ["top"]:
-            userData = utils.formatServerUsername(self.c, self.event.from_id, self.value)
+            userData = utils.formatServerUsername(self.event.from_id, self.value)
             return self.osu.getUserBest(userData)
         if self.key in ["last", "recent", "ласт", "rs"]:
-            userData = utils.formatServerUsername(self.c, self.event.from_id, self.value)
+            userData = utils.formatServerUsername(self.event.from_id, self.value)
             return self.osu.getUserRecent(userData)
         if self.key in ["c", "compare", "с"]:
             if not self.event["fwd_messages"]:
                 raise exceptions.ScoreMessageNotFound
-            userData = utils.formatServerUsername(self.c, self.event.from_id, self.value)
+            userData = utils.formatServerUsername(self.event.from_id, self.value)
             return self.osu.compare(self.event["fwd_messages"][-1], userData)
         # if self.key in ["newpp"]:
         #     self.data["peer_id"] = self.event.from_id
@@ -185,7 +184,7 @@ class CommandsHandler:
         return text
 
     def donatorCheck(self):
-        if not self.admin.stillDonator(self.event.from_id) and self.admin.isDonator(self.event.from_id):
+        if not utils.stillDonator(self.event.from_id) and utils.isDonator(self.event.from_id):
             self.admin.remove_donator(self.event.from_id)
             vk_api_name = self.vk.users.get(
                     user_ids = self.event.from_id, 

@@ -17,13 +17,12 @@ from .api import BanchoApi, GatariApi
 
 
 class Osu:
-    def __init__(self, key, dbCursor, from_id, upload):
+    def __init__(self, key, from_id, upload):
         self.banchoApi = BanchoApi(key)
         self.gatariApi = GatariApi()
         self.from_id = from_id
         self.upload = upload
         self.session = requests.Session()
-        self.c = dbCursor
         with open("maps.json", 'r', encoding="UTF-8") as maps:
             self.maps = json.load(maps)
 
@@ -73,23 +72,21 @@ class Osu:
 
     def osuset(self, text):
         """Привязка аккаунта осу к вк
-
         :param text: сервер и ник, которые нужно добавить
         :raises exceptions.ArgumentError: [description]
         :return: 
         """
-        data = utils.formatServerUsername(self.c, self.from_id, text)
-        if str(self.from_id) in glob.config["donators"] or self.from_id in glob.config["admin"]:
-            if len(text) > 1 and data["server"] in ('bancho', 'gatari'):
-                self.c.execute("INSERT OR IGNORE INTO users(id) VALUES (?)",(self.from_id,))
-                self.c.execute("UPDATE users SET server=?, osu_username=? WHERE id=?",(data["server"].strip(), data["username"].strip(), self.from_id))
-                glob.db.commit()
+        data = utils.formatServerUsername(self.from_id, text)
+        if utils.isDonator(self.from_id) or self.from_id in glob.config["admin"]:
+            if len(text) > 1 and data["server"] in ('bancho', 'gatari'):             
+                glob.c.execute("INSERT OR IGNORE INTO users(id) VALUES (?)",(self.from_id,))
+                glob.c.execute("UPDATE users SET server=?, osu_username=? WHERE id=?",(data["server"].strip(), data["username"].strip(), self.from_id))
+                glob.db.commit()                            
                 return "Аккаунт {} был успешно привязан к вашему айди.".format(text)
             raise exceptions.ArgumentError("Доступные сервера: bancho, gatari")
 
     def addBeatmapToDB(self, beatmapData):
         """Добавляет карту в базу
-
         :param beatmapData: osu!api /get_beatmaps responsee
         """
         beatmapSet_id = beatmapData["beatmapset_id"]
@@ -104,7 +101,6 @@ class Osu:
 
     def getBeatmapFromDB(self, beatmap_id):
         """Функция поиска карты в базе
-
         :param beatmap_id: айди карты
         :return: информация osu!api по beatmap_id, иначе None
         """
@@ -117,14 +113,13 @@ class Osu:
     def lemmyPicture(self, text, mode=0):
         """
         Функция, возвращающая ссылку на пикчу с osu!lemmy
-
         :param: text - сервер, ник
         :param: mode - мод 
         0 = osu!, 1 = Taiko, 2 = CtB, 3 = osu!mania
         """
-        data = utils.formatServerUsername(self.c, self.from_id, text)
+        data = utils.formatServerUsername(self.from_id, text)
         if data is None:
-            userData = utils.getUserFromDB(self.c, self.from_id)
+            userData = utils.getUserFromDB(self.from_id)
             server = userData.get("server")
             username = userData.get("username")
         else:
@@ -151,7 +146,6 @@ class Osu:
 
     def getBeatmapBG(self, beatmapSet_id):
         """Загрузка бг карты в вк
-
         :param beatmapSet_id: айди сета
         :return: vk_background_url
         """
@@ -166,7 +160,6 @@ class Osu:
     def osuPicture(self, server, mode, username):
         """
         Пикча osu!lemmy (std)
-
         :param server: сервер (bancho, gatari)
         :param username: osu! server username
         :return: image link
@@ -180,7 +173,6 @@ class Osu:
     
     def getUserBest(self, userData):
         """Топ скор заданного пользователя
-
         :param data:    dict
                         {
                             "server" : "", 
@@ -199,7 +191,7 @@ class Osu:
 
     def getUserRecent(self, userData):
         if userData is None:
-            userData = utils.getUserFromDB(self.c, self.from_id)
+            userData = utils.getUserFromDB(self.from_id)
         server = userData.get("server", None)
         username = userData.get("username", None)
         limit = userData.get("limit", 1)
@@ -379,7 +371,7 @@ class Osu:
 
     def compare(self, messages, userData):
         if userData is None:
-            userData = utils.getUserFromDB(self.c, self.from_id)
+            userData = utils.getUserFromDB(self.from_id)
         server = userData.get("server", None)
         username = userData.get("username", None)
         if server is None or username is None:
@@ -396,7 +388,7 @@ class Osu:
     def compareBancho(self, beatmap_id, username: str = None):
         limit = 1
         if username == "":
-            username = utils.getUserFromDB(self.c, self.from_id).get("username")
+            username = utils.getUserFromDB(self.from_id).get("username")
         if username is None:
             raise exceptions.dbUserNotFound
         js = self.banchoApi.get_scores(b=beatmap_id, u=username, limit=limit)
@@ -441,7 +433,7 @@ class Osu:
 
     def compareGatari(self, beatmap_id, username: str = None):
         if username == "":
-            username = utils.getUserFromDB(self.c, self.from_id).get("username")
+            username = utils.getUserFromDB(self.from_id).get("username")
         if username is None:
             raise exceptions.dbUserNotFound
         js = self.gatariApi.get_user(username)['users'][0]
@@ -502,4 +494,3 @@ class Osu:
     #         text+= str(round(newPP["DisplayPlays"][i]["LocalPP"], 2)) + "pp"
     #         text+= " ({}pp diff)".format(round(newPP["DisplayPlays"][i]["PPDelta"], 2))
     #     return text
-        

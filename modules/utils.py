@@ -4,6 +4,7 @@ from constants import exceptions
 from objects import glob
 import re
 from helpers import checks
+import datetime
 
 def config_update():
     """
@@ -25,11 +26,11 @@ def updateUsers():
     """
     glob.db.commit()
 
-def insertUser(cursor, user_id, name=None):
-    cursor.execute("INSERT OR IGNORE INTO users(id, name) VALUES(?, ?)", (user_id, name))
+def insertUser(user_id, name=None):
+    glob.c.execute("INSERT OR IGNORE INTO users(id, name) VALUES(?, ?)", (user_id, name))
 
-def insertLevels(cursor, chat_id, user_id, experience=None, level=None):
-    cursor.execute("INSERT OR IGNORE INTO konfa_{} VALUES(?, ?, ?)".format(chat_id), (user_id, experience, level))
+def insertLevels(chat_id, user_id, experience=None, level=None):
+    glob.c.execute("INSERT OR IGNORE INTO konfa_{} VALUES(?, ?, ?)".format(chat_id), (user_id, experience, level))
 
 def uploadPicture(upload, url, decode_content = False):
     session = requests.Session()
@@ -116,44 +117,59 @@ def addpic(from_id, upload, text, attachments):
 def checkArgs(text):
     return text if text!="" else None
 
-def getUserFromDB(cursor, from_id):
-    server, username = cursor.execute("SELECT server, osu_username FROM users WHERE id=?", (from_id,)).fetchone()
+def getUserFromDB(from_id):
+    server, username = glob.c.execute("SELECT server, osu_username FROM users WHERE id=?", (from_id,)).fetchone()
     return { "server" : server, "username" : username }
 
 def setServerUsername(src, text):
     text = checkArgs(text)
-    server = username = limit = None
+    server = username = None
+    limit = 1
     if text is not None:
-        r = re.search(r'(bancho|gatari)?(.*?)(\s\d+)?$', text)
+        r = re.search(r'(bancho|gatari)?(.*?)(\s?\d+)?$', text)
         if r:
             server = r.group(1)
             username = r.group(2)
             limit = r.group(3)
     if server:
-        src["server"] = server
+        src["server"] = server.strip()
     if username:
-        src["username"] = username
+        src["username"] = username.strip()
     if limit:
-        src["limit"] = limit
+        src["limit"] = int(limit)
     if None in src.values():
         raise exceptions.dbUserNotFound
     return src
 
-def formatServerUsername(cursor, from_id, text):
-    return setServerUsername(getUserFromDB(cursor, from_id), text)
-
-def getRole(cursor, user_id):
-    user_id = str(user_id)
-    if "id" in user_id:
-        user_id = re.search(r'\d+', user_id).group(0)
-    if int(user_id) in glob.config['admin']:
-        return 'Роль: админ'
-    elif user_id in glob.config["donators"]:
-        role_name = glob.config["donators"][user_id].get("role_name", "донатер")
-        return 'Роль: {}\nВы будете донатером до {} (-2 от мск)'.format(
-            role_name, glob.config["donators"][user_id]["expires"])
-    return 'Роль: юзер'
+def formatServerUsername(from_id, text):
+    return setServerUsername(getUserFromDB(from_id), text)
 
 def isRestricted(user_id):
     user_id = str(user_id)
     return user_id in glob.config["restricted"]
+
+
+def isDonator(user_id):
+    return glob.c.execute("SELECT id FROM donators WHERE id = ?", (user_id,)).fetchone() is not None
+
+def stillDonator(user_id):
+    date = glob.c.execute("SELECT expires FROM donators WHERE id = ?", (user_id,)).fetchone()
+    if date is not None:
+        date = date[0]
+    else:
+        return
+    date = datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
+    date_now = datetime.datetime.now()
+    delta = date - date_now
+    return True if delta.days > 0 else False
+
+def getRole(user_id):
+    role = "Роль: {}"
+    if user_id in glob.config["admin"]:
+        return role.format("админ")
+    elif isDonator(user_id):
+        user = glob.c.execute("SELECT expires, role_name FROM donators WHERE id=?", (user_id,)).fetchone()
+        role+="\nВы будете донатером до {} (-2 от мск)"
+        return role.format(user[1] if user[1] is not None else "донатер", user[0])
+    else:
+        return role.format("юзер")

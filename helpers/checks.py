@@ -6,8 +6,11 @@ def isOwner(user_id):
 def isAdmin(user_id):
     return user_id in glob.config["admin"]
 
-def isDonator(cursor, user_id):
-    return len(cursor.execute("SELECT * FROM donators WHERE id = ?", (user_id,)).fetchone())>0
+def isDonator(user_id):
+    user = glob.c.execute("SELECT * FROM donators WHERE id = ?", (user_id,)).fetchone()
+    if user is not None and len(user)>0:
+        return True
+    return False
 
 def isMainChat(chat_id):
     """
@@ -15,14 +18,14 @@ def isMainChat(chat_id):
     """
     return chat_id == 2000000001
 
-def isChatInDB(cursor, chat_id):
+def isChatInDB(chat_id):
     """
     :param chat_id: айди беседы
     """
     # return cursor.execute("SELECT * FROM sqlite_master WHERE table_name = ? ", (chat_id, )).fetchone()[0]==1
 
-def hasPrivileges(cursor, user_id):
-    return isAdmin(user_id) or isDonator(cursor, user_id) or isOwner(user_id)
+def hasPrivileges(user_id):
+    return isAdmin(user_id) or isDonator(user_id) or isOwner(user_id)
 
 def commandAdder(user_id, key):
     return isAdmin(user_id) or user_id == glob.commands[key].get("author")
