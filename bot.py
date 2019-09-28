@@ -8,7 +8,7 @@ import json
 from constants import exceptions
 import time
 import sqlite3
-
+import threading
 
 class VkBotLongPollFix(VkBotLongPoll):
     def listen(self):
@@ -34,10 +34,9 @@ class Bot:
         with open("commands.json", "r", encoding="utf-8") as f:
             glob.commands = json.load(f)
         with open("config.json", "r", encoding="utf-8") as f:
-            glob.config = json.load(f)
-        with open("users.json", "r", encoding="utf-8") as f:
-            glob.users = json.load(f)
-        
+            glob.config = json.load(f)        
+        glob.db = sqlite3.connect("users.db", check_same_thread = False)
+        glob.c = glob.db.cursor()
 
     def sendMsg(self, peer_id, message=None, attachment=None):
         """
@@ -53,30 +52,42 @@ class Bot:
     def start(self):
         for event in self.longpoll.listen():
             if event.type == VkBotEventType.MESSAGE_NEW:
-                handler = CommandsHandler(self.vk, self.upload, event)
-                data = {}
-                try:
-                    data = handler.processMessage()
-                except (exceptions.ArgumentError,
-                        exceptions.CustomException,
-                        exceptions.NoAdminPermissions,
-                        exceptions.NoDonorPermissions,
-                        exceptions.NoPrivilegesPermissions,
-                        exceptions.ApiError) as e:
-                    data = {
-                            "peer_id": event.obj.peer_id,
-                            "message": "Ошибка: {}".format(e.args[0]), 
-                            "attachment": None
-                    }
-                except Exception as e:
-                    data["peer_id"] = 236965366
-                    if data.get("message") is not None:
-                        data["message"] += "\nОшибка: {}".format(e.args[0])
-                    else:
-                        data["message"] = "\nОшибка: {}".format(e.args[0])
-                if data is not None:
-                    try:
-                        self.sendMsg(**data)
-                    except Exception as e:
-                        logging.error(e)
+                event_thread = threading.Thread(target=self.handleEvent, args=(event,))
+                event_thread.start()
+                event_thread.join()
+                
+    def handleEvent(self, event):
+        handler = CommandsHandler(self.vk, self.upload, event)
+        data = {
+            "peer_id": event.obj.peer_id,
+            "message": None,
+            "attachment" : None
+        }
+        try:
+            data = handler.processMessage()
+        except exceptions.NoPrivilegesPermissions:
+            data["message"] = "Ошибка: Недостаточно прав, однако ты можешь задонатить и взамен получить возможность юзать эту команду"
+        except exceptions.NoAdminPermissions:
+            data["message"] = "Ошибка: Недостаточно прав, команда для админов"
+        except exceptions.ScoreMessageNotFound:
+            data["message"] = "Ошибка: Необходимо переслать сообщение со скором"
+        except exceptions.ArgumentError:
+            data["message"] = "Ошибка: Проверьте правильность аргументов"
+        except exceptions.dbUserNotFound:
+            data["message"] = "Ошибка: Не удалось найти аккаунт в базе, попробуйте указать сервер и ник.\n Например: !{} bancho cookiezi".format(handler.key)
+        except exceptions.UserNotFound:
+            data["message"] = "Ошибка: Нет данных, возможно, что пользователь в бане, либо нет скоров за последние 24 часа"
+        except exceptions.CustomException as e:
+            data["message"] = "Ошибка: {}".format(e.args[0])
+        except Exception as e:
+            data["peer_id"] = 236965366
+            if data.get("message") is not None:
+                data["message"] += "\nОшибка: {}".format(e.args)
+            else:
+                data["message"] = "\nОшибка: {}\nАвтор: *id{}\nСообщение: {}".format(e.args[0], event.obj.from_id, event.obj.text)
+        if data is not None:
+            try:
+                self.sendMsg(**data)
+            except Exception as e:
+                logging.error(e)
                     
