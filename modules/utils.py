@@ -126,7 +126,7 @@ def setServerUsername(src, text):
     server = username = None
     limit = 1
     if text is not None:
-        r = re.search(r'(bancho|gatari)(?:\s+)(\S+)(?:\s+)?(\d+)?$', text)
+        r = re.search(r'(bancho|gatari)?(?:\s)?(.*?)(?:\s)?(\d+)?$', text)
         if r:
             server = r.group(1)
             username = r.group(2)
