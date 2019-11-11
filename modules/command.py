@@ -8,7 +8,7 @@ class Command(ABC):
     @staticmethod
     def message(text=None, attachments=None):
         return {"message" : str(text), "attachments" : attachments}
-
+    
     @abstractmethod
     def execute(self):
         pass

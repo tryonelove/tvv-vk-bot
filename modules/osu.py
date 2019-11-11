@@ -13,17 +13,13 @@ class OsuStatsPicture(Command):
 
     def setServerUrl(self):
         if self._server == "gatari":
-            self._server = "http://sig.gatari.pw/sig.php?colour={}&uname={}&xpbar&xpbarhex&darktriangles&pp=1&mode={}".format(
-                random.choice(self.sig_colors), self._username, self._mode)
+            self._server = "http://sig.gatari.pw/sig.php?colour={}&uname={}&xpbar&xpbarhex&darktriangles&pp=1&mode={}"
         elif self._server == "bancho":
-            self._server = 'http://134.209.249.44:5000/sig?{}&colour={}&uname={}&xpbar&xpbarhex&darktriangles&pp=1&mode={}'.format(
-                random.randint(1, 1000), random.choice(self.sig_colors), self._username, self._mode)
-
-    def getVkPicture(self):
-        url = utils.uploadPicture(self._upload, self._server, decode_content=True)
-        return url
+            self._server = 'http://134.209.249.44:5000/sig?{}&colour={}&uname={}&xpbar&xpbarhex&darktriangles&pp=1&mode={}'
 
     def execute(self):
         self.setServerUrl()
-        picture = self.getVkPicture()
-        return self.message(attachments=picture.format())
+        picture = utils.uploadPicture(self._upload, self._server, decode_content=True)
+        if self._server == "gatari":
+            return self.message(attachments=picture.format(random.randint(1, 1000), random.choice(self.sig_colors), self._username, self._mode))
+        return self.message(attachments=picture.format(random.choice(self.sig_colors), self._username, self._mode))

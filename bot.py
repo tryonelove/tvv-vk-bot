@@ -7,6 +7,7 @@ import time
 import sqlite3
 import threading
 import invoker
+import config
 
 class VkBotLongPollFix(VkBotLongPoll):
     def listen(self):
@@ -33,3 +34,7 @@ class Bot:
                 event_thread = threading.Thread(target=invoker.Invoker(self.vk, event).invoke)
                 event_thread.start()
                 event_thread.join()
+
+if __name__=="__main__":
+    bot = Bot(config.API_KEY, config.GROUP_ID)
+    bot.start()

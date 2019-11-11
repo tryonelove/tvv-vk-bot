@@ -1,10 +1,12 @@
 import modules
 import logging
+from vk_api import VkUpload
 
 class Invoker:
     def __init__(self, vk, event):
         self.vk = vk
         self.event = event.obj
+        self.upload = VkUpload(self.vk)
         self.cmd = None
         if self.is_command():
             logging.info("It's a command, going next")
@@ -23,9 +25,8 @@ class Invoker:
             self.cmd = modules.fun.Roll(self._value)
         elif self._key in ["weather", "погода"]:
             self.cmd = modules.fun.Weather(self._value)
-        elif self._key in ["osu", "осу"]:
-            raise NotImplementedError()
-            # self.cmd = modules.osu.OsuStatsPicture
+        elif self._key in ["osu", "осу"]:            
+            self.cmd = modules.osu.OsuStatsPicture(self.upload, server)
 
     def set_command(self):
         message = self.event.text.split()
