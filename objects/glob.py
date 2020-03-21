@@ -1,0 +1,2 @@
+vk = None
+upload = None
