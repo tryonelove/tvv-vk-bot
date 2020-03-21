@@ -1,25 +1,53 @@
 import random
 from .command import Command
 from . import utils
+from objects import glob
+import logging
+from helpers import checks
 
-class OsuStatsPicture(Command):
-    sig_colors = ['black', 'red', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink', 'hex2255ee']
-    def __init__(self, upload, server, username, mode):
-        Command.__init__(self)
-        self._server = server
-        self._username = username
-        self._mode = mode
-        self._upload = upload
 
-    def setServerUrl(self):
-        if self._server == "gatari":
-            self._server = "http://sig.gatari.pw/sig.php?colour={}&uname={}&xpbar&xpbarhex&darktriangles&pp=1&mode={}"
-        elif self._server == "bancho":
-            self._server = 'http://134.209.249.44:5000/sig?{}&colour={}&uname={}&xpbar&xpbarhex&darktriangles&pp=1&mode={}'
+class StatsPicture(Command):
+    SIG_COLORS = ('black', 'red', 'orange', 'yellow', 'green',
+                  'blue', 'purple', 'pink', 'hex2255ee')
+    SERVERS = {
+        "gatari": "http://sig.gatari.pw/sig.php?colour={}&uname={}&xpbar&xpbarhex&darktriangles&pp=1&mode={}",
+        "bancho": "http://134.209.249.44:5000/sig?colour={}&uname={}&xpbar&xpbarhex&darktriangles&pp=1&mode={}&{}"
+    }
+
+    def __init__(self, server, *username):
+        super().__init__()
+        self._pictureUrl = self.SERVERS.get(server)
+        self._username = " ".join(username)
+        self._mode = None
 
     def execute(self):
-        self.setServerUrl()
-        picture = utils.uploadPicture(self._upload, self._server, decode_content=True)
-        if self._server == "gatari":
-            return self.message(attachments=picture.format(random.randint(1, 1000), random.choice(self.sig_colors), self._username, self._mode))
-        return self.message(attachments=picture.format(random.choice(self.sig_colors), self._username, self._mode))
+        pic = self._pictureUrl.format(random.choice(
+            self.SIG_COLORS), self._username, self._mode, random.random())
+        logging.info(pic)
+        picture = utils.upload_picture(pic, decode_content=True)
+        logging.info(picture)
+        return self.message(attachments=picture)
+
+
+class OsuPicture(StatsPicture):
+    def __init__(self, *args):
+        super().__init__(*args)
+        self._mode = 0
+
+
+class TaikoPicture(StatsPicture):
+    def __init__(self, *args):
+        super().__init__(*args)
+        self._mode = 1
+
+
+class CtbPicture(StatsPicture):
+    def __init__(self, *args):
+        super().__init__(*args)
+        self._mode = 2
+
+
+class ManiaPicture(StatsPicture):
+    def __init__(self, *args):
+        super().__init__(*args)
+        self._mode = 3
