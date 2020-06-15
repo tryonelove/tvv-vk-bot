@@ -1,16 +1,10 @@
 from abc import ABC, abstractmethod
 import requests
-
+from helpers import message
 
 class Command(ABC):
     def __init__(self):
-        self.session = requests.Session()
-
-    @staticmethod
-    def message(text=None, attachments=None):
-        if isinstance(text, int):
-            text = str(text)
-        return {"message": text, "attachment": attachments}
+        self.Message = message.Message
 
     @abstractmethod
     def execute(self):

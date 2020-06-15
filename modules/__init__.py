@@ -1,1 +1,1 @@
-from . import fun, osu
+from . import osu, fun, levels, staticCommand
