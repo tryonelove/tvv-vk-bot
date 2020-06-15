@@ -12,15 +12,12 @@ class GetLevel(Command):
         executed = glob.c.execute(q, (self._user_id,)).fetchone()
         if executed:
             _, experience, lvl_start = executed
+            exp_required = (lvl_start+1)**3
             user_info = glob.vk.users.get(user_id=int(self._user_id), name_case="nom")[0]
             full_name = f"{user_info['first_name']} {user_info['last_name']}"
-            message = "{}, ваша статистика:\n  \
-                            Уровень: {}\n \
-                            Опыт: {}/{}XP".format(
-                            full_name, 
-                            lvl_start,
-                            experience, 
-                            (lvl_start+1)**3)
+            message = f"{full_name}, ваша статистика:\n  \
+                            Уровень: {lvl_start}\n \
+                            Опыт: {experience}/{exp_required}XP"
             return message
 
     def execute(self):
@@ -43,10 +40,10 @@ class GetLeaderboard(Command):
             users = glob.vk.users.get(user_ids=user_ids)
             for user_index, _ in enumerate(leaderboard):
                 rank = user_index+1
-                full_name = "{} {}".format(users[user_index]["first_name"], users[user_index]["last_name"])
+                full_name = f"{users[user_index]['first_name']} {users[user_index]['last_name']}"
                 exp = leaderboard[user_index][1]
                 level = leaderboard[user_index][2]
-                text+= '#{rank} {full_name} {experience}XP ({level}lvl)\n'.format(rank=rank,full_name = full_name, experience = exp, level=level)
+                text+= f'#{rank} {full_name} {exp}XP ({level}lvl)\n'
             return text
 
         def execute(self):
