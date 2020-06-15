@@ -1,4 +1,4 @@
-from .command import Command
+from commands.command import Command
 from objects import glob
 
 class StaticCommand(Command):

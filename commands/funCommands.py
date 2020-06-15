@@ -1,6 +1,6 @@
 import json
 import random
-from .command import Command
+from commands.command import Command
 import requests
 
 class Weather(Command):

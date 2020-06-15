@@ -1,12 +1,17 @@
-import modules
+import commands
 
 commands_list = {
-    "roll": modules.fun.Roll,
-    "ролл": modules.fun.Roll,
-    "weather": modules.fun.Weather,
-    "погода": modules.fun.Weather,
-    "osu": modules.osu.OsuPicture,
-    "taiko": modules.osu.TaikoPicture,
-    "mania": modules.osu.ManiaPicture,
-    "ctb": modules.osu.CtbPicture,
+    "roll": commands.funCommands.Roll,
+    "ролл": commands.funCommands.Roll,
+    "weather": commands.funCommands.Weather,
+    "погода": commands.funCommands.Weather,
+    "osu": commands.osuCommands.OsuPicture,
+    "taiko": commands.osuCommands.TaikoPicture,
+    "mania": commands.osuCommands.ManiaPicture,
+    "ctb": commands.osuCommands.CtbPicture,
+    "level": commands.levelCommands.GetLevel,
+    "lvl": commands.levelCommands.GetLevel,
+    "лвл": commands.levelCommands.GetLevel,
+    "leaderboard": commands.levelCommands.GetLeaderboard,
+    "лидерборд": commands.levelCommands.GetLeaderboard,
 }
