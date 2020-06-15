@@ -1,7 +1,7 @@
 import modules
 import logging
 from objects import glob
-from commands import commands_list
+from helpers.commandsList import commands_list
 
 
 class Invoker:
