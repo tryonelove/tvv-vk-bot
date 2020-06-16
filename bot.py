@@ -26,7 +26,7 @@ class Bot:
 
 
 if __name__ == "__main__":
-    # bot = Bot(config.API_KEY_TEST, config.GROUP_ID_TEST)
-    bot = Bot(config.API_KEY, config.GROUP_ID)
+    bot = Bot(config.API_KEY_TEST, config.GROUP_ID_TEST)
+    # bot = Bot(config.API_KEY, config.GROUP_ID)
 
     bot.start()

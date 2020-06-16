@@ -8,7 +8,7 @@ class GetLevel(Command):
         self._chat_id = chat_id
 
     def _get_level(self):
-        q = "SELECT * FROM konfa_{} WHERE id=?".format(self._chat_id)
+        q = f"SELECT * FROM konfa_{self._chat_id} WHERE id=?"
         executed = glob.c.execute(q, (self._user_id,)).fetchone()
         if executed:
             _, experience, lvl_start = executed

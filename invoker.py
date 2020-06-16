@@ -31,17 +31,20 @@ class Invoker:
     def _invoke_command(self):
         if self.cmd is None:
             return
-        logging.info("Sending a message")
+        logging.info("Sending a message.")
 
         # Check if it's a custom command or built-in one
         if issubclass(self.cmd, commands.staticCommands.StaticCommand):
-            logging.info("Static command")
+            logging.info("Static command.")
             command_object = self.cmd(self._key)
         elif issubclass(self.cmd, (commands.levelCommands.GetLevel, commands.levelCommands.GetLeaderboard)):
-            logging.info("Level command")
+            logging.info("Level command.")
             command_object = self.cmd(self.event.from_id, self.event.peer_id)
+        elif issubclass(self.cmd, commands.commandManager.CommandManager):
+            logging.info("Commands managing.")
+            command_object = self.cmd(self.event)
         else:
-            logging.info("Other command")
+            logging.info("Other command.")
             command_object = self.cmd(self._value)
         executed = command_object.execute()
         if executed:
@@ -59,7 +62,7 @@ class Invoker:
             logging.info("Command has been set: {}".format(self._key))
             self._get_command()
             logging.info("Got a command: {}".format(self.cmd))
-
+            logging.info(self.event)
             self._invoke_command()
         else:
             self._invoke_level()

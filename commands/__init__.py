@@ -1,1 +1,1 @@
-from . import staticCommands, funCommands, osuCommands, levelCommands
+from . import staticCommands, funCommands, osuCommands, levelCommands, commandManager

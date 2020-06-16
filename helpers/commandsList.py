@@ -14,4 +14,6 @@ commands_list = {
     "лвл": commands.levelCommands.GetLevel,
     "leaderboard": commands.levelCommands.GetLeaderboard,
     "лидерборд": commands.levelCommands.GetLeaderboard,
+    "addcom": commands.commandManager.AddCommand,
+    "delcom": commands.commandManager.DeleteCommand,
 }

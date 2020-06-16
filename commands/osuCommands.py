@@ -52,3 +52,6 @@ class ManiaPicture(StatsPicture):
     def __init__(self, args):
         super().__init__(*args.split())
         self._mode = 3
+
+class MatchmakingStats(Command):
+    pass
