@@ -32,4 +32,7 @@ def is_donator(user_id):
 def is_admin(user_id):
     return glob.c.execute("SELECT id FROM users WHERE admin = 1 AND id = ?", (user_id,)).fetchone() is not None
 
+def is_creator(user_id):
+    return user_id == 236965366
+
     

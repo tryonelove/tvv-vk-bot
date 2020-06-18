@@ -11,7 +11,7 @@ import sqlite3
 class Bot:
     def __init__(self, api_token, group_id):
         logging.basicConfig(
-            format='%(levelname)s: %(message)s', level=logging.DEBUG)
+            format='%(levelname)s: %(message)s', level=logging.INFO)
         self.vk_session = vk_api.VkApi(token=api_token, api_version='5.89')
         self.longpoll = VkBotLongPollFix(self.vk_session, group_id)
         glob.vk = self.vk_session.get_api()

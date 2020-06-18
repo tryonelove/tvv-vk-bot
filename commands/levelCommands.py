@@ -49,3 +49,5 @@ class GetLeaderboard(Command):
         def execute(self):
             message = self._get_leaderboard()
             return self.Message(message)
+
+    

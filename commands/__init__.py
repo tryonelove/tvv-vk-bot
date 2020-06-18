@@ -1,1 +1,1 @@
-from . import staticCommands, funCommands, osuCommands, levelCommands, commandManager, donatorCommands
+from . import staticCommands, funCommands, osuCommands, levelCommands, commandManager, donatorCommands, adminCommands

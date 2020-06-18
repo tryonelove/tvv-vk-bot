@@ -43,12 +43,12 @@ class Invoker:
             command_object = self.cmd(self.event.from_id, self.event.peer_id)
         elif issubclass(self.cmd, commands.commandManager.CommandManager):
             logging.info("Commands managing.")
-            if not utils.is_donator(self.event.from_id) or utils.is_admin(self.event.from_id):
+            if not utils.is_donator(self.event.from_id) or not utils.is_admin(self.event.from_id):
                 return
             command_object = self.cmd(self.event)
-        elif issubclass(self.cmd, commands.donatorCommands.DonatorManager):
-            logging.info("Donators managing.")
-            if utils.is_admin(self.event.from_id):
+        elif issubclass(self.cmd, (commands.donatorCommands.DonatorManager, commands.adminCommands.AdminManager)):
+            logging.info("Admin managing.")
+            if not utils.is_creator(self.event.from_id):
                 return
             command_object = self.cmd(self._value)
         else:

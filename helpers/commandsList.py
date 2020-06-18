@@ -18,4 +18,6 @@ commands_list = {
     "delcom": commands.commandManager.DeleteCommand,
     "role": commands.donatorCommands.GetRole,
     "add_donator": commands.donatorCommands.AddDonator,
+    "op": commands.adminCommands.Op,
+    "deop": commands.adminCommands.Deop,
 }
