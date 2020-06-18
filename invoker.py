@@ -2,8 +2,9 @@ import modules
 import logging
 from objects import glob
 import commands
-from modules import levels
+from modules import levels, utils
 from helpers import commandsList
+
 
 class Invoker:
     def __init__(self, event):
@@ -42,7 +43,14 @@ class Invoker:
             command_object = self.cmd(self.event.from_id, self.event.peer_id)
         elif issubclass(self.cmd, commands.commandManager.CommandManager):
             logging.info("Commands managing.")
+            if not utils.is_donator(self.event.from_id) or utils.is_admin(self.event.from_id):
+                return
             command_object = self.cmd(self.event)
+        elif issubclass(self.cmd, commands.donatorCommands.DonatorManager):
+            logging.info("Donators managing.")
+            if utils.is_admin(self.event.from_id):
+                return
+            command_object = self.cmd(self._value)
         else:
             logging.info("Other command.")
             command_object = self.cmd(self._value)
@@ -51,12 +59,12 @@ class Invoker:
             self._send_message(executed)
 
     def _invoke_level(self):
-        logging.debug("User_id: {}".format(self.event.from_id))
-        logging.debug("Peer_id: {}".format(self.event.peer_id))
+        logging.info("Changing user level.")
         levelSystem = levels.LevelSystem(self.event.from_id, self.event.peer_id)
         levelSystem.level_check(self.event.text)
 
     def invoke(self):
+        self._invoke_level()
         if self._is_command():
             self._set_key_value()
             logging.info("Command has been set: {}".format(self._key))
@@ -64,6 +72,4 @@ class Invoker:
             logging.info("Got a command: {}".format(self.cmd))
             logging.info(self.event)
             self._invoke_command()
-        else:
-            self._invoke_level()
 

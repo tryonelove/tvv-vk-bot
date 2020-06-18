@@ -5,7 +5,8 @@ from helpers import messageObject
 class Command(ABC):
     def __init__(self):
         self.Message = messageObject.MessageObject
-
+        self.access_level = 0
+        
     @abstractmethod
     def execute(self):
         pass

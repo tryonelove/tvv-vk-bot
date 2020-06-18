@@ -19,6 +19,7 @@ class GetRole(DonatorManager):
         return glob.c.execute("SELECT expires, role_name FROM donators WHERE id=?", (self._user_id,)).fetchone()
 
     def execute(self):
+        logging.info("Getting user role.")
         message = "Роль: "
         if utils.is_admin(self._user_id):
             role = "админ"
@@ -68,3 +69,24 @@ class AddDonator(DonatorManager):
             self._add_new_donator()
         return self.Message(self.RESPONSE.format(self._user_id))
 
+
+class RemoveDonator(DonatorManager):
+    SUCCESS = "Пользователь {} был удалён из списка донатеров."
+    NOT_DONATOR = "Пользователь {} не является донатером."
+    def __init__(self, args):
+        super().__init__(args)
+
+    def _remove_completely(self):
+        glob.c.execute("DELETE FROM donators WHERE id=?",(self._user_id,))
+        glob.db.commit()
+
+    def _decrease_duration(self):
+        # TODO
+        pass
+
+    def execute(self):
+        logging.info("Removing from donators.")
+        if not utils.is_donator(self._user_id):
+            return self.Message(self.NOT_DONATOR.format(self._user_id))
+        self._remove_completely()        
+        return self.Message(self.SUCCESS.format(self._user_id))
