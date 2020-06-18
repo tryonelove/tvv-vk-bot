@@ -1,6 +1,7 @@
 import requests
 from objects import glob
 
+
 def upload_picture(url, decode_content = False):
     """
     Upload image to the server
@@ -24,3 +25,11 @@ def find_largest_attachment(attachments):
             largest = larger
             largest_pic = image["url"]
     return largest_pic
+
+def is_donator(user_id):
+    return glob.c.execute("SELECT id FROM donators WHERE id = ?", (user_id,)).fetchone() is not None
+
+def is_admin(user_id):
+    return glob.c.execute("SELECT id FROM users WHERE admin = 1 AND id = ?", (user_id,)).fetchone() is not None
+
+    

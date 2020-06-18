@@ -16,4 +16,6 @@ commands_list = {
     "лидерборд": commands.levelCommands.GetLeaderboard,
     "addcom": commands.commandManager.AddCommand,
     "delcom": commands.commandManager.DeleteCommand,
+    "role": commands.donatorCommands.GetRole,
+    "add_donator": commands.donatorCommands.AddDonator,
 }

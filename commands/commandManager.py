@@ -7,6 +7,7 @@ class CommandManager(Command):
     def __init__(self, event):
         super().__init__()
         self._event = event
+        self._author_id = self._event.from_id
         self._key = None
         self._value = None
         self._attachments = None
@@ -30,7 +31,8 @@ class CommandManager(Command):
 class AddCommand(CommandManager):
     def __init__(self, event):
         super().__init__(event)
-        self._author_id = self._event.from_id
+        self._value = None
+        self._attachments = None
 
     def execute(self):
         q = "INSERT OR REPLACE INTO commands VALUES (?, ?, ?, ?)"
@@ -42,7 +44,6 @@ class AddCommand(CommandManager):
 class DeleteCommand(CommandManager):
     def __init__(self, event):
         super().__init__(event)
-        self._author_id = self._event.from_id
 
     def execute(self):
         q = "DELETE FROM commands WHERE key = ?"
