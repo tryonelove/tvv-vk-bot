@@ -1,5 +1,6 @@
 import requests
 from objects import glob
+from constants.roles import Roles
 
 
 def upload_picture(url, decode_content = False):
@@ -26,13 +27,12 @@ def find_largest_attachment(attachments):
             largest_pic = image["url"]
     return largest_pic
 
-def is_donator(user_id):
-    return glob.c.execute("SELECT id FROM donators WHERE id = ?", (user_id,)).fetchone() is not None
+def get_role(user_id):
+    return glob.c.execute("SELECT role FROM users WHERE id = ?", (user_id,)).fetchone()[0]
 
-def is_admin(user_id):
-    return glob.c.execute("SELECT id FROM users WHERE admin = 1 AND id = ?", (user_id,)).fetchone() is not None
+def has_role(user_id, required_role):
+    role = get_role(user_id)
+    return role & required_role.value > 0
 
 def is_creator(user_id):
     return user_id == 236965366
-
-    

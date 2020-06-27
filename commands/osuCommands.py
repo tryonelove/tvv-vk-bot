@@ -3,8 +3,7 @@ import logging
 from commands.command import Command
 from modules import utils, banchoApi
 from objects import glob
-from helpers import checks
-from constants.const import Servers
+from constants import servers
 
 
 class StatsPicture(Command):
@@ -53,5 +52,7 @@ class ManiaPicture(StatsPicture):
         super().__init__(*args.split())
         self._mode = 3
 
+
 class MatchmakingStats(Command):
-    pass
+    def __init__(self):
+        super().__init__()

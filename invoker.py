@@ -4,6 +4,7 @@ from objects import glob
 import commands
 from modules import levels, utils
 from helpers import commandsList
+from constants.roles import Roles 
 
 
 class Invoker:
@@ -33,8 +34,6 @@ class Invoker:
         if self.cmd is None:
             return
         logging.info("Sending a message.")
-
-        # Check if it's a custom command or built-in one
         if issubclass(self.cmd, commands.staticCommands.StaticCommand):
             logging.info("Static command.")
             command_object = self.cmd(self._key)
@@ -43,7 +42,7 @@ class Invoker:
             command_object = self.cmd(self.event.from_id, self.event.peer_id)
         elif issubclass(self.cmd, commands.commandManager.CommandManager):
             logging.info("Commands managing.")
-            if not utils.is_donator(self.event.from_id) or not utils.is_admin(self.event.from_id):
+            if not utils.has_role(self.event.from_id, Roles.DONATOR | Roles.ADMIN):
                 return
             command_object = self.cmd(self.event)
         elif issubclass(self.cmd, (commands.donatorCommands.DonatorManager, commands.adminCommands.AdminManager)):

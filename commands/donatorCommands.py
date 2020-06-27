@@ -1,8 +1,10 @@
 from commands.command import Command
 import datetime
 from objects import glob
+from constants.roles import Roles 
 from modules import utils
 import logging
+
 
 class DonatorManager(Command):
     def __init__(self, args):
@@ -21,12 +23,12 @@ class GetRole(DonatorManager):
     def execute(self):
         logging.info("Getting user role.")
         message = "Роль: "
-        if utils.is_admin(self._user_id):
+        if utils.has_role(self._user_id, Roles.ADMIN):
             role = "админ"
-        elif utils.is_donator(self._user_id):
+        elif utils.has_role(self._user_id, Roles.DONATOR):
             expires, role = self._get_expire_date()
             expires = datetime.datetime.strptime(expires, "%Y-%m-%d %H:%M:%S")
-            role+=f"\nВы будете донатером до {expires}"
+            role+= f"\nВы будете донатером до {expires}"
         else:
             role = "юзер"
         message+=role
@@ -48,9 +50,9 @@ class AddDonator(DonatorManager):
     
     def _add_new_donator(self):
         duration = self._donation_sum // 25
-        now = datetime.datetime.now()
-        now += datetime.timedelta(days=+31*duration)
-        glob.c.execute("INSERT INTO donators VALUES(?,?,?)", (self._user_id, now.strftime("%Y-%m-%d %H:%M:%S"), self._role_name))
+        q = f"INSERT INTO donators VALUES(?, (SELECT strftime('%s','now', '+{duration} month')), ?)"
+        glob.c.execute(q, (self._user_id, self._role_name))
+        glob.c.execute("UPDATE users SET role = ?", (Roles.DONATOR.value,))
         glob.db.commit()
 
     def _add_existing_donator(self):
@@ -62,8 +64,8 @@ class AddDonator(DonatorManager):
         glob.db.commit()
 
     def execute(self):
-        logging.info("Adding a donator.")
-        if utils.is_donator(self._user_id):
+        logging.info(f"Adding a donator: {self._user_id}.")
+        if utils.has_role(self._user_id, Roles.DONATOR):
             self._add_existing_donator()
         else:
             self._add_new_donator()
@@ -86,7 +88,7 @@ class RemoveDonator(DonatorManager):
 
     def execute(self):
         logging.info("Removing from donators.")
-        if not utils.is_donator(self._user_id):
+        if not utils.has_role(self._user_id, Roles.DONATOR):
             return self.Message(self.NOT_DONATOR.format(self._user_id))
         self._remove_completely()        
         return self.Message(self.SUCCESS.format(self._user_id))

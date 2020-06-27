@@ -1,5 +1,7 @@
 from objects import glob
 from . import utils
+import logging
+
 
 class LevelSystem:
     def __init__(self, user_id, chat_id):
@@ -11,11 +13,11 @@ class LevelSystem:
             return
         glob.c.execute("""
             CREATE TABLE IF NOT EXISTS konfa_{} 
-            (id INTEGER PRIMARY KEY, experience FLOAT, level INTEGER, 
+            (id INTEGER PRIMARY KEY, experience FLOAT DEFAULT 0, level INTEGER DEFAULT 1, 
             FOREIGN KEY(id) REFERENCES users(id)
             ON DELETE CASCADE ON UPDATE CASCADE)
         """.format(self._chat_id))
-        self.update_data(self._chat_id)
+        self.update_data()
         k = self.calc_exp(message)
         self.add_exp(k)
 
@@ -35,21 +37,15 @@ class LevelSystem:
                 k += 1
         return k
 
-    def update_data(self, user_id):
-        q = "SELECT * FROM konfa_{} WHERE id=?".format(self._chat_id)
+    def update_data(self):
+        q = f"SELECT * FROM konfa_{self._chat_id} WHERE id=?"
         glob.c.execute(q, (self._user_id,))
         if not glob.c.fetchall():
-            data = glob.vk.users.get(user_ids=self._user_id)[0]
-            full_name =  data["first_name"] + " " + data['last_name']
-            glob.c.execute("INSERT OR IGNORE INTO users(id, name) VALUES(?, ?)", (user_id, full_name))
-            glob.c.execute("INSERT OR IGNORE INTO konfa_{} VALUES(?, ?, ?)".format(self._chat_id), (user_id, 0, 1))
+            glob.c.execute("INSERT OR IGNORE INTO users(id) VALUES(?)", (self._user_id,))
+            glob.c.execute(f"INSERT OR IGNORE INTO konfa_{self._chat_id}(id) VALUES(?)", (self._user_id,))
             glob.db.commit()
 
     def add_exp(self, exp):
-        q = "SELECT * FROM konfa_{} WHERE id=?".format(self._chat_id)
-        q_update = "UPDATE konfa_{} SET experience=? WHERE id=?".format(self._chat_id)
-        glob.c.execute(q, (self._user_id,))
-        old = glob.c.fetchone()[1]
-        new_exp = old + exp
-        glob.c.execute(q_update, (new_exp, self._user_id))
+        q = f"UPDATE konfa_{self._chat_id} SET experience=experience + ? WHERE id=?"
+        glob.c.execute(q, (exp, self._user_id))
         glob.db.commit()

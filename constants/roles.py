@@ -1,6 +1,7 @@
-from enum import Enum
+from enum import IntFlag
 
-class Roles(Enum):
-    USER = 0,
-    DONATOR = 1,
-    ADMIN = 2
+class Roles(IntFlag):
+    RESTRICTED = 0,
+    USER = 1,
+    DONATOR = 2,
+    ADMIN = 4

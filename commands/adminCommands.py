@@ -11,7 +11,7 @@ class Op(AdminManager):
         super().__init__(args)
 
     def execute(self):
-        q = "UPDATE users SET admin = 1 WHERE id = ?"
+        q = "UPDATE users SET role = 1 WHERE id = ?"
         glob.c.execute(q, (self._user_id,))
         glob.db.commit()
         return self.Message(f"Пользователь {self._user_id} был добавлен как админ.")
@@ -22,7 +22,7 @@ class Deop(AdminManager):
         super().__init__(args)
 
     def execute(self):
-        q = "UPDATE users SET admin = 0 WHERE id = ?"
+        q = "UPDATE users SET role = 1 WHERE id = ?"
         glob.c.execute(q, (self._user_id))
         glob.db.commit()
         return self.Message(f"Пользователь {self._user_id} был удалён из админов.")
