@@ -1,6 +1,6 @@
 from commands.command import Command
 from objects import glob
-from modules import utils
+from helpers import utils
 import logging
 
 class CommandManager(Command):

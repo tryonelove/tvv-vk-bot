@@ -1,7 +1,7 @@
 import random
 import logging
 from commands.command import Command
-from modules import utils, banchoApi
+from helpers import utils, banchoApi
 from objects import glob
 from constants import servers
 

@@ -1,8 +1,9 @@
 from commands.command import Command
 from objects import glob
 
+
 class StaticCommand(Command):
-    def __init__(self, key): 
+    def __init__(self, key):
         super().__init__()
         self._key = key
 
@@ -12,5 +13,3 @@ class StaticCommand(Command):
             (self._key,)).fetchone()
         if message:
             return self.Message(*message)
-
-

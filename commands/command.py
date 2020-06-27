@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
 import requests
-from helpers import messageObject
+from objects import message
 
 class Command(ABC):
     def __init__(self):
-        self.Message = messageObject.MessageObject
+        self.Message = message.MessageObject
 
     @abstractmethod
     def execute(self):

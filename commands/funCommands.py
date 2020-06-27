@@ -3,6 +3,7 @@ import random
 from commands.command import Command
 import requests
 
+
 class Weather(Command):
     WEATHER_STATE = {
         "Clear": "Ясно ☀ ",
@@ -21,7 +22,7 @@ class Weather(Command):
 
     def execute(self):
         r = requests.get("http://api.openweathermap.org/data/2.5/weather",
-                             params={"q": self._city, "APPID": "81d59d3e4bcd5bd5b69f6f95250213ee"})
+                         params={"q": self._city, "APPID": "81d59d3e4bcd5bd5b69f6f95250213ee"})
         if r.status_code != 200:
             raise NotImplementedError()
         js = r.json()

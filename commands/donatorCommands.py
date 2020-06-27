@@ -1,8 +1,8 @@
 from commands.command import Command
 import datetime
 from objects import glob
-from constants.roles import Roles 
-from modules import utils
+from constants.roles import Roles
+from helpers import utils
 import logging
 
 
@@ -15,7 +15,7 @@ class DonatorManager(Command):
 
 class GetRole(DonatorManager):
     def __init__(self, args):
-        super().__init__(args)        
+        super().__init__(args)
 
     def _get_expire_date(self):
         return glob.c.execute("SELECT expires, role_name FROM donators WHERE id=?", (self._user_id,)).fetchone()
@@ -28,26 +28,27 @@ class GetRole(DonatorManager):
         elif utils.has_role(self._user_id, Roles.DONATOR):
             expires, role = self._get_expire_date()
             expires = datetime.datetime.fromtimestamp(expires)
-            role+= f"\nВы будете донатером до {expires}"
+            role += f"\nВы будете донатером до {expires}"
         else:
             role = "юзер"
-        message+=role
+        message += role
         return self.Message(message)
 
 
 class AddDonator(DonatorManager):
     RESPONSE = "Пользователь {} получил роль донатера."
+
     def __init__(self, args):
         super().__init__(args)
         self._donation_sum = self._parse_donation_sum()
-        self._role_name = self._parse_role_name() if len(self._args)>2 else None
+        self._role_name = self._parse_role_name() if len(self._args) > 2 else None
 
     def _parse_donation_sum(self):
         return int(self._args[1])
-            
+
     def _parse_role_name(self):
         return " ".join(self._args[2:])
-    
+
     def _add_new_donator(self):
         duration = self._donation_sum // 25
         q = f"INSERT INTO donators VALUES(?, (SELECT strftime('%s','now', '+{duration} month')), ?)"
@@ -73,11 +74,12 @@ class AddDonator(DonatorManager):
 class RemoveDonator(DonatorManager):
     SUCCESS = "Пользователь {} был удалён из списка донатеров."
     NOT_DONATOR = "Пользователь {} не является донатером."
+
     def __init__(self, args):
         super().__init__(args)
 
     def _remove_completely(self):
-        glob.c.execute("DELETE FROM donators WHERE id=?",(self._user_id,))
+        glob.c.execute("DELETE FROM donators WHERE id=?", (self._user_id,))
         glob.db.commit()
 
     def _decrease_duration(self):
@@ -88,5 +90,5 @@ class RemoveDonator(DonatorManager):
         logging.info("Removing from donators.")
         if not utils.has_role(self._user_id, Roles.DONATOR):
             return self.Message(self.NOT_DONATOR.format(self._user_id))
-        self._remove_completely()        
+        self._remove_completely()
         return self.Message(self.SUCCESS.format(self._user_id))

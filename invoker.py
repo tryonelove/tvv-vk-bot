@@ -1,10 +1,8 @@
-import modules
 import logging
-from objects import glob
 import commands
-from modules import levels, utils
-from helpers import commandsList
-from constants.roles import Roles 
+from objects import glob 
+from helpers import commandsList, utils, levels
+from constants.roles import Roles
 
 
 class Invoker:
@@ -16,7 +14,8 @@ class Invoker:
         return self.event.text.startswith("!")
 
     def _get_command(self):
-        self.cmd = commandsList.commands_list.get(self._key, commands.staticCommands.StaticCommand)
+        self.cmd = commandsList.commands_list.get(
+            self._key, commands.staticCommands.StaticCommand)
         logging.debug(self.cmd)
 
     def _set_key_value(self):
@@ -33,7 +32,6 @@ class Invoker:
     def _invoke_command(self):
         if self.cmd is None:
             return
-        logging.info("Sending a message.")
         if issubclass(self.cmd, commands.staticCommands.StaticCommand):
             logging.info("Static command.")
             command_object = self.cmd(self._key)
@@ -59,16 +57,14 @@ class Invoker:
 
     def _invoke_level(self):
         logging.info("Changing user level.")
-        levelSystem = levels.LevelSystem(self.event.from_id, self.event.peer_id)
+        levelSystem = levels.LevelSystem(
+            self.event.from_id, self.event.peer_id)
         levelSystem.level_check(self.event.text)
 
     def invoke(self):
         self._invoke_level()
         if self._is_command():
             self._set_key_value()
-            logging.info("Command has been set: {}".format(self._key))
+            logging.info(f"Command: {self._key}")
             self._get_command()
-            logging.info("Got a command: {}".format(self.cmd))
-            logging.info(self.event)
             self._invoke_command()
-
