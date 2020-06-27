@@ -27,7 +27,7 @@ class GetRole(DonatorManager):
             role = "админ"
         elif utils.has_role(self._user_id, Roles.DONATOR):
             expires, role = self._get_expire_date()
-            expires = datetime.datetime.strptime(expires, "%Y-%m-%d %H:%M:%S")
+            expires = datetime.datetime.fromtimestamp(expires)
             role+= f"\nВы будете донатером до {expires}"
         else:
             role = "юзер"
@@ -55,18 +55,16 @@ class AddDonator(DonatorManager):
         glob.c.execute("UPDATE users SET role = ?", (Roles.DONATOR.value,))
         glob.db.commit()
 
-    def _add_existing_donator(self):
+    def _increase_duration(self):
         duration = self._donation_sum // 25
-        expires = glob.c.execute("SELECT expires FROM donators WHERE id=?", (self._user_id,)).fetchone()[0]
-        date = datetime.datetime.strptime(expires, "%Y-%m-%d %H:%M:%S")
-        date += datetime.timedelta(days=+31*duration)
-        glob.c.execute("UPDATE donators SET expires = ? WHERE id = ?", (date.strftime("%Y-%m-%d %H:%M:%S"), self._user_id))
+        q = f"SELECT strftime('%s', (SELECT expires FROM donators WHERE id={self._user_id}), '+{duration} month')"
+        glob.c.execute(q)
         glob.db.commit()
 
     def execute(self):
         logging.info(f"Adding a donator: {self._user_id}.")
         if utils.has_role(self._user_id, Roles.DONATOR):
-            self._add_existing_donator()
+            self._increase_duration()
         else:
             self._add_new_donator()
         return self.Message(self.RESPONSE.format(self._user_id))
