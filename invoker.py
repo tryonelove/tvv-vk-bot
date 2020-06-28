@@ -24,7 +24,7 @@ class Invoker:
         self._value = " ".join(message[1:])
 
     def _send_message(self, message_object):
-        params = {"peer_id": self.event.peer_id}
+        params = {"peer_id": message_object.get("peer_id") or self.event.peer_id}
         params["message"] = message_object.message or None
         params["attachment"] = message_object.attachment or None
         glob.vk.messages.send(**params)

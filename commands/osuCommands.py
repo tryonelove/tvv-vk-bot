@@ -4,6 +4,7 @@ from commands.command import Command
 from helpers import utils, banchoApi
 from objects import glob
 from constants import servers
+import requests
 
 
 class StatsPicture(Command):
@@ -54,5 +55,28 @@ class ManiaPicture(StatsPicture):
 
 
 class MatchmakingStats(Command):
-    def __init__(self):
+    API = "https://osumatchmaking.c7x.dev/users/"
+
+    def __init__(self, username):
         super().__init__()
+        self._username = username
+
+    def _make_request(self):
+        session = requests.Session()
+        r = session.get(self.API + self._username)
+        if r.status_code != 200:
+            return None
+        return r.json()
+
+    def execute(self):
+        js = self._make_request()
+        username = js.get("osuName")
+        country = js.get("countryCode")
+        rank = js.get("rank")
+        rating = round(js.get("currentVisualRating"))
+        wins = js.get("wins")
+        losses = js.get("losses")
+        winrate = round((wins / (wins + losses)) * 100, 2)
+        winstreak = js.get("currentWinstreak")
+        response = f"{country} | {username} #{rank}\nRating: {rating}\nW/L: {wins}/{losses} | WR: {winrate}%\nWinstreak: {winstreak}"
+        return self.Message(response)

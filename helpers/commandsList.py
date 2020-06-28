@@ -20,4 +20,5 @@ commands_list = {
     "add_donator": commands.donatorCommands.AddDonator,
     "op": commands.adminCommands.Op,
     "deop": commands.adminCommands.Deop,
+    "mm": commands.osuCommands.MatchmakingStats
 }
