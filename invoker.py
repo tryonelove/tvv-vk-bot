@@ -1,6 +1,6 @@
 import logging
 import commands
-from objects import glob 
+from objects import glob
 from helpers import commandsList, utils, levels
 from constants.roles import Roles
 
@@ -24,30 +24,36 @@ class Invoker:
         self._value = " ".join(message[1:])
 
     def _send_message(self, message_object):
-        params = {"peer_id": message_object.get("peer_id") or self.event.peer_id}
+        params = {"peer_id": message_object.peer_id or self.event.peer_id}
         params["message"] = message_object.message or None
         params["attachment"] = message_object.attachment or None
         glob.vk.messages.send(**params)
 
     def _invoke_command(self):
-        if self.cmd is None:
+        if self.cmd is None or utils.has_role(self.event.from_id, Roles.RESTRICTED):
             return
         if issubclass(self.cmd, commands.staticCommands.StaticCommand):
             logging.info("Static command.")
-            command_object = self.cmd(self._key)
+            command_object = self.cmd(key=self._key)
+
         elif issubclass(self.cmd, (commands.levelCommands.GetLevel, commands.levelCommands.GetLeaderboard)):
             logging.info("Level command.")
-            command_object = self.cmd(self.event.from_id, self.event.peer_id)
+            command_object = self.cmd(
+                user_id=self.event.from_id, chat_id=self.event.peer_id)
+
         elif issubclass(self.cmd, commands.commandManager.CommandManager):
             logging.info("Commands managing.")
             if not utils.has_role(self.event.from_id, Roles.DONATOR | Roles.ADMIN):
                 return
-            command_object = self.cmd(self.event)
-        elif issubclass(self.cmd, (commands.donatorCommands.DonatorManager, commands.adminCommands.AdminManager)):
+            command_object = self.cmd(
+                message=self.event.text, attachments=self.event.attachments, author_id=self.event.from_id)
+
+        elif issubclass(self.cmd, (commands.interfaces.IDonatorManager, commands.interfaces.IAdminCommand)):
             logging.info("Admin managing.")
             if not utils.is_creator(self.event.from_id):
                 return
             command_object = self.cmd(self._value)
+
         else:
             logging.info("Other command.")
             command_object = self.cmd(self._value)

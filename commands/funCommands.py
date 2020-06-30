@@ -1,10 +1,13 @@
 import json
 import random
-from commands.command import Command
+from commands.interfaces import ICommand
 import requests
 
 
-class Weather(Command):
+class Weather(ICommand):
+    """
+    Weather command
+    """
     WEATHER_STATE = {
         "Clear": "Ясно ☀ ",
         "Cloudsovercast": "Переменная облачность ⛅ ",
@@ -40,7 +43,10 @@ class Weather(Command):
         return self.Message(text)
 
 
-class Roll(Command):
+class Roll(ICommand):
+    """
+    Roll a random number command
+    """
     def __init__(self, limit, *args):
         super().__init__()
         self._limit = self.__check_value(limit)

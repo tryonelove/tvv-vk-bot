@@ -1,8 +1,11 @@
-from commands.command import Command
+from commands.interfaces import ICommand
 from objects import glob
 
 
-class GetLevel(Command):
+class GetLevel(ICommand):
+    """
+    Get user level and experience
+    """
     def __init__(self, user_id, chat_id):
         super().__init__()
         self._user_id = user_id
@@ -27,7 +30,10 @@ class GetLevel(Command):
         return self.Message(message)
 
 
-class GetLeaderboard(Command):
+class GetLeaderboard(ICommand):
+    """
+    Get chat experience leaderboard
+    """
     def __init__(self, _, chat_id):
         super().__init__()
         self._chat_id = chat_id

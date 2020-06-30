@@ -8,6 +8,7 @@ import invoker
 import config
 import sqlite3
 
+
 class Bot:
     def __init__(self, api_token, group_id):
         logging.basicConfig(
@@ -28,5 +29,4 @@ class Bot:
 if __name__ == "__main__":
     bot = Bot(config.API_KEY_TEST, config.GROUP_ID_TEST)
     # bot = Bot(config.API_KEY, config.GROUP_ID)
-
     bot.start()

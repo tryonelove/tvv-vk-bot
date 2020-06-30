@@ -1,4 +1,4 @@
-from commands.command import Command
+from commands.interfaces import IDonatorManager
 import datetime
 from objects import glob
 from constants.roles import Roles
@@ -6,14 +6,11 @@ from helpers import utils
 import logging
 
 
-class DonatorManager(Command):
-    def __init__(self, args):
-        super().__init__()
-        self._args = args.split()
-        self._user_id = int(self._args[0])
+class GetRole(IDonatorManager):
+    """
+    Get user role command
+    """
 
-
-class GetRole(DonatorManager):
     def __init__(self, args):
         super().__init__(args)
 
@@ -35,7 +32,10 @@ class GetRole(DonatorManager):
         return self.Message(message)
 
 
-class AddDonator(DonatorManager):
+class AddDonator(IDonatorManager):
+    """
+    Add donator command
+    """
     RESPONSE = "Пользователь {} получил роль донатера."
 
     def __init__(self, args):
@@ -71,7 +71,10 @@ class AddDonator(DonatorManager):
         return self.Message(self.RESPONSE.format(self._user_id))
 
 
-class RemoveDonator(DonatorManager):
+class RemoveDonator(IDonatorManager):
+    """
+    Remove donator command
+    """
     SUCCESS = "Пользователь {} был удалён из списка донатеров."
     NOT_DONATOR = "Пользователь {} не является донатером."
 

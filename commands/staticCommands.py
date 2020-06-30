@@ -1,8 +1,11 @@
-from commands.command import Command
+from commands.interfaces import ICommand
 from objects import glob
 
 
-class StaticCommand(Command):
+class StaticCommand(ICommand):
+    """
+    Get a user-created command from database
+    """
     def __init__(self, key):
         super().__init__()
         self._key = key

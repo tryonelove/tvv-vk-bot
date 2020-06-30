@@ -34,5 +34,11 @@ def has_role(user_id, required_role):
     role = get_role(user_id)
     return role & required_role.value > 0
 
+def get_server_username(user_id):
+    """
+    Return server and username from database
+    """
+    return glob.c.execute("SELECT server, username FROM users WHERE id = ?", (user_id,)).fetchone()[0]
+
 def is_creator(user_id):
     return user_id == 236965366
