@@ -1,15 +1,13 @@
-from commands.interfaces import ICommand
+from commands.interfaces import ILevelCommand
 from objects import glob
 
 
-class GetLevel(ICommand):
+class GetLevel(ILevelCommand):
     """
     Get user level and experience
     """
-    def __init__(self, user_id, chat_id):
-        super().__init__()
-        self._user_id = user_id
-        self._chat_id = chat_id
+    def __init__(self, chat_id, user_id):
+        super().__init__(chat_id=chat_id, user_id=user_id)
 
     def _get_level(self):
         q = f"SELECT * FROM konfa_{self._chat_id} WHERE id=?"
@@ -30,13 +28,12 @@ class GetLevel(ICommand):
         return self.Message(message)
 
 
-class GetLeaderboard(ICommand):
+class GetLeaderboard(ILevelCommand):
     """
     Get chat experience leaderboard
     """
-    def __init__(self, _, chat_id):
-        super().__init__()
-        self._chat_id = chat_id
+    def __init__(self, chat_id, **kwargs):
+        super().__init__(chat_id=chat_id)
 
     def _get_leaderboard(self):
         text = "Топ 10 конфы:\n\n"

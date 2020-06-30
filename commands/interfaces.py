@@ -2,10 +2,12 @@ from abc import ABC, abstractmethod
 import requests
 from objects import message
 
+
 class ICommand(ABC):
     """
     Base command interface
     """
+
     def __init__(self, *args, **kwargs):
         self.Message = message.MessageObject
 
@@ -13,10 +15,12 @@ class ICommand(ABC):
     def execute(self):
         pass
 
+
 class IAdminCommand(ICommand):
     """
     Interface for admin-managing commands 
     """
+
     def __init__(self, user_id):
         super().__init__()
         self._user_id = user_id
@@ -26,14 +30,27 @@ class IOsuCommand(ICommand):
     """
     Interface for all osu! commands
     """
+
     def __init__(self):
         super().__init__()
+
+
+class ILevelCommand(ICommand):
+    """
+    Interface for level commands
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__()
+        self._user_id = kwargs.get("user_id")
+        self._chat_id = kwargs.get("chat_id")
 
 
 class ICommandManager(ICommand):
     """
     Interface for user-created commands
     """
+
     def __init__(self, **kwargs):
         super().__init__()
         self._message = kwargs.get("message")
@@ -54,6 +71,7 @@ class IDonatorManager(ICommand):
     """
     Interface to manage donators
     """
+
     def __init__(self, args):
         super().__init__()
         self._args = args.split()

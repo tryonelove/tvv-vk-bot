@@ -36,12 +36,12 @@ class Invoker:
             logging.info("Static command.")
             command_object = self.cmd(key=self._key)
 
-        elif issubclass(self.cmd, (commands.levelCommands.GetLevel, commands.levelCommands.GetLeaderboard)):
+        elif issubclass(self.cmd, (commands.interfaces.ILevelCommand)):
             logging.info("Level command.")
             command_object = self.cmd(
                 user_id=self.event.from_id, chat_id=self.event.peer_id)
 
-        elif issubclass(self.cmd, commands.commandManager.CommandManager):
+        elif issubclass(self.cmd, commands.interfaces.ICommandManager):
             logging.info("Commands managing.")
             if not utils.has_role(self.event.from_id, Roles.DONATOR | Roles.ADMIN):
                 return

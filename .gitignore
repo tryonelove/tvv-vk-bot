@@ -143,3 +143,6 @@ media
 static
 
 config.py
+
+test*
+*.db

@@ -78,7 +78,7 @@ class APIRequest(IOsuCommand):
 
 class MatchmakingStats(APIRequest):
     """
-    Get osu! matchmaking stats
+    Get osu! matchchmaking stats
     """
     def __init__(self, username):
         super().__init__()
@@ -97,4 +97,3 @@ class MatchmakingStats(APIRequest):
         winstreak = js.get("currentWinstreak")
         response = f"{country} | {username} #{rank}\nRating: {rating}\nW/L: {wins}/{losses} | WR: {winrate}%\nWinstreak: {winstreak}"
         return self.Message(response)
-
