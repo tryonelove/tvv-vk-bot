@@ -16,9 +16,11 @@ commands_list = {
     "лидерборд": commands.levelCommands.GetLeaderboard,
     "addcom": commands.commandManager.AddCommand,
     "delcom": commands.commandManager.DeleteCommand,
+    "osuset": commands.osuCommands.OsuSet,
     "role": commands.donatorCommands.GetRole,
     "add_donator": commands.donatorCommands.AddDonator,
     "op": commands.adminCommands.Op,
     "deop": commands.adminCommands.Deop,
-    "mm": commands.osuCommands.MatchmakingStats
+    "mm": commands.osuCommands.MatchmakingStats,
+    "top": commands.osuCommands.TopScoreCommand
 }

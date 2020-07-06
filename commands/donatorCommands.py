@@ -2,7 +2,7 @@ from commands.interfaces import IDonatorManager
 import datetime
 from objects import glob
 from constants.roles import Roles
-from helpers import utils
+from helpers.utils import Utils 
 import logging
 
 
@@ -20,9 +20,9 @@ class GetRole(IDonatorManager):
     def execute(self):
         logging.info("Getting user role.")
         message = "Роль: "
-        if utils.has_role(self._user_id, Roles.ADMIN):
+        if Utils.has_role(self._user_id, Roles.ADMIN):
             role = "админ"
-        elif utils.has_role(self._user_id, Roles.DONATOR):
+        elif Utils.has_role(self._user_id, Roles.DONATOR):
             expires, role = self._get_expire_date()
             expires = datetime.datetime.fromtimestamp(expires)
             role += f"\nВы будете донатером до {expires}"
@@ -64,7 +64,7 @@ class AddDonator(IDonatorManager):
 
     def execute(self):
         logging.info(f"Adding a donator: {self._user_id}.")
-        if utils.has_role(self._user_id, Roles.DONATOR):
+        if Utils.has_role(self._user_id, Roles.DONATOR):
             self._increase_duration()
         else:
             self._add_new_donator()
@@ -91,7 +91,7 @@ class RemoveDonator(IDonatorManager):
 
     def execute(self):
         logging.info("Removing from donators.")
-        if not utils.has_role(self._user_id, Roles.DONATOR):
+        if not Utils.has_role(self._user_id, Roles.DONATOR):
             return self.Message(self.NOT_DONATOR.format(self._user_id))
         self._remove_completely()
         return self.Message(self.SUCCESS.format(self._user_id))

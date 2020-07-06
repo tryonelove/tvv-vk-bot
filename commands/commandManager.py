@@ -1,6 +1,6 @@
 from commands.interfaces import ICommandManager
 from objects import glob
-from helpers import utils
+from helpers.utils import Utils
 import logging
 
 
@@ -19,10 +19,10 @@ class CommandManager(ICommandManager):
             self._value = " ".join(message[2:])
         if self._attachments:
             if self._attachments[0]["type"] == "photo":
-                largest_url = utils.find_largest_attachment(
+                largest_url = Utils.find_largest_attachment(
                     self._attachments[0]["photo"]["sizes"])
                 logging.info("Uploading picture: "+largest_url)
-                self._attachments = utils.upload_picture(largest_url)
+                self._attachments = Utils.upload_picture(largest_url)
         else:
             self._attachments = None
 
