@@ -28,6 +28,7 @@ class Invoker:
         params = {"peer_id": message_object.peer_id or self.event.peer_id}
         params["message"] = message_object.message or None
         params["attachment"] = message_object.attachment or None
+        logging.debug(params)
         if params["message"] is None and params["attachment"] is None:
             return
         glob.vk.messages.send(**params)
@@ -60,7 +61,7 @@ class Invoker:
         elif issubclass(self.cmd, commands.interfaces.IOsuCommand):
             logging.debug("osu! command")
             # Need to get server and username from db
-            params = Utils.get_osu_params(self._value, self.event.from_id)
+            params = Utils.get_osu_params(self._value, self.event.from_id) # server, username, user_id dict
             command_object = self.cmd(**params)
         else:
             logging.debug("Other command.")

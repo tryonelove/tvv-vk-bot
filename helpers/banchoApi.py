@@ -1,5 +1,6 @@
 import requests
 import json
+from config import OSU_API_KEY
 
 class BanchoApi:
     """
@@ -7,9 +8,9 @@ class BanchoApi:
     https://github.com/ppy/osu-api/wiki
     """
     API = "https://osu.ppy.sh/api/"
-    def __init__(self, key):
+    def __init__(self):
         self.session = requests.Session()
-        self.key = key
+        self.key = OSU_API_KEY
 
     def get_beatmaps(
         self, since=None, s=None, b=None,

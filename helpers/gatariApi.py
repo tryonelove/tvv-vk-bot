@@ -16,9 +16,9 @@ class GatariApi:
         if js:
             return js
 
-    def get_user(self, username):
+    def get_user(self, u):
         data = self.__make_request(self.NEW_API, "users/get", params = {
-            "id" : username
+            "id" : u
         })
         return data
 

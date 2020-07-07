@@ -1,12 +1,12 @@
 import random
 import logging
 from commands.interfaces import IOsuCommand
-from helpers import banchoApi, gatariApi, scoreFormatter
+from helpers import banchoApi, gatariApi, scoreFormatter, exceptions
 from helpers.utils import Utils
 from objects import glob
 from constants import servers
 import requests
-from config import OSU_API_KEY
+import pyttanko
 
 
 class StatsPicture(IOsuCommand):
@@ -23,7 +23,7 @@ class StatsPicture(IOsuCommand):
     def __init__(self, server, username, **kwargs):
         super().__init__(**kwargs)
         self._pictureUrl = self.SERVERS.get(server)
-        self._username = " ".join(username)
+        self._username = username
         self._mode = None
 
     def execute(self):
@@ -72,7 +72,7 @@ class MatchmakingStats(IOsuCommand):
     def execute(self):
         r = requests.get(self.API + self._username)
         if r.status_code != 200:
-            raise NotImplementedError()
+            raise exceptions.APIRequestError()
         js = r.json()
         username = js.get("osuName")
         country = js.get("countryCode")
@@ -90,15 +90,31 @@ class OsuSet(IOsuCommand):
     """
     Connect user_id to osu! account
     """
+
     def __init__(self, server, username, user_id, **kwargs):
         super().__init__()
         self._server = server
         self._username = username
         self._user_id = user_id
+        self._api = banchoApi.BanchoApi() if server == "bancho" else gatariApi.GatariApi()
+
+    def _get_real_username(self):
+        user = self._api.get_user(u=self._username)
+        if self._server == "bancho":
+            username = user[0]["username"]
+        else:
+            username = user["users"][0]["username"]
+        return username
 
     def execute(self):
-        glob.c.execute("INSERT OR IGNORE INTO users(id) VALUES(?)", (self._user_id,))
-        glob.c.execute("UPDATE users SET server=?, username=? WHERE id=?",(self._server, self._username, self._user_id))
+        try:
+            self._username = self._get_real_username()
+        except:
+            raise exceptions.UserNotFoundError()
+        glob.c.execute(
+            "INSERT OR IGNORE INTO users(id) VALUES(?)", (self._user_id,))
+        glob.c.execute("UPDATE users SET server=?, username=? WHERE id=?",
+                       (self._server, self._username, self._user_id))
         glob.db.commit()
         return self.Message(f"Аккаунт {self._server} {self._username} был успешно привязан к вашему айди.")
 
@@ -121,14 +137,17 @@ class TopScoreCommand(IOsuCommand):
 
 
 class BanchoTopScore:
+    """
+    Get bancho top score
+    """
+
     def __init__(self, username, limit):
-        super().__init__()
         self._username = username
         self._limit = int(limit)
-        self.api = banchoApi.BanchoApi(OSU_API_KEY)
+        self._api = banchoApi.BanchoApi()
 
     def get(self):
-        result = self.api.get_user_best(
+        result = self._api.get_user_best(
             u=self._username, limit=self._limit)[self._limit-1]
         beatmap_id = result['beatmap_id']
         combo = result['maxcombo']
@@ -140,12 +159,11 @@ class BanchoTopScore:
         ranking = result['rank']
         accuracy = Utils.calculate_accuracy(
             *map(int, (misses, count50, count100, count300)))
-        beatmap = Utils(api=self.api).get_cached_beatmap(beatmap_id)
+        beatmap = Utils(api=self._api).get_cached_beatmap(beatmap_id)
         max_combo = beatmap["max_combo"]
         title = f"{beatmap['artist']} - {beatmap['title']} [{beatmap['version']}]"
-        username = self.api.get_user(u=self._username)[0]["username"]
         score_message = scoreFormatter.Formatter(
-            username=username,
+            username=self._username,
             title=title,
             m=m,
             accuracy=accuracy,
@@ -159,12 +177,76 @@ class BanchoTopScore:
         score_background = beatmap["background_url"]
         return score_message, score_background
 
+
 class GatariTopScore:
-    def __init__(self, server, username, limit, **kwargs):
-        super().__init__()
+    def __init__(self, username, limit, **kwargs):
         self._username = username
-        self._limit = limit
-        self.api = gatariApi.GatariApi()
+        self._limit = int(limit)
+        self._api = gatariApi.GatariApi()
 
     def get(self):
-        return 1
+        user = self._api.get_user(self._username)
+        if not user["users"]:
+            raise exceptions.UserNotFoundError
+        user_id = user["users"][0]["id"]
+        best_scores = self._api.get_user_best(user_id, self._limit)
+        score = best_scores["scores"][self._limit-1]
+        beatmap_id = score["beatmap"]["beatmap_id"]
+        combo = score['max_combo']
+        misses = score['count_miss']
+        m = score['mods']
+        ranking = score['ranking']
+        accuracy = score["accuracy"]
+        beatmap = Utils(api=banchoApi.BanchoApi()
+                        ).get_cached_beatmap(beatmap_id)
+        max_combo = score["beatmap"]["fc"]
+        title = f"{beatmap['artist']} - {beatmap['title']} [{beatmap['version']}]"
+        score_message = scoreFormatter.Formatter(
+            username=self._username,
+            title=title,
+            m=m,
+            accuracy=accuracy,
+            combo=combo,
+            max_combo=max_combo,
+            misses=misses,
+            pp=0,
+            pp_if_fc=0,
+            beatmap_id=beatmap_id
+        )
+        score_background = beatmap["background_url"]
+        return score_message, score_background
+
+
+class RecentScoreCommand(IOsuCommand):
+    def __init__(self, server, username, limit, **kwargs):
+        super().__init__()
+        self._server = server
+        self._username = username
+        self._limit = limit or 1
+        self._api = BanchoRecentScore if server == "bancho" else GatariRecentScore
+
+    def execute(self):
+        pass
+
+
+class BanchoRecentScore(IOsuCommand):
+    def __init__(self, username, limit, **kwargs):
+        self._username = username
+        self._limit = int(limit)
+
+    def get(self):
+        return 0
+
+
+class GatariRecentScore(IOsuCommand):
+    def __init__(self, username, limit, **kwargs):
+        self._username = username
+        self._limit = int(limit)
+
+    def get(self):
+        return 0
+
+
+class Compare(IOsuCommand):
+    # TODO
+    pass

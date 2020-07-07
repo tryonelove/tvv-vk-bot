@@ -9,7 +9,7 @@ import re
 class Utils:
     BANCHO_API = "https://osu.ppy.sh/api/"
 
-    def __init__(self, api = None):
+    def __init__(self, api=None):
         self.api = api
 
     @staticmethod
@@ -113,7 +113,8 @@ class Utils:
 
     @staticmethod
     def get_osu_params(string, user_id):
-        params = {"server": None, "username": None, "limit": None, "user_id": user_id}
+        params = {"server": None, "username": None,
+                  "limit": 1, "user_id": user_id}
         data = Utils.get_server_username(user_id)
         if string:
             result = re.match("(bancho|gatari)?(.*?)?(\d+)?$", string)
