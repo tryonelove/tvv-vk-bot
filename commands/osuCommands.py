@@ -218,6 +218,9 @@ class GatariTopScore:
 
 
 class RecentScoreCommand(IOsuCommand):
+    """
+    Recent score command manager
+    """
     def __init__(self, server, username, limit, **kwargs):
         super().__init__()
         self._server = server
@@ -226,25 +229,92 @@ class RecentScoreCommand(IOsuCommand):
         self._api = BanchoRecentScore if server == "bancho" else GatariRecentScore
 
     def execute(self):
-        pass
+        result = self._api(self._username, self._limit).get()
+        return self.Message(*result)
 
 
-class BanchoRecentScore(IOsuCommand):
+class BanchoRecentScore:
+    """
+    Get recent bancho score
+    """
     def __init__(self, username, limit, **kwargs):
         self._username = username
         self._limit = int(limit)
+        self._api = banchoApi.BanchoApi()
 
     def get(self):
-        return 0
+        result = self._api.get_user_recent(
+            u=self._username, limit=self._limit)[self._limit-1]
+        beatmap_id = result['beatmap_id']
+        combo = result['maxcombo']
+        count50 = result['count50']
+        count100 = result['count100']
+        count300 = result['count300']
+        misses = result['countmiss']
+        m = result['enabled_mods']
+        ranking = result['rank']
+        accuracy = Utils.calculate_accuracy(
+            *map(int, (misses, count50, count100, count300)))
+        beatmap = Utils(api=self._api).get_cached_beatmap(beatmap_id)
+        max_combo = beatmap["max_combo"]
+        title = f"{beatmap['artist']} - {beatmap['title']} [{beatmap['version']}]"
+        score_message = scoreFormatter.Formatter(
+            username=self._username,
+            title=title,
+            m=m,
+            accuracy=accuracy,
+            combo=combo,
+            max_combo=max_combo,
+            misses=misses,
+            pp=0,
+            pp_if_fc=0,
+            beatmap_id=beatmap_id
+        )
+        score_background = beatmap["background_url"]
+        return score_message, score_background
 
 
-class GatariRecentScore(IOsuCommand):
+class GatariRecentScore:
+    """
+    Get recent gatari score
+    """
+
     def __init__(self, username, limit, **kwargs):
         self._username = username
         self._limit = int(limit)
+        self._api = gatariApi.GatariApi()
 
     def get(self):
-        return 0
+        user = self._api.get_user(self._username)
+        if not user["users"]:
+            raise exceptions.UserNotFoundError
+        user_id = user["users"][0]["id"]
+        best_scores = self._api.get_user_recent(user_id, self._limit)
+        score = best_scores["scores"][self._limit-1]
+        beatmap_id = score["beatmap"]["beatmap_id"]
+        combo = score['max_combo']
+        misses = score['count_miss']
+        m = score['mods']
+        ranking = score['ranking']
+        accuracy = score["accuracy"]
+        beatmap = Utils(api=banchoApi.BanchoApi()
+                        ).get_cached_beatmap(beatmap_id)
+        max_combo = score["beatmap"]["fc"]
+        title = f"{beatmap['artist']} - {beatmap['title']} [{beatmap['version']}]"
+        score_message = scoreFormatter.Formatter(
+            username=self._username,
+            title=title,
+            m=m,
+            accuracy=accuracy,
+            combo=combo,
+            max_combo=max_combo,
+            misses=misses,
+            pp=0,
+            pp_if_fc=0,
+            beatmap_id=beatmap_id
+        )
+        score_background = beatmap["background_url"]
+        return score_message, score_background
 
 
 class Compare(IOsuCommand):
