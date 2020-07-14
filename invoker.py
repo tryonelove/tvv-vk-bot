@@ -25,7 +25,7 @@ class Invoker:
         self._value = " ".join(message[1:])
 
     def _send_message(self, message_object):
-        params = {"peer_id": message_object.peer_id or self.event.peer_id}
+        params = {"peer_id": self.event.peer_id}
         params["message"] = message_object.message or None
         params["attachment"] = message_object.attachment or None
         logging.debug(params)
@@ -62,6 +62,9 @@ class Invoker:
             logging.debug("osu! command")
             # Need to get server and username from db
             params = Utils.get_osu_params(self._value, self.event.from_id) # server, username, user_id dict
+            if self.event.fwd_messages:
+                fwd_message = self.event.fwd_messages[-1]
+                params["beatmap_id"] = Utils.find_beatmap_id(fwd_message["text"])
             command_object = self.cmd(**params)
         else:
             logging.debug("Other command.")

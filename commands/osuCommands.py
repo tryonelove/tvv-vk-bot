@@ -121,7 +121,7 @@ class OsuSet(IOsuCommand):
 
 class TopScoreCommand(IOsuCommand):
     """
-    Interface for top score command
+    Manager for top score command
     """
 
     def __init__(self, server, username, limit, **kwargs):
@@ -219,8 +219,9 @@ class GatariTopScore:
 
 class RecentScoreCommand(IOsuCommand):
     """
-    Recent score command manager
+    Manager for recent score command
     """
+
     def __init__(self, server, username, limit, **kwargs):
         super().__init__()
         self._server = server
@@ -237,6 +238,7 @@ class BanchoRecentScore:
     """
     Get recent bancho score
     """
+
     def __init__(self, username, limit, **kwargs):
         self._username = username
         self._limit = int(limit)
@@ -318,5 +320,41 @@ class GatariRecentScore:
 
 
 class Compare(IOsuCommand):
-    # TODO
-    pass
+    """
+    Compare scores
+    """
+    def __init__(self, username, beatmap_id, **kwargs):
+        super().__init__()
+        self._beatmap_id = beatmap_id
+        self._username = username
+        self._limit = 1
+        self._api = banchoApi.BanchoApi()
+
+    def execute(self):
+        result = self._api.get_scores(b=self._beatmap_id, u=self._username, limit=self._limit)[self._limit-1]
+        combo = result['maxcombo']
+        count50 = result['count50']
+        count100 = result['count100']
+        count300 = result['count300']
+        misses = result['countmiss']
+        m = result['enabled_mods']
+        ranking = result['rank']
+        accuracy = Utils.calculate_accuracy(
+            *map(int, (misses, count50, count100, count300)))
+        beatmap = Utils(api=self._api).get_cached_beatmap(self._beatmap_id)
+        max_combo = beatmap["max_combo"]
+        title = f"{beatmap['artist']} - {beatmap['title']} [{beatmap['version']}]"
+        score_message = scoreFormatter.Formatter(
+            username=self._username,
+            title=title,
+            m=m,
+            accuracy=accuracy,
+            combo=combo,
+            max_combo=max_combo,
+            misses=misses,
+            pp=0,
+            pp_if_fc=0,
+            beatmap_id=self._beatmap_id
+        )
+        score_background = beatmap["background_url"]
+        return self.Message(score_message, score_background)

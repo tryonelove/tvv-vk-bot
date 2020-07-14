@@ -23,5 +23,6 @@ commands_list = {
     "deop": commands.adminCommands.Deop,
     "mm": commands.osuCommands.MatchmakingStats,
     "top": commands.osuCommands.TopScoreCommand,
-    "last": commands.osuCommands.RecentScoreCommand
+    "last": commands.osuCommands.RecentScoreCommand,
+    "compare": commands.osuCommands.Compare,
 }

@@ -41,6 +41,8 @@ class Utils:
     def get_role(user_id):
         """
         Get user role
+
+        :param user_id: user_id
         """
         return glob.c.execute("SELECT role FROM users WHERE id = ?", (user_id,)).fetchone()[0]
 
@@ -48,6 +50,9 @@ class Utils:
     def has_role(user_id, required_role):
         """
         Check if user has a required role
+
+        :param user_id: user_id to check
+        :param required_role: role to check
         """
         role = Utils.get_role(user_id)
         return role & required_role.value > 0
@@ -117,7 +122,7 @@ class Utils:
                   "limit": 1, "user_id": user_id}
         data = Utils.get_server_username(user_id)
         if string:
-            result = re.match("(bancho|gatari)?(.*?)?(\d+)?$", string)
+            result = re.match(r"(bancho|gatari)?(.*?)?(\d+)?$", string)
             params["server"] = result.group(1) or None
             params["username"] = result.group(2) or None
             params["limit"] = result.group(3) or 1
@@ -128,6 +133,20 @@ class Utils:
         params["server"] = params["server"].strip()
         params["username"] = params["username"].strip()
         return params
+
+    @staticmethod
+    def find_beatmap_id(string):
+        """
+        Return beatmap id from a text message
+        """
+        beatmap_id = None
+        if "beatmapsets" in string:
+            result = re.search(r"^https?:\/\/?osu.ppy.sh\/beatmapsets\/(\d+)(#\w+)\/(\d+)?", string)
+            beatmap_id = result.group(3)
+        elif "/b/" in string:
+            result = re.search(r".*\/b/(\d+)", string)
+            beatmap_id = result.group(1)
+        return beatmap_id
 
     @staticmethod
     def calculate_accuracy(misses, count50, count100, count300):
