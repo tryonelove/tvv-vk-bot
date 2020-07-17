@@ -4,7 +4,7 @@ from constants.roles import Roles
 from constants import osuConstants
 from config import OSU_API_KEY
 import re
-
+import oppadc
 
 class Utils:
     BANCHO_API = "https://osu.ppy.sh/api/"
@@ -118,6 +118,11 @@ class Utils:
 
     @staticmethod
     def get_osu_params(string, user_id):
+        """
+        Get a dictionary, containing 
+        server, username, score limit and user_id
+        """
+
         params = {"server": None, "username": None,
                   "limit": 1, "user_id": user_id}
         data = Utils.get_server_username(user_id)
@@ -141,7 +146,8 @@ class Utils:
         """
         beatmap_id = None
         if "beatmapsets" in string:
-            result = re.search(r"^https?:\/\/?osu.ppy.sh\/beatmapsets\/(\d+)(#\w+)\/(\d+)?", string)
+            result = re.search(
+                r"^https?:\/\/?osu.ppy.sh\/beatmapsets\/(\d+)(#\w+)\/(\d+)?", string)
             beatmap_id = result.group(3)
         elif "/b/" in string:
             result = re.search(r".*\/b/(\d+)", string)
@@ -153,3 +159,9 @@ class Utils:
         accuracy = (50*count50+100*count100+300*count300) * \
             100/(300*(misses+count50+count100+count300))
         return accuracy
+
+    @staticmethod
+    def calculate_pp(beatmap_id, mods):
+        url = f'https://osu.ppy.sh/beatmapsets/{beatmap_id}/download'
+        r = requests.get(url, allow_redirects=True)
+        open('facebook.ico', 'wb').write(r.content)

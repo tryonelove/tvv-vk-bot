@@ -6,7 +6,7 @@ from helpers.utils import Utils
 from objects import glob
 from constants import servers
 import requests
-import pyttanko
+import oppadc
 
 
 class StatsPicture(IOsuCommand):
@@ -68,6 +68,7 @@ class MatchmakingStats(IOsuCommand):
         super().__init__()
         self._username = username
         self.API = "https://osumatchmaking.c7x.dev/users/"
+        self.oppadc = oppadc.OsuMap
 
     def execute(self):
         r = requests.get(self.API + self._username)
