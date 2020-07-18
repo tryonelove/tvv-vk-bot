@@ -11,13 +11,16 @@ class GetRole(IDonatorManager):
     Get user role command
     """
 
-    def __init__(self, args):
+    def __init__(self, args, from_id, **kwargs):
         super().__init__(args)
+        self._from_id = from_id
 
     def _get_expire_date(self):
         return glob.c.execute("SELECT expires, role_name FROM donators WHERE id=?", (self._user_id,)).fetchone()
 
     def execute(self):
+        if self._user_id is None:
+            self._user_id = self._from_id
         logging.info("Getting user role.")
         message = "Роль: "
         if Utils.has_role(self._user_id, Roles.ADMIN):

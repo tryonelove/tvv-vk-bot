@@ -21,7 +21,7 @@ class StatsPicture(IOsuCommand):
     }
 
     def __init__(self, server, username, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__()
         self._pictureUrl = self.SERVERS.get(server)
         self._username = username
         self._mode = None

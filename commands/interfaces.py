@@ -21,7 +21,7 @@ class IAdminCommand(ICommand):
     Interface for admin-managing commands 
     """
 
-    def __init__(self, user_id):
+    def __init__(self, user_id, **kwargs):
         super().__init__()
         self._user_id = user_id
 
@@ -72,7 +72,7 @@ class IDonatorManager(ICommand):
     Interface to manage donators
     """
 
-    def __init__(self, args):
+    def __init__(self, args, **kwargs):
         super().__init__()
         self._args = args.split()
-        self._user_id = int(self._args[0])
+        self._user_id = int(self._args[0]) if self._args else None

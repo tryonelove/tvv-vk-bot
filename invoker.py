@@ -4,7 +4,8 @@ from objects import glob
 from helpers import commandsList, levels
 from helpers.utils import Utils
 from constants.roles import Roles
-
+from config import CREATOR_ID
+from constants.messageTypes import MessageTypes
 
 class Invoker:
     def __init__(self, event):
@@ -25,7 +26,11 @@ class Invoker:
         self._value = " ".join(message[1:])
 
     def _send_message(self, message_object):
-        params = {"peer_id": self.event.peer_id}
+        params = {}
+        if message_object.message_type == MessageTypes.PRIVATE:
+            params["peer_id"] = self.event.from_id
+        else:
+            params["peer_id"] = self.event.peer_id
         params["message"] = message_object.message or None
         params["attachment"] = message_object.attachment or None
         logging.debug(params)
@@ -34,6 +39,7 @@ class Invoker:
         glob.vk.messages.send(**params)
 
     def _invoke_command(self):
+        logging.info(f"Got a {self.cmd}, message: {self.event.text}")
         if self.cmd is None or Utils.has_role(self.event.from_id, Roles.RESTRICTED):
             return
         if issubclass(self.cmd, commands.staticCommands.StaticCommand):
@@ -56,7 +62,7 @@ class Invoker:
             logging.debug("Admin managing.")
             if not Utils.is_creator(self.event.from_id):
                 return
-            command_object = self.cmd(self._value)
+            command_object = self.cmd(self._value, self.event.from_id)
 
         elif issubclass(self.cmd, commands.interfaces.IOsuCommand):
             logging.debug("osu! command")
@@ -66,18 +72,25 @@ class Invoker:
                 fwd_message = self.event.fwd_messages[-1]
                 params["beatmap_id"] = Utils.find_beatmap_id(fwd_message["text"])
             command_object = self.cmd(**params)
+
         else:
             logging.debug("Other command.")
             command_object = self.cmd(self._value)
+        executed = None
+        # try:
         executed = command_object.execute()
+        # except Exception as e:
+            # logging.error(e.args)
         if executed:
             self._send_message(executed)        
 
     def _invoke_level(self):
-        logging.debug("Changing user level.")
         levelSystem = levels.LevelSystem(
             self.event.from_id, self.event.peer_id)
         levelSystem.level_check(self.event.text)
+
+    def _invoke_donator(self):
+        pass
 
     def invoke(self):
         self._invoke_level()
