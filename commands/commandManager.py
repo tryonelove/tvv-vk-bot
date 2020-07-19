@@ -7,7 +7,6 @@ import logging
 class CommandManager(ICommandManager):
     def __init__(self, *args, **kwargs):
         super().__init__(**kwargs)
-        self._set_values()
 
     def _set_values(self):
         """
@@ -36,6 +35,7 @@ class AddCommand(CommandManager):
         super().__init__(message=message, attachments=attachments, author_id=author_id)
 
     def execute(self):
+        self._set_values()
         q = "INSERT OR REPLACE INTO commands VALUES (?, ?, ?, ?)"
         glob.c.execute(q, (self._key, self._value,
                            self._attachments, self._author_id))
@@ -48,10 +48,11 @@ class DeleteCommand(CommandManager):
     Delete command by key
     """
 
-    def __init__(self, message, *args):
+    def __init__(self, message, **kwargs):
         super().__init__(message=message)
 
     def execute(self):
+        self._set_values()
         q = "DELETE FROM commands WHERE key = ?"
         glob.c.execute(q, (self._key,))
         glob.db.commit()

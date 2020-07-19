@@ -58,7 +58,6 @@ class ICommandManager(ICommand):
         self._author_id = kwargs.get("author_id")
         self._key = kwargs.get("key")
         self._value = kwargs.get("value")
-        self._set_values()
 
     def _set_values(self):
         """
