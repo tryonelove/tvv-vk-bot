@@ -38,9 +38,8 @@ class Weather(ICommand):
             js['weather'][0]['main'], js['weather'][0]['main'])
         country = js['sys']['country']
         humidity = js['main']['humidity']
-        text = "{}, {}\n{}\nТемпература: {}°C\n\
-        Влажность: {}%\nСкорость ветра: {} м/с".format(self._city.capitalize(), country,
-                                                       descr, temperature, humidity, wind)
+        text = f"{self._city.capitalize()}, {country}\n{descr}\nТемпература: {temperature}°C\n\
+        Влажность: {humidity}%\nСкорость ветра: {wind} м/с"
         return self.Message(text)
 
 

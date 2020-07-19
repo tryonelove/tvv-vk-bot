@@ -173,7 +173,8 @@ class BanchoTopScore:
             misses=misses,
             pp=0,
             pp_if_fc=0,
-            beatmap_id=beatmap_id
+            beatmap_id=beatmap_id,
+            rank=ranking
         )
         score_background = beatmap["background_url"]
         return score_message, score_background
@@ -212,7 +213,8 @@ class GatariTopScore:
             misses=misses,
             pp=0,
             pp_if_fc=0,
-            beatmap_id=beatmap_id
+            beatmap_id=beatmap_id,
+            rank=ranking
         )
         score_background = beatmap["background_url"]
         return score_message, score_background
@@ -271,7 +273,8 @@ class BanchoRecentScore:
             misses=misses,
             pp=0,
             pp_if_fc=0,
-            beatmap_id=beatmap_id
+            beatmap_id=beatmap_id,
+            rank=ranking
         )
         score_background = beatmap["background_url"]
         return score_message, score_background
@@ -314,7 +317,8 @@ class GatariRecentScore:
             misses=misses,
             pp=0,
             pp_if_fc=0,
-            beatmap_id=beatmap_id
+            beatmap_id=beatmap_id,
+            rank = ranking
         )
         score_background = beatmap["background_url"]
         return score_message, score_background
@@ -355,7 +359,8 @@ class Compare(IOsuCommand):
             misses=misses,
             pp=0,
             pp_if_fc=0,
-            beatmap_id=self._beatmap_id
+            beatmap_id=self._beatmap_id,
+            rank=ranking
         )
         score_background = beatmap["background_url"]
         return self.Message(score_message, score_background)

@@ -19,7 +19,7 @@ class Deop(IAdminCommand):
 
     def execute(self):
         q = f"UPDATE users SET role = {Roles.USER} WHERE id = ?"
-        glob.c.execute(q, (self._user_id))
+        glob.c.execute(q, (self._user_id,))
         glob.db.commit()
         return self.Message(f"Пользователь {self._user_id} был удалён из админов.")
 
@@ -30,7 +30,7 @@ class Restrict(IAdminCommand):
 
     def execute(self):
         q = f"UPDATE users SET role = {Roles.RESTRICTED} WHERE id = ?"
-        glob.c.execute(q, (self._user_id))
+        glob.c.execute(q, (self._user_id,))
         glob.db.commit()
         return self.Message(f"Пользователь {self._user_id} больше не может юзать бота.")
 
@@ -41,7 +41,7 @@ class Unrestrict(IAdminCommand):
 
     def execute(self):
         q = f"UPDATE users SET role = {Roles.USER} WHERE id = ?"
-        glob.c.execute(q, (self._user_id))
+        glob.c.execute(q, (self._user_id,))
         glob.db.commit()
         return self.Message(f"Пользователь {self._user_id} теперь может юзать бота.")
 

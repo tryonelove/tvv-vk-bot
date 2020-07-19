@@ -4,7 +4,7 @@ from constants import osuConstants
 class Formatter:
     def __init__(self,
                  username, title, m, accuracy,
-                 combo, max_combo, misses, pp, beatmap_id, pp_if_fc):
+                 combo, max_combo, misses, pp, beatmap_id, pp_if_fc, rank):
         self.username = username
         self.title = title
         self.beatmap_id = beatmap_id
@@ -13,6 +13,7 @@ class Formatter:
         self.pp = self.format_pp(pp, pp_if_fc)
         self.accuracy = self.format_accuracy(accuracy)
         self.misses = self.format_misses(misses)
+        self.rank = rank
 
     def format_accuracy(self, accuracy):
         return round(float(accuracy), 2)
@@ -62,4 +63,8 @@ class Formatter:
         return summ
 
     def __str__(self):
-        return f"{self.username} | {self.title} {self.mods} ({self.accuracy}%) {self.combo} {self.misses} | {self.pp}\nhttps://osu.ppy.sh/b/{self.beatmap_id}"
+        result = ""
+        if self.rank == "F":
+            result+="UNSUBMITTED\n"
+        result = f"{self.username} | {self.title} {self.mods} ({self.accuracy}%) {self.combo} {self.misses} | {self.pp}\nhttps://osu.ppy.sh/b/{self.beatmap_id}"
+        return result 

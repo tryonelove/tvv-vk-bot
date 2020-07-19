@@ -58,12 +58,19 @@ class Invoker:
             command_object = self.cmd(
                 message=self.event.text, attachments=self.event.attachments, author_id=self.event.from_id)
 
-        elif issubclass(self.cmd, (commands.interfaces.IDonatorManager, commands.interfaces.IAdminCommand)):
+        elif issubclass(self.cmd, commands.interfaces.IAdminCommand):
             logging.debug("Admin managing.")
             if not Utils.is_creator(self.event.from_id):
                 return
-            command_object = self.cmd(self._value, self.event.from_id)
+            target_user_id = Utils.find_user_id(self.event.text)
+            command_object = self.cmd(target_user_id, self.event.from_id)
 
+        elif issubclass(self.cmd, commands.interfaces.IDonatorManager):
+            logging.debug("Donator managing.")
+            if not Utils.is_creator(self.event.from_id):
+                return
+            command_object = self.cmd(self._value, self.event.from_id)
+            
         elif issubclass(self.cmd, commands.interfaces.IOsuCommand):
             logging.debug("osu! command")
             # Need to get server and username from db

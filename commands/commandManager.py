@@ -17,13 +17,13 @@ class CommandManager(ICommandManager):
         if len(message) > 1:
             self._value = " ".join(message[2:])
         if self._attachments:
-            if self._attachments[0]["type"] == "photo":
-                largest_url = Utils.find_largest_attachment(
-                    self._attachments[0]["photo"]["sizes"])
-                logging.info("Uploading picture: "+largest_url)
-                self._attachments = Utils.upload_picture(largest_url)
-        else:
-            self._attachments = None
+            if self._attachments[0]["type"] != "photo":
+                self._attachments = None
+                return
+            largest_url = Utils.find_largest_attachment(
+                self._attachments[0]["photo"]["sizes"])
+            logging.info("Uploading picture: "+largest_url)
+            self._attachments = Utils.upload_picture(largest_url)
 
 
 class AddCommand(CommandManager):

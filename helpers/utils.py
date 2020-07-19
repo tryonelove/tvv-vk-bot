@@ -161,7 +161,16 @@ class Utils:
         return accuracy
 
     @staticmethod
+    def find_user_id(string):
+        """
+        Return user_id from a message with a mention.
+        """
+        user_id = re.search(r"id(\d+)", string).group(1)
+        return user_id
+
+    @staticmethod
     def calculate_pp(beatmap_id, mods):
+        # TODO
         url = f'https://osu.ppy.sh/beatmapsets/{beatmap_id}/download'
         r = requests.get(url, allow_redirects=True)
         open('facebook.ico', 'wb').write(r.content)
