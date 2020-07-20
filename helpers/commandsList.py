@@ -30,5 +30,4 @@ commands_list = {
     "compare": commands.osuCommands.Compare,
     "c": commands.osuCommands.Compare,
     "с": commands.osuCommands.Compare,
-
 }

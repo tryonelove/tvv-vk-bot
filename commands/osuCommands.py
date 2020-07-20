@@ -379,7 +379,7 @@ class Compare(IOsuCommand):
         beatmap = Utils(api=self._api).get_cached_beatmap(self._beatmap_id)
         max_combo = beatmap["max_combo"]
         title = f"{beatmap['artist']} - {beatmap['title']} [{beatmap['version']}]"
-
+        # Calculate pp
         calculator = ppCalculator.PpCalculator(
             self._beatmap_id, m, misses, count50, count100, count300, combo)
         calculator.parse_map()

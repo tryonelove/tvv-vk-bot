@@ -84,10 +84,10 @@ class Invoker:
             logging.debug("Other command.")
             command_object = self.cmd(self._value)
         executed = None
-        # try:
-        executed = command_object.execute()
-        # except Exception as e:
-            # logging.error(e.args)
+        try:
+            executed = command_object.execute()
+        except Exception as e:
+            logging.error(e.args)
         if executed:
             self._send_message(executed)        
 
