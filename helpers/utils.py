@@ -4,7 +4,9 @@ from constants.roles import Roles
 from constants import osuConstants
 from config import OSU_API_KEY
 import re
-import oppadc
+import pyttanko
+import io
+
 
 class Utils:
     BANCHO_API = "https://osu.ppy.sh/api/"
@@ -169,8 +171,14 @@ class Utils:
         return user_id
 
     @staticmethod
-    def calculate_pp(beatmap_id, mods):
-        # TODO
-        url = f'https://osu.ppy.sh/beatmapsets/{beatmap_id}/download'
-        r = requests.get(url, allow_redirects=True)
-        open('facebook.ico', 'wb').write(r.content)
+    def calculate_pp(beatmap_id, mods, misses, count50, count100, count300, combo):
+        url = f'https://osu.ppy.sh/osu/{beatmap_id}'
+        r = requests.get(url)
+        p = pyttanko.parser()
+        bmap = p.map(io.StringIO(r.text))
+        objcount = bmap.ncircles + bmap.nsliders + bmap.nspinners
+        count300, count100, count50 = pyttanko.acc_round(100, objcount, 0)
+        stars = pyttanko.diff_calc().calc(bmap, mods)
+        ppv2 = pyttanko.ppv2(stars.aim, stars.speed, n100=count100, n50=count50, n300=count300, bmap=bmap)
+        
+        

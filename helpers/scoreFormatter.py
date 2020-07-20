@@ -66,5 +66,5 @@ class Formatter:
         result = ""
         if self.rank == "F":
             result+="UNSUBMITTED\n"
-        result = f"{self.username} | {self.title} {self.mods} ({self.accuracy}%) {self.combo} {self.misses} | {self.pp}\nhttps://osu.ppy.sh/b/{self.beatmap_id}"
+        result += f"{self.username} | {self.title} {self.mods} ({self.accuracy}%) {self.combo} {self.misses} | {self.pp}\nhttps://osu.ppy.sh/b/{self.beatmap_id}"
         return result 
