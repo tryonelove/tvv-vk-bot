@@ -28,8 +28,6 @@ class Formatter:
             pp = str(_pp) + "pp"
         if _pp != pp_if_fc:
             pp += " ({}pp if FC)".format(pp_if_fc)
-        else:
-            pp = ""
         return pp
 
     def format_combo(self, combo, max_combo):
