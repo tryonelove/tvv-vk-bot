@@ -23,7 +23,7 @@ class Bot:
     def start(self):
         for event in self.longpoll.listen():
             if event.type == VkBotEventType.MESSAGE_NEW:
-                threading.Thread(target=invoker.Invoker(event).invoke)
+                threading.Thread(target=invoker.Invoker(event).invoke).start()
 
 
 if __name__ == "__main__":
