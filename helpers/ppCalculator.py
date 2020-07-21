@@ -4,9 +4,9 @@ import requests
 
 
 class PpCalculator:
-    def __init__(self, beatmap_id, mods, misses, count50, count100, count300, combo):
+    def __init__(self, beatmap_id, m, misses, count50, count100, count300, combo, **kwargs):
         self.beatmap_id = beatmap_id
-        self.mods = int(mods)
+        self.mods = int(m)
         self.misses = int(misses)
         self.count50 = int(count50)
         self.count100 = int(count100)

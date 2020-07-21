@@ -5,13 +5,11 @@ from constants import osuConstants
 from config import OSU_API_KEY
 import re
 import datetime
-
+from helpers import banchoApi
 
 class Utils:
-    BANCHO_API = "https://osu.ppy.sh/api/"
-
-    def __init__(self, api=None):
-        self.api = api
+    def __init__(self):
+        self.api = banchoApi.BanchoApi()
 
     @staticmethod
     def upload_picture(url, decode_content=False):
