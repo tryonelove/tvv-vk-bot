@@ -48,7 +48,7 @@ class GetLeaderboard(ILevelCommand):
             rank = user_index+1
             full_name = f"{users[user_index]['first_name']} {users[user_index]['last_name']}"
             if Utils.has_role(users[user_index]["id"], Roles.DONATOR):
-                full_name+="🏅"
+                full_name+="⭐"
             exp = leaderboard[user_index][1]
             level = leaderboard[user_index][2]
             text += f'#{rank} {full_name} {exp}XP ({level}lvl)\n'
