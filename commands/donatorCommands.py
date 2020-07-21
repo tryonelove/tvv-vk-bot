@@ -9,14 +9,14 @@ import logging
 class GetRole(IDonatorManager):
     """
     Get user role command
+
+    :param user_id: target_user_id
+    :param from_id: from_id (in case user_id is empty)
     """
 
-    def __init__(self, args, from_id, **kwargs):
-        super().__init__(args)
+    def __init__(self, user_id, from_id, **kwargs):
+        super().__init__(user_id)
         self._from_id = from_id
-
-    def _get_expire_date(self):
-        return glob.c.execute("SELECT expires, role_name FROM donators WHERE id=?", (self._user_id,)).fetchone()
 
     def execute(self):
         if self._user_id is None:
@@ -26,7 +26,7 @@ class GetRole(IDonatorManager):
         if Utils.has_role(self._user_id, Roles.ADMIN):
             role = "админ"
         elif Utils.has_role(self._user_id, Roles.DONATOR):
-            expires, role = self._get_expire_date()
+            expires, role = Utils.get_donator_expire_date(self._user_id)
             expires = datetime.datetime.fromtimestamp(expires)
             role += f"\nВы будете донатером до {expires}"
         else:
@@ -41,8 +41,8 @@ class AddDonator(IDonatorManager):
     """
     RESPONSE = "Пользователь {} получил роль донатера."
 
-    def __init__(self, args):
-        super().__init__(args)
+    def __init__(self, message, *args, **kwargs):
+        super().__init__(message)
         self._donation_sum = self._parse_donation_sum()
         self._role_name = self._parse_role_name() if len(self._args) > 2 else None
 
@@ -77,15 +77,18 @@ class AddDonator(IDonatorManager):
 class RemoveDonator(IDonatorManager):
     """
     Remove donator command
+
+    :param user_id: target user_id
     """
     SUCCESS = "Пользователь {} был удалён из списка донатеров."
     NOT_DONATOR = "Пользователь {} не является донатером."
 
-    def __init__(self, args):
-        super().__init__(args)
+    def __init__(self, user_id):
+        super().__init__(user_id)
 
     def _remove_completely(self):
         glob.c.execute("DELETE FROM donators WHERE id=?", (self._user_id,))
+        glob.c.execute("UPDATE users SET role=1 WHERE id=?",(self._user_id,))
         glob.db.commit()
 
     def _decrease_duration(self):

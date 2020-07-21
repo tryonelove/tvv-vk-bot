@@ -25,6 +25,11 @@ class Deop(IAdminCommand):
 
 
 class Restrict(IAdminCommand):
+    """
+    Restrict bot usage for users.
+
+    :param user_id: target user_id
+    """
     def __init__(self, user_id, *args):
         super().__init__(user_id)
 
@@ -36,6 +41,11 @@ class Restrict(IAdminCommand):
 
 
 class Unrestrict(IAdminCommand):
+    """
+    Unrestrict bot usage for users.
+
+    :param user_id: target user_id
+    """
     def __init__(self, user_id, *args):
         super().__init__(user_id)
 

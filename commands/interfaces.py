@@ -73,5 +73,8 @@ class IDonatorManager(ICommand):
 
     def __init__(self, args, **kwargs):
         super().__init__()
-        self._args = args.split()
-        self._user_id = int(self._args[0]) if self._args else None
+        try:
+            self._args = args.split()
+            self._user_id = int(self._args[0]) if self._args else None
+        except:
+            self._user_id = args

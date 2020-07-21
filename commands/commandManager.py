@@ -10,7 +10,7 @@ class CommandManager(ICommandManager):
 
     def _set_values(self):
         """
-        Split message into {key: value} format
+        Split message into key: value format
         """
         message = self._message.split()
         self._key = message[1]
@@ -29,6 +29,10 @@ class CommandManager(ICommandManager):
 class AddCommand(CommandManager):
     """
     Create command
+
+    :param message: message containing key and value message for command
+    :param attachments: command attachments
+    :param author_id: user_id the message has been sent from 
     """
 
     def __init__(self, message, attachments, author_id):
@@ -46,8 +50,9 @@ class AddCommand(CommandManager):
 class DeleteCommand(CommandManager):
     """
     Delete command by key
-    """
 
+    :param message: message containing key for removing command
+    """
     def __init__(self, message, **kwargs):
         super().__init__(message=message)
 
