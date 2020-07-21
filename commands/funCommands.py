@@ -2,6 +2,7 @@ import json
 import random
 from commands.interfaces import ICommand
 import requests
+from helpers import exceptions
 
 
 class Weather(ICommand):
@@ -27,19 +28,18 @@ class Weather(ICommand):
         r = requests.get("http://api.openweathermap.org/data/2.5/weather",
                          params={"q": self._city, "APPID": "81d59d3e4bcd5bd5b69f6f95250213ee"})
         if r.status_code != 200:
-            raise NotImplementedError()
+            raise exceptions.APIRequestError()
         js = r.json()
         if not js or js["cod"] == "404":
-            raise NotImplementedError()
+            raise exceptions.APIRequestError()
         temperature = round(float(js['main']['temp']) - 273)
         wind = js['wind']['speed']
         descr = self.WEATHER_STATE.get(
             js['weather'][0]['main'], js['weather'][0]['main'])
         country = js['sys']['country']
         humidity = js['main']['humidity']
-        text = "{}, {}\n{}\nТемпература: {}°C\n\
-        Влажность: {}%\nСкорость ветра: {} м/с".format(self._city.capitalize(), country,
-                                                       descr, temperature, humidity, wind)
+        text = f"{self._city.capitalize()}, {country}\n{descr}\nТемпература: {temperature}°C\n\
+        Влажность: {humidity}%\nСкорость ветра: {wind} м/с"
         return self.Message(text)
 
 

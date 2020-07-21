@@ -1,6 +1,7 @@
 from commands.interfaces import ILevelCommand
 from objects import glob
-
+from helpers.utils import Utils
+from constants.roles import Roles
 
 class GetLevel(ILevelCommand):
     """
@@ -46,6 +47,8 @@ class GetLeaderboard(ILevelCommand):
         for user_index, _ in enumerate(leaderboard):
             rank = user_index+1
             full_name = f"{users[user_index]['first_name']} {users[user_index]['last_name']}"
+            if Utils.has_role(users[user_index]["id"], Roles.DONATOR):
+                full_name+="🏅"
             exp = leaderboard[user_index][1]
             level = leaderboard[user_index][2]
             text += f'#{rank} {full_name} {exp}XP ({level}lvl)\n'

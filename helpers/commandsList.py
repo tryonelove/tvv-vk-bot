@@ -1,6 +1,7 @@
 import commands
 
 commands_list = {
+    "help": commands.staticCommands.HelpCommand,
     "roll": commands.funCommands.Roll,
     "ролл": commands.funCommands.Roll,
     "weather": commands.funCommands.Weather,
@@ -16,9 +17,17 @@ commands_list = {
     "лидерборд": commands.levelCommands.GetLeaderboard,
     "addcom": commands.commandManager.AddCommand,
     "delcom": commands.commandManager.DeleteCommand,
+    "osuset": commands.osuCommands.OsuSet,
     "role": commands.donatorCommands.GetRole,
+    "роль": commands.donatorCommands.GetRole,
     "add_donator": commands.donatorCommands.AddDonator,
+    "rm_donator": commands.donatorCommands.RemoveDonator,
     "op": commands.adminCommands.Op,
     "deop": commands.adminCommands.Deop,
-    "mm": commands.osuCommands.MatchmakingStats
+    "mm": commands.osuCommands.MatchmakingStats,
+    "top": commands.osuCommands.TopScoreCommand,
+    "last": commands.osuCommands.RecentScoreCommand,
+    "compare": commands.osuCommands.Compare,
+    "c": commands.osuCommands.Compare,
+    "с": commands.osuCommands.Compare,
 }

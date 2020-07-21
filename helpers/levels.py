@@ -9,7 +9,13 @@ class LevelSystem:
         self._chat_id = chat_id
 
     def level_check(self, message):
-        if self._user_id < 0 or self._chat_id < 2000000000:
+        # Skip bot accounts
+        if self._user_id < 0:
+            return
+        # Still need to add user to db if doesn't exist
+        glob.c.execute("INSERT OR IGNORE INTO users(id) VALUES(?)", (self._user_id,))
+        # Skip private vonversations
+        if self._chat_id < 2000000000:
             return
         glob.c.execute("""
             CREATE TABLE IF NOT EXISTS konfa_{} 
@@ -41,7 +47,6 @@ class LevelSystem:
         q = f"SELECT * FROM konfa_{self._chat_id} WHERE id=?"
         glob.c.execute(q, (self._user_id,))
         if not glob.c.fetchall():
-            glob.c.execute("INSERT OR IGNORE INTO users(id) VALUES(?)", (self._user_id,))
             glob.c.execute(f"INSERT OR IGNORE INTO konfa_{self._chat_id}(id) VALUES(?)", (self._user_id,))
             glob.db.commit()
 
