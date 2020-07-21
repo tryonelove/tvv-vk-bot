@@ -66,7 +66,7 @@ class MatchmakingStats(IOsuCommand):
     def __init__(self, username, **kwargs):
         super().__init__()
         self._username = username
-        self.API = "https://osumatchmaking.c7x.dev/users/"
+        self.API = "https://oma.hwc.hr/api/users/"
 
     def execute(self):
         r = requests.get(self.API + self._username)
@@ -75,12 +75,13 @@ class MatchmakingStats(IOsuCommand):
         js = r.json()
         username = js.get("osuName")
         country = js.get("countryCode")
-        rank = js.get("rank")
-        rating = round(js.get("currentVisualRating"))
-        wins = js.get("wins")
-        losses = js.get("losses")
+        stats = js.get("stats")["1v1"]
+        rank = stats.get("rank")
+        rating = round(stats.get("currentVisualRating"))
+        wins = stats.get("wins")
+        losses = stats.get("losses")
         winrate = round((wins / (wins + losses)) * 100, 2)
-        winstreak = js.get("currentWinstreak")
+        winstreak = stats.get("currentWinstreak")
         response = f"{country} | {username} #{rank}\nRating: {rating}\nW/L: {wins}/{losses} | WR: {winrate}%\nWinstreak: {winstreak}"
         return self.Message(response)
 
@@ -116,8 +117,6 @@ class OsuSet(IOsuCommand):
                        (self._server, self._username, self._user_id))
         glob.db.commit()
         return self.Message(f"Аккаунт {self._server} {self._username} был успешно привязан к вашему айди.")
-
-
 
 
 class BanchoScore:
@@ -300,4 +299,3 @@ class Compare(IOsuCommand):
         api_response = self._api.get_scores(
             b=self._beatmap_id, u=self._username, limit=self._limit)[self._limit-1]
         return BanchoScore(self._username, api_response).get_response()
-

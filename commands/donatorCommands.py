@@ -56,7 +56,7 @@ class AddDonator(IDonatorManager):
         duration = self._donation_sum // 25
         q = f"INSERT INTO donators VALUES(?, (SELECT strftime('%s','now', '+{duration} month')), ?)"
         glob.c.execute(q, (self._user_id, self._role_name))
-        glob.c.execute("UPDATE users SET role = ?", (Roles.DONATOR.value,))
+        glob.c.execute("UPDATE users SET role = ? WHERE id=?", (Roles.DONATOR.value, self._user_id))
         glob.db.commit()
 
     def _increase_duration(self):
