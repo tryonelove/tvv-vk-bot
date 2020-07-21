@@ -7,7 +7,7 @@ from constants.roles import Roles
 from config import CREATOR_ID
 from constants.messageTypes import MessageTypes
 import datetime
-
+import threading
 
 class Invoker:
     def __init__(self, event):
@@ -116,13 +116,15 @@ class Invoker:
                 self._send_message(msg)
 
     def invoke(self):
-        try:
-            self._invoke_level()
-            self._invoke_donator()
-            if self._is_command():
-                self._set_key_value()
-                logging.info(f"Command: {self._key}")
-                self._get_command()
-                self._invoke_command()
-        except Exception as e:
-            logging.error(e.args)
+        if self.event.from_id < 0:
+            return
+        # try:
+        self._invoke_level()
+        self._invoke_donator()
+        if self._is_command():
+            self._set_key_value()
+            logging.info(f"Command: {self._key}")
+            self._get_command()
+            threading.Thread(target=self._invoke_command).start()
+        # except Exception as e:
+            # logging.error(e.args)
