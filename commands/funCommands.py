@@ -3,6 +3,14 @@ import random
 from commands.interfaces import ICommand
 import requests
 from helpers import exceptions
+from objects import glob
+
+class WeatherSet(ICommand):
+    def __init__(self, city):
+        self._city = " ".join(city)
+
+    def execute(self):
+        glob.c.execute("INSERT INTO weather VALUES ")
 
 
 class Weather(ICommand):

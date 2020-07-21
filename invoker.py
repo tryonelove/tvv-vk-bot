@@ -96,8 +96,8 @@ class Invoker:
         command_object = self._get_command_object()
         executed = None
         executed = command_object.execute()
-        # if executed:
-            # self._send_message(executed)
+        if executed:
+            self._send_message(executed)
 
     def _invoke_level(self):
         levelSystem = levels.LevelSystem(
@@ -120,15 +120,15 @@ class Invoker:
     def invoke(self):
         if self.event.from_id < 0:
             return
-        # try:
-        lock.acquire(True)
-        self._invoke_level()
-        self._invoke_donator()
-        lock.release()
-        if self._is_command():
-            self._set_key_value()
-            logging.info(f"Command: {self._key}")
-            self._get_command()
-            self._invoke_command()
-        # except Exception as e:
-            # logging.error(e.args)
+        try:
+            lock.acquire(True)
+            self._invoke_level()
+            self._invoke_donator()
+            lock.release()
+            if self._is_command():
+                self._set_key_value()
+                logging.info(f"Command: {self._key}")
+                self._get_command()
+                self._invoke_command()
+        except Exception as e:
+            logging.error(e.args)
