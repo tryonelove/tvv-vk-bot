@@ -190,7 +190,7 @@ class TopScoreCommand(IOsuCommand):
         self._server = server
         self._username = username
         self._limit = limit or 1
-        self._api = BanchoTopScore if server == "bancho" else GatariTopScore
+        self._api = BanchoTopScore if server in ["bancho", "банчо"] else GatariTopScore
 
     def execute(self):
         result = self._api(self._username, self._limit).get()
@@ -239,7 +239,7 @@ class RecentScoreCommand(IOsuCommand):
         self._server = server
         self._username = username
         self._limit = limit or 1
-        self._api = BanchoRecentScore if server == "bancho" else GatariRecentScore
+        self._api = BanchoRecentScore if server in ["bancho", "банчо"] else GatariRecentScore
 
     def execute(self):
         result = self._api(self._username, self._limit).get()
