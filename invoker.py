@@ -7,7 +7,9 @@ from constants.roles import Roles
 from config import CREATOR_ID
 from constants.messageTypes import MessageTypes
 import datetime
-import threading
+from threading import Lock
+
+lock = Lock()
 
 class Invoker:
     def __init__(self, event):
@@ -94,8 +96,8 @@ class Invoker:
         command_object = self._get_command_object()
         executed = None
         executed = command_object.execute()
-        if executed:
-            self._send_message(executed)
+        # if executed:
+            # self._send_message(executed)
 
     def _invoke_level(self):
         levelSystem = levels.LevelSystem(
@@ -119,12 +121,14 @@ class Invoker:
         if self.event.from_id < 0:
             return
         # try:
+        lock.acquire(True)
         self._invoke_level()
         self._invoke_donator()
+        lock.release()
         if self._is_command():
             self._set_key_value()
             logging.info(f"Command: {self._key}")
             self._get_command()
-            threading.Thread(target=self._invoke_command).start()
+            self._invoke_command()
         # except Exception as e:
             # logging.error(e.args)
