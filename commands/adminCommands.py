@@ -20,12 +20,14 @@ class AdminCommand(IAdminCommand):
 class Op(AdminCommand):
     def __init__(self, user_id, *args):
         super().__init__(user_id)
+        self.role = Roles.ADMIN
         self.RESPONSE = f"Пользователь {self._user_id} был добавлен как админ."
 
 
 class Deop(IAdminCommand):
     def __init__(self, user_id, *args):
         super().__init__(user_id)
+        self.role = Roles.USER
         self.RESPONSE = f"Пользователь {self._user_id} был удалён из админов."
 
 
@@ -38,6 +40,7 @@ class Restrict(IAdminCommand):
 
     def __init__(self, user_id, *args):
         super().__init__(user_id)
+        self.role = Roles.RESTRICTED
         self.RESPONSE = f"Пользователь {self._user_id} больше не может юзать бота."
 
 
@@ -50,4 +53,5 @@ class Unrestrict(IAdminCommand):
 
     def __init__(self, user_id, *args):
         super().__init__(user_id)
+        self.role = Roles.USER
         self.RESPONSE = f"Пользователь {self._user_id} теперь может юзать бота."
