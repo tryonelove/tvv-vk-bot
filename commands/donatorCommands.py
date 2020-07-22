@@ -15,6 +15,7 @@ class GetRole(ICommand):
     """
 
     def __init__(self, user_id, from_id, **kwargs):
+        super().__init__()
         self._user_id = user_id
         self._from_id = from_id
 
