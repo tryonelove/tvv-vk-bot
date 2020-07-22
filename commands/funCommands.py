@@ -4,12 +4,15 @@ from commands.interfaces import ICommand
 import requests
 from helpers import exceptions
 from objects import glob
+from helpers.utils import Utils
+
 
 class WeatherSet(ICommand):
     def __init__(self, city, user_id, *args, **kwargs):
         super().__init__()
         self._city = city
         self._user_id = user_id
+
 
     def execute(self):
         glob.c.execute("INSERT OR IGNORE INTO weather VALUES (?, ?)", (self._user_id, self._city))
@@ -33,11 +36,17 @@ class Weather(ICommand):
         "Snow": "Снег ❄"
     }
 
-    def __init__(self, city, *args):
+    def __init__(self, city, user_id, *args, **kwargs):
         super().__init__()
         self._city = city
+        self._user_id = user_id
+
+    def _check_value(self):
+        if not self._city:
+            self._city = Utils.get_weather_city(self._user_id)[0]
 
     def execute(self):
+        self._check_value()
         r = requests.get("http://api.openweathermap.org/data/2.5/weather",
                          params={"q": self._city, "APPID": "81d59d3e4bcd5bd5b69f6f95250213ee"})
         if r.status_code != 200:

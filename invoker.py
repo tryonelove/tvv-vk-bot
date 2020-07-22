@@ -86,8 +86,6 @@ class Invoker:
 
         else:
             logging.debug("Other command.")
-            if not self._value:
-                self._value = Utils.get_weather_city(self.event.from_id)[0]
             command_object = self.cmd(self._value, self.event.from_id)
         return command_object
 
@@ -96,8 +94,7 @@ class Invoker:
         if self.cmd is None or Utils.has_role(self.event.from_id, Roles.RESTRICTED):
             return
         command_object = self._get_command_object()
-        executed = None
-        executed = command_object.execute()
+        executed = command_object.execute() or None
         if executed:
             self._send_message(executed)
 
@@ -122,15 +119,15 @@ class Invoker:
     def invoke(self):
         if self.event.from_id < 0:
             return
-        # try:
-        lock.acquire(True)
-        self._invoke_level()
-        self._invoke_donator()
-        lock.release()
-        if self._is_command():
-            self._set_key_value()
-            logging.info(f"Command: {self._key}")
-            self._get_command()
-            self._invoke_command()
-        # except Exception as e:
-            # logging.error(e.args)
+        try:
+            lock.acquire(True)
+            self._invoke_level()
+            self._invoke_donator()
+            lock.release()
+            if self._is_command():
+                self._set_key_value()
+                logging.info(f"Command: {self._key}")
+                self._get_command()
+                self._invoke_command()
+        except Exception as e:
+            logging.error(e.args)
