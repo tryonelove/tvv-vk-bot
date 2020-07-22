@@ -26,6 +26,20 @@ class LevelSystem:
         self.update_data()
         k = self.calc_exp(message)
         self.add_exp(k)
+        self.level_up()
+
+    def level_up(self):
+        q = "SELECT experience, level FROM konfa_{} WHERE id=?".format(self._chat_id)
+        q_upd = "UPDATE konfa_{} SET level=? WHERE id=?".format(self._chat_id)
+        experience, lvl_start = glob.c.execute(q, (self._user_id,)).fetchone()
+        lvl_end = int(experience ** (1/3))
+        data = glob.vk.users.get(user_id=int(self._user_id), name_case = "nom")[0]
+        if lvl_start < lvl_end:
+            # if lvl_end>=7:
+            username =  f"{data['first_name']} {data['last_name']}"
+            glob.vk.messages.send(peer_id = self._chat_id, message="{} апнул {} лвл!".format(username, lvl_end))
+            glob.c.execute(q_upd, (lvl_end, self._user_id))
+            glob.db.commit()
 
     @staticmethod
     def calc_exp(message):
