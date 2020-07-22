@@ -38,8 +38,7 @@ class LevelSystem:
             glob.c.execute(f"UPDATE konfa_{self._chat_id} SET experience=0, level=1 WHERE id=?", (self._user_id,))
             experience = 0
             lvl_start = 1
-        else:
-            lvl_end = int(experience ** (1/3))
+        lvl_end = int(experience ** (1/3))
         if lvl_start < lvl_end:
             data = glob.vk.users.get(user_id=int(self._user_id), name_case = "nom")[0]
             if lvl_end>=7:
