@@ -51,7 +51,7 @@ class Formatter:
         "NC" in ordered_mods and ordered_mods.remove("DT")
         "PF" in ordered_mods and ordered_mods.remove("SD")
 
-        return "%s" % "".join(ordered_mods) if ordered_mods else ""
+        return "+%s" % "".join(ordered_mods) if ordered_mods else ""
 
     def modsToInt(self, mods):
         summ = 0
