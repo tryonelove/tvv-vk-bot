@@ -300,4 +300,4 @@ class Compare(IOsuCommand):
             b=self._beatmap_id, u=self._username, limit=self._limit)[self._limit-1]
         api_response["beatmap_id"] = self._beatmap_id
         score = BanchoScore(self._username, api_response).get_response()
-        return self.Message(score)
+        return self.Message(*score)
