@@ -19,9 +19,7 @@ class GetLevel(ILevelCommand):
             user_info = glob.vk.users.get(
                 user_id=int(self._user_id), name_case="nom")[0]
             full_name = f"{user_info['first_name']} {user_info['last_name']}"
-            message = f"{full_name}, ваша статистика:\n  \
-                            Уровень: {lvl_start}\n \
-                            Опыт: {experience}/{exp_required}XP"
+            message = f"{full_name}, ваша статистика:\nУровень: {lvl_start}\nОпыт: {experience}/{exp_required}XP"
             return message
 
     def execute(self):
