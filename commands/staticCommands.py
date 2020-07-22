@@ -28,7 +28,7 @@ class HelpCommand(ICommand):
     """
     RESPONSE = "Страница {}"
 
-    def __init__(self, page):
+    def __init__(self, page, *args, **kwargs):
         super().__init__()
         try:
             self._page = int(page)

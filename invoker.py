@@ -130,4 +130,5 @@ class Invoker:
                 self._get_command()
                 self._invoke_command()
         except Exception as e:
+            logging.error(self.event)
             logging.error(e.args)
