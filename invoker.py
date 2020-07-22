@@ -48,7 +48,7 @@ class Invoker:
             logging.debug("Static command.")
             command_object = self.cmd(key=self._key)
 
-        elif issubclass(self.cmd, (commands.interfaces.ILevelCommand)):
+        elif issubclass(self.cmd, commands.interfaces.ILevelCommand):
             logging.debug("Level command.")
             command_object = self.cmd(
                 user_id=self.event.from_id, chat_id=self.event.peer_id)

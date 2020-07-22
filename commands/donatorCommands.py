@@ -1,4 +1,4 @@
-from commands.interfaces import IDonatorManager
+from commands.interfaces import ICommand
 import datetime
 from objects import glob
 from constants.roles import Roles
@@ -6,7 +6,7 @@ from helpers.utils import Utils
 import logging
 
 
-class GetRole(IDonatorManager):
+class GetRole(ICommand):
     """
     Get user role command
 
@@ -15,11 +15,11 @@ class GetRole(IDonatorManager):
     """
 
     def __init__(self, user_id, from_id, **kwargs):
-        super().__init__(user_id)
+        self._user_id = user_id
         self._from_id = from_id
 
     def execute(self):
-        if self._user_id is None:
+        if not self._user_id:
             self._user_id = self._from_id
         logging.info("Getting user role.")
         message = "Роль: "
