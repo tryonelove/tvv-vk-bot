@@ -6,11 +6,16 @@ from helpers import exceptions
 from objects import glob
 
 class WeatherSet(ICommand):
-    def __init__(self, city):
-        self._city = " ".join(city)
+    def __init__(self, city, user_id, *args, **kwargs):
+        super().__init__()
+        self._city = city
+        self._user_id = user_id
 
     def execute(self):
-        glob.c.execute("INSERT INTO weather VALUES ")
+        glob.c.execute("INSERT OR IGNORE INTO weather VALUES (?, ?)", (self._user_id, self._city))
+        glob.c.execute("UPDATE weather SET city=?", (self._city,))
+        glob.db.commit()
+        return self.Message(f"Город {self._city} был успешно привязан.")
 
 
 class Weather(ICommand):
@@ -28,9 +33,9 @@ class Weather(ICommand):
         "Snow": "Снег ❄"
     }
 
-    def __init__(self, *city):
+    def __init__(self, city, *args):
         super().__init__()
-        self._city = " ".join(city)
+        self._city = city
 
     def execute(self):
         r = requests.get("http://api.openweathermap.org/data/2.5/weather",

@@ -6,6 +6,7 @@ commands_list = {
     "ролл": commands.funCommands.Roll,
     "weather": commands.funCommands.Weather,
     "погода": commands.funCommands.Weather,
+    "weatherset": commands.funCommands.WeatherSet,
     "osu": commands.osuCommands.OsuPicture,
     "taiko": commands.osuCommands.TaikoPicture,
     "mania": commands.osuCommands.ManiaPicture,

@@ -176,4 +176,6 @@ class Utils:
         """
         return glob.c.execute("SELECT expires, role FROM donators WHERE id=?", (user_id,)).fetchone()
             
-    
+    @staticmethod
+    def get_weather_city(user_id):
+        return glob.c.execute("SELECT city FROM weather WHERE id=?", (user_id,)).fetchone()

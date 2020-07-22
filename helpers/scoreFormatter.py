@@ -53,7 +53,7 @@ class Formatter:
 
         return "+%s" % "".join(ordered_mods) if ordered_mods else ""
 
-    def modsToInt(self, mods):
+    def mods_to_int(self, mods):
         summ = 0
         for i in range(0, len(mods), 2):
             mod = mods[i:i+2]
