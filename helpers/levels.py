@@ -35,7 +35,7 @@ class LevelSystem:
         experience, lvl_start = glob.c.execute(q, (self._user_id,)).fetchone()
         if experience is None or lvl_start is None:
             # temp fix
-            glob.c.execute(f"UPDATE konfa_{self._chat_id} SET experience=0, level=1 WHERE id=?")
+            glob.c.execute(f"UPDATE konfa_{self._chat_id} SET experience=0, level=1 WHERE id=?", (self._user_id,))
             experience = 0
             lvl_start = 1
         else:
