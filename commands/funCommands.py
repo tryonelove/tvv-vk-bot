@@ -13,7 +13,7 @@ class WeatherSet(ICommand):
 
     def execute(self):
         glob.c.execute("INSERT OR IGNORE INTO weather VALUES (?, ?)", (self._user_id, self._city))
-        glob.c.execute("UPDATE weather SET city=?", (self._city,))
+        glob.c.execute("UPDATE weather SET city=? WHERE id=?", (self._city, self._user_id))
         glob.db.commit()
         return self.Message(f"Город {self._city} был успешно привязан.")
 
