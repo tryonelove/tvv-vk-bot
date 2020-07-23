@@ -3,12 +3,12 @@ class UserNotFoundError(Exception):
     The following user doesn't exist.
     """
 
-class AccesDenies(Exception):
+class AccesDeniesError(Exception):
     """
     Access denied due to unmatching permissions.
     """
 
-class APIRequestError(Exception):
+class ApiRequestError(Exception):
     """
     API request error.
     """
@@ -17,3 +17,5 @@ class CityNotFoundError(Exception):
     """
     City not found (weather command)
     """
+
+exceptions = (UserNotFoundError, AccesDeniesError, ApiRequestError, CityNotFoundError)

@@ -5,13 +5,11 @@ from constants import osuConstants
 from config import OSU_API_KEY
 import re
 import datetime
-
+from helpers import banchoApi
 
 class Utils:
-    BANCHO_API = "https://osu.ppy.sh/api/"
-
-    def __init__(self, api=None):
-        self.api = api
+    def __init__(self):
+        self.api = banchoApi.BanchoApi()
 
     @staticmethod
     def upload_picture(url, decode_content=False):
@@ -128,7 +126,7 @@ class Utils:
                   "limit": 1, "user_id": user_id}
         data = Utils.get_server_username(user_id)
         if string:
-            result = re.match(r"(bancho|gatari)?(.*?)?(\d+)?$", string)
+            result = re.match(r"(bancho|gatari|банчо|гатари)?(.*?)?(\d+)?$", string)
             params["server"] = result.group(1) or None
             params["username"] = result.group(2) or None
             params["limit"] = result.group(3) or 1
@@ -178,4 +176,10 @@ class Utils:
         """
         return glob.c.execute("SELECT expires, role FROM donators WHERE id=?", (user_id,)).fetchone()
             
-    
+    @staticmethod
+    def get_weather_city(user_id):
+        return glob.c.execute("SELECT city FROM weather WHERE id=?", (user_id,)).fetchone()
+
+    @staticmethod
+    def is_level_disabled(chat_id):
+        return glob.c.execute("SELECT * FROM disabled_level WHERE chat_id=?", (chat_id,)).fetchone()

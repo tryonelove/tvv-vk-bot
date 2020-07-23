@@ -17,10 +17,13 @@ class Bot:
         self.longpoll = VkBotLongPollFix(self.vk_session, group_id)
         glob.vk = self.vk_session.get_api()
         glob.upload = vk_api.VkUpload(glob.vk)
-        glob.db = sqlite3.connect("database.db")
+        glob.db = sqlite3.connect("database.db", check_same_thread=False)
         glob.c = glob.db.cursor()
 
+
     def start(self):
+        glob.c.executescript(config.DATABASE_INIT)
+        glob.db.commit()
         for event in self.longpoll.listen():
             if event.type == VkBotEventType.MESSAGE_NEW:
                 invoker.Invoker(event).invoke()

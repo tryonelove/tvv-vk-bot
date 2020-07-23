@@ -4,16 +4,16 @@ from constants import osuConstants
 class Formatter:
     def __init__(self,
                  username, title, m, accuracy,
-                 combo, max_combo, misses, pp, beatmap_id, pp_if_fc, rank):
+                 combo, max_combo, misses, real_pp, beatmap_id, pp_if_fc, ranking, **kwargs):
         self.username = username
         self.title = title
         self.beatmap_id = beatmap_id
         self.mods = self.int_to_mods(m)
         self.combo = self.format_combo(combo, max_combo)
-        self.pp = self.format_pp(pp, pp_if_fc)
+        self.pp = self.format_pp(real_pp, pp_if_fc)
         self.accuracy = self.format_accuracy(accuracy)
         self.misses = self.format_misses(misses)
-        self.rank = rank
+        self.rank = ranking
 
     def format_accuracy(self, accuracy):
         return round(float(accuracy), 2)
@@ -28,8 +28,6 @@ class Formatter:
             pp = str(_pp) + "pp"
         if _pp != pp_if_fc:
             pp += " ({}pp if FC)".format(pp_if_fc)
-        else:
-            pp = ""
         return pp
 
     def format_combo(self, combo, max_combo):
@@ -53,9 +51,9 @@ class Formatter:
         "NC" in ordered_mods and ordered_mods.remove("DT")
         "PF" in ordered_mods and ordered_mods.remove("SD")
 
-        return "%s" % "".join(ordered_mods) if ordered_mods else ""
+        return "+%s" % "".join(ordered_mods) if ordered_mods else ""
 
-    def modsToInt(self, mods):
+    def mods_to_int(self, mods):
         summ = 0
         for i in range(0, len(mods), 2):
             mod = mods[i:i+2]

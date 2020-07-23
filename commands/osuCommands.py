@@ -66,21 +66,22 @@ class MatchmakingStats(IOsuCommand):
     def __init__(self, username, **kwargs):
         super().__init__()
         self._username = username
-        self.API = "https://osumatchmaking.c7x.dev/users/"
+        self.API = "https://oma.hwc.hr/api/users/"
 
     def execute(self):
         r = requests.get(self.API + self._username)
         if r.status_code != 200:
-            raise exceptions.APIRequestError()
+            raise exceptions.ApiRequestError
         js = r.json()
         username = js.get("osuName")
         country = js.get("countryCode")
-        rank = js.get("rank")
-        rating = round(js.get("currentVisualRating"))
-        wins = js.get("wins")
-        losses = js.get("losses")
+        stats = js.get("stats")["1v1"]
+        rank = stats.get("rank")
+        rating = round(stats.get("currentVisualRating"))
+        wins = stats.get("wins")
+        losses = stats.get("losses")
         winrate = round((wins / (wins + losses)) * 100, 2)
-        winstreak = js.get("currentWinstreak")
+        winstreak = stats.get("currentWinstreak")
         response = f"{country} | {username} #{rank}\nRating: {rating}\nW/L: {wins}/{losses} | WR: {winrate}%\nWinstreak: {winstreak}"
         return self.Message(response)
 
@@ -106,16 +107,74 @@ class OsuSet(IOsuCommand):
         return username
 
     def execute(self):
-        try:
-            self._username = self._get_real_username()
-        except:
-            raise exceptions.UserNotFoundError()
+        self._username = self._get_real_username()
         glob.c.execute(
             "INSERT OR IGNORE INTO users(id) VALUES(?)", (self._user_id,))
         glob.c.execute("UPDATE users SET server=?, username=? WHERE id=?",
                        (self._server, self._username, self._user_id))
         glob.db.commit()
         return self.Message(f"Аккаунт {self._server} {self._username} был успешно привязан к вашему айди.")
+
+
+class BanchoScore:
+    def __init__(self, username, api_response):
+        self.username = username
+        self.api_response = api_response
+
+    def get_response(self):
+        params = {}
+        params["username"] = self.username
+        params["beatmap_id"] = self.api_response['beatmap_id']
+        params["combo"] = self.api_response['maxcombo']
+        params["count50"] = self.api_response['count50']
+        params["count100"] = self.api_response['count100']
+        params["count300"] = self.api_response['count300']
+        params["misses"] = self.api_response['countmiss']
+        params["m"] = self.api_response['enabled_mods']
+        params["ranking"] = self.api_response['rank']
+        params["accuracy"] = Utils.calculate_accuracy(
+            *map(int, (params["misses"], params["count50"], params["count100"], params["count300"])))
+        beatmap = Utils().get_cached_beatmap(params["beatmap_id"])
+        params["max_combo"] = beatmap["max_combo"]
+        params["title"] = f"{beatmap['artist']} - {beatmap['title']} [{beatmap['version']}]"
+        # Calculate pp
+        calculator = ppCalculator.PpCalculator(**params)
+        calculator.parse_map()
+        params["real_pp"] = calculator.get_real_pp()
+        params["pp_if_fc"] = calculator.get_if_fc_pp()
+        score_message = scoreFormatter.Formatter(**params)
+        score_background = beatmap["background_url"]
+        return score_message, score_background
+
+
+class GatariScore:
+    def __init__(self, username, api_response):
+        self.username = username
+        self.api_response = api_response
+
+    def get_response(self):
+        params = {}
+        params["username"] = self.username
+        params["beatmap_id"] = self.api_response["beatmap"]["beatmap_id"]
+        params["combo"] = self.api_response['max_combo']
+        params["misses"] = self.api_response['count_miss']
+        params["m"] = self.api_response['mods']
+        params["ranking"] = self.api_response['ranking']
+        params["accuracy"] = self.api_response["accuracy"]
+        params["count50"] = self.api_response["count_50"]
+        params["count100"] = self.api_response["count_100"]
+        params["count300"] = self.api_response["count_300"]
+        beatmap = Utils().get_cached_beatmap(params["beatmap_id"])
+        params["max_combo"] = self.api_response["beatmap"]["fc"]
+        params["title"] = f"{beatmap['artist']} - {beatmap['title']} [{beatmap['version']}]"
+        # Calculate pp
+        calculator = ppCalculator.PpCalculator(**params)
+        calculator.parse_map()
+        params["real_pp"] = calculator.get_real_pp()
+        params["pp_if_fc"] = calculator.get_if_fc_pp()
+        score_message = scoreFormatter.Formatter(**params)
+        score_background = beatmap["background_url"]
+        return score_message, score_background
 
 
 class TopScoreCommand(IOsuCommand):
@@ -128,7 +187,7 @@ class TopScoreCommand(IOsuCommand):
         self._server = server
         self._username = username
         self._limit = limit or 1
-        self._api = BanchoTopScore if server == "bancho" else GatariTopScore
+        self._api = BanchoTopScore if server in ["bancho", "банчо"] else GatariTopScore
 
     def execute(self):
         result = self._api(self._username, self._limit).get()
@@ -146,42 +205,11 @@ class BanchoTopScore:
         self._api = banchoApi.BanchoApi()
 
     def get(self):
-        result = self._api.get_user_best(
-            u=self._username, limit=self._limit)[self._limit-1]
-        beatmap_id = result['beatmap_id']
-        combo = result['maxcombo']
-        count50 = result['count50']
-        count100 = result['count100']
-        count300 = result['count300']
-        misses = result['countmiss']
-        m = result['enabled_mods']
-        ranking = result['rank']
-        accuracy = Utils.calculate_accuracy(
-            *map(int, (misses, count50, count100, count300)))
-        beatmap = Utils(api=self._api).get_cached_beatmap(beatmap_id)
-        max_combo = beatmap["max_combo"]
-        title = f"{beatmap['artist']} - {beatmap['title']} [{beatmap['version']}]"
-        # Calculate pp
-        calculator = ppCalculator.PpCalculator(
-            beatmap_id, m, misses, count50, count100, count300, combo)
-        calculator.parse_map()
-        real_pp = calculator.get_real_pp()
-        pp_if_fc = calculator.get_if_fc_pp()
-        score_message = scoreFormatter.Formatter(
-            username=self._username,
-            title=title,
-            m=m,
-            accuracy=accuracy,
-            combo=combo,
-            max_combo=max_combo,
-            misses=misses,
-            pp=real_pp,
-            pp_if_fc=pp_if_fc,
-            beatmap_id=beatmap_id,
-            rank=ranking
-        )
-        score_background = beatmap["background_url"]
-        return score_message, score_background
+        api_response = self._api.get_user_best(
+                u=self._username, limit=self._limit)
+        if not api_response:
+            raise exceptions.ApiRequestError
+        return BanchoScore(self._username, api_response[self._limit-1]).get_response()
 
 
 class GatariTopScore:
@@ -197,40 +225,7 @@ class GatariTopScore:
         user_id = user["users"][0]["id"]
         best_scores = self._api.get_user_best(user_id, self._limit)
         score = best_scores["scores"][self._limit-1]
-        beatmap_id = score["beatmap"]["beatmap_id"]
-        combo = score['max_combo']
-        misses = score['count_miss']
-        m = score['mods']
-        ranking = score['ranking']
-        accuracy = score["accuracy"]
-        count50 = score["count_50"]
-        count100 = score["count_100"]
-        count300 = score["count_300"]
-        beatmap = Utils(api=banchoApi.BanchoApi()
-                        ).get_cached_beatmap(beatmap_id)
-        max_combo = score["beatmap"]["fc"]
-        title = f"{beatmap['artist']} - {beatmap['title']} [{beatmap['version']}]"
-        # Calculate pp
-        calculator = ppCalculator.PpCalculator(
-            beatmap_id, m, misses, count50, count100, count300, combo)
-        calculator.parse_map()
-        real_pp = calculator.get_real_pp()
-        pp_if_fc = calculator.get_if_fc_pp()
-        score_message = scoreFormatter.Formatter(
-            username=self._username,
-            title=title,
-            m=m,
-            accuracy=accuracy,
-            combo=combo,
-            max_combo=max_combo,
-            misses=misses,
-            pp=real_pp,
-            pp_if_fc=pp_if_fc,
-            beatmap_id=beatmap_id,
-            rank=ranking
-        )
-        score_background = beatmap["background_url"]
-        return score_message, score_background
+        return GatariScore(self._username, score).get_response()
 
 
 class RecentScoreCommand(IOsuCommand):
@@ -243,7 +238,7 @@ class RecentScoreCommand(IOsuCommand):
         self._server = server
         self._username = username
         self._limit = limit or 1
-        self._api = BanchoRecentScore if server == "bancho" else GatariRecentScore
+        self._api = BanchoRecentScore if server in ["bancho", "банчо"] else GatariRecentScore
 
     def execute(self):
         result = self._api(self._username, self._limit).get()
@@ -261,42 +256,11 @@ class BanchoRecentScore:
         self._api = banchoApi.BanchoApi()
 
     def get(self):
-        result = self._api.get_user_recent(
-            u=self._username, limit=self._limit)[self._limit-1]
-        beatmap_id = result['beatmap_id']
-        combo = result['maxcombo']
-        count50 = result['count50']
-        count100 = result['count100']
-        count300 = result['count300']
-        misses = result['countmiss']
-        m = result['enabled_mods']
-        ranking = result['rank']
-        accuracy = Utils.calculate_accuracy(
-            *map(int, (misses, count50, count100, count300)))
-        beatmap = Utils(api=self._api).get_cached_beatmap(beatmap_id)
-        max_combo = beatmap["max_combo"]
-        title = f"{beatmap['artist']} - {beatmap['title']} [{beatmap['version']}]"
-        # Calculate pp
-        calculator = ppCalculator.PpCalculator(
-            beatmap_id, m, misses, count50, count100, count300, combo)
-        calculator.parse_map()
-        real_pp = calculator.get_real_pp()
-        pp_if_fc = calculator.get_if_fc_pp()
-        score_message = scoreFormatter.Formatter(
-            username=self._username,
-            title=title,
-            m=m,
-            accuracy=accuracy,
-            combo=combo,
-            max_combo=max_combo,
-            misses=misses,
-            pp=real_pp,
-            pp_if_fc=pp_if_fc,
-            beatmap_id=beatmap_id,
-            rank=ranking
-        )
-        score_background = beatmap["background_url"]
-        return score_message, score_background
+        api_response = self._api.get_user_recent(
+            u=self._username, limit=self._limit)
+        if not api_response:
+            raise exceptions.ApiRequestError
+        return BanchoScore(self._username, api_response[self._limit-1]).get_response()
 
 
 class GatariRecentScore:
@@ -314,42 +278,10 @@ class GatariRecentScore:
         if not user["users"]:
             raise exceptions.UserNotFoundError
         user_id = user["users"][0]["id"]
-        best_scores = self._api.get_user_recent(user_id, self._limit, show_failed=True)
+        best_scores = self._api.get_user_recent(
+            user_id, self._limit, show_failed=True)
         score = best_scores["scores"][self._limit-1]
-        beatmap_id = score["beatmap"]["beatmap_id"]
-        combo = score['max_combo']
-        misses = score['count_miss']
-        m = score['mods']
-        ranking = score['ranking']
-        accuracy = score["accuracy"]
-        beatmap = Utils(api=banchoApi.BanchoApi()
-                        ).get_cached_beatmap(beatmap_id)
-        max_combo = score["beatmap"]["fc"]
-        title = f"{beatmap['artist']} - {beatmap['title']} [{beatmap['version']}]"
-        count50 = score["count_50"]
-        count100 = score["count_100"]
-        count300 = score["count_300"]
-        # Calculate pp
-        calculator = ppCalculator.PpCalculator(
-            beatmap_id, m, misses, count50, count100, count300, combo)
-        calculator.parse_map()
-        real_pp = calculator.get_real_pp()
-        pp_if_fc = calculator.get_if_fc_pp()
-        score_message = scoreFormatter.Formatter(
-            username=self._username,
-            title=title,
-            m=m,
-            accuracy=accuracy,
-            combo=combo,
-            max_combo=max_combo,
-            misses=misses,
-            pp=real_pp,
-            pp_if_fc=pp_if_fc,
-            beatmap_id=beatmap_id,
-            rank=ranking
-        )
-        score_background = beatmap["background_url"]
-        return score_message, score_background
+        return GatariScore(self._username, score).get_response()
 
 
 class Compare(IOsuCommand):
@@ -365,38 +297,8 @@ class Compare(IOsuCommand):
         self._api = banchoApi.BanchoApi()
 
     def execute(self):
-        result = self._api.get_scores(
+        api_response = self._api.get_scores(
             b=self._beatmap_id, u=self._username, limit=self._limit)[self._limit-1]
-        combo = result['maxcombo']
-        count50 = result['count50']
-        count100 = result['count100']
-        count300 = result['count300']
-        misses = result['countmiss']
-        m = result['enabled_mods']
-        ranking = result['rank']
-        accuracy = Utils.calculate_accuracy(
-            *map(int, (misses, count50, count100, count300)))
-        beatmap = Utils(api=self._api).get_cached_beatmap(self._beatmap_id)
-        max_combo = beatmap["max_combo"]
-        title = f"{beatmap['artist']} - {beatmap['title']} [{beatmap['version']}]"
-        # Calculate pp
-        calculator = ppCalculator.PpCalculator(
-            self._beatmap_id, m, misses, count50, count100, count300, combo)
-        calculator.parse_map()
-        real_pp = calculator.get_real_pp()
-        pp_if_fc = calculator.get_if_fc_pp()
-        score_message = scoreFormatter.Formatter(
-            username=self._username,
-            title=title,
-            m=m,
-            accuracy=accuracy,
-            combo=combo,
-            max_combo=max_combo,
-            misses=misses,
-            pp=real_pp,
-            pp_if_fc=pp_if_fc,
-            beatmap_id=self._beatmap_id,
-            rank=ranking
-        )
-        score_background = beatmap["background_url"]
-        return self.Message(score_message, score_background)
+        api_response["beatmap_id"] = self._beatmap_id
+        score = BanchoScore(self._username, api_response).get_response()
+        return self.Message(*score)

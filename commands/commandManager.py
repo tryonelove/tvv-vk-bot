@@ -24,6 +24,8 @@ class CommandManager(ICommandManager):
                 self._attachments[0]["photo"]["sizes"])
             logging.info("Uploading picture: "+largest_url)
             self._attachments = Utils.upload_picture(largest_url)
+        else:
+            self._attachments = None
 
 
 class AddCommand(CommandManager):

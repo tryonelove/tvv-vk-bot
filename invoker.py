@@ -7,7 +7,7 @@ from constants.roles import Roles
 from config import CREATOR_ID
 from constants.messageTypes import MessageTypes
 import datetime
-
+from helpers import exceptions
 
 class Invoker:
     def __init__(self, event):
@@ -40,15 +40,13 @@ class Invoker:
             return
         glob.vk.messages.send(**params)
 
-    def _invoke_command(self):
-        logging.info(f"Got a {self.cmd}, message: {self.event.text}")
-        if self.cmd is None or Utils.has_role(self.event.from_id, Roles.RESTRICTED):
-            return
+    def _get_command_object(self):
+        command_object = None
         if issubclass(self.cmd, commands.staticCommands.StaticCommand):
             logging.debug("Static command.")
             command_object = self.cmd(key=self._key)
 
-        elif issubclass(self.cmd, (commands.interfaces.ILevelCommand)):
+        elif issubclass(self.cmd, commands.interfaces.ILevelCommand):
             logging.debug("Level command.")
             command_object = self.cmd(
                 user_id=self.event.from_id, chat_id=self.event.peer_id)
@@ -56,42 +54,47 @@ class Invoker:
         elif issubclass(self.cmd, commands.interfaces.ICommandManager):
             logging.debug("Commands managing.")
             if not Utils.has_role(self.event.from_id, Roles.DONATOR | Roles.ADMIN):
-                return
+                raise exceptions.AccesDeniesError
             command_object = self.cmd(
                 message=self.event.text, attachments=self.event.attachments, author_id=self.event.from_id)
 
         elif issubclass(self.cmd, commands.interfaces.IAdminCommand):
             logging.debug("Admin managing.")
             if not Utils.is_creator(self.event.from_id):
-                return
-            target_user_id = Utils.find_user_id(self.event.text)
-            command_object = self.cmd(target_user_id, self.event.from_id)
+                raise exceptions.AccesDeniesError
+            user_id = Utils.find_user_id(self.event.text)
+            command_object = self.cmd(user_id, self.event.from_id)
 
         elif issubclass(self.cmd, commands.interfaces.IDonatorManager):
             logging.debug("Donator managing.")
             if not Utils.is_creator(self.event.from_id):
-                return
+                raise exceptions.AccesDeniesError
             command_object = self.cmd(self._value, self.event.from_id)
-            
+
         elif issubclass(self.cmd, commands.interfaces.IOsuCommand):
             logging.debug("osu! command")
             # Need to get server and username from db
-            params = Utils.get_osu_params(self._value, self.event.from_id) # server, username, user_id dict
+            # server, username, user_id dict
+            params = Utils.get_osu_params(self._value, self.event.from_id)
             if self.event.fwd_messages:
                 fwd_message = self.event.fwd_messages[-1]
-                params["beatmap_id"] = Utils.find_beatmap_id(fwd_message["text"])
+                params["beatmap_id"] = Utils.find_beatmap_id(
+                    fwd_message["text"])
             command_object = self.cmd(**params)
 
         else:
             logging.debug("Other command.")
-            command_object = self.cmd(self._value)
-        executed = None
-        try:
-            executed = command_object.execute()
-        except Exception as e:
-            logging.error(e.args)
+            command_object = self.cmd(self._value, self.event.from_id)
+        return command_object
+
+    def _invoke_command(self):
+        logging.info(f"Got a {self.cmd}, message: {self.event.text}")
+        if self.cmd is None or Utils.has_role(self.event.from_id, Roles.RESTRICTED):
+            return
+        command_object = self._get_command_object()
+        executed = command_object.execute() or None
         if executed:
-            self._send_message(executed)        
+            self._send_message(executed)
 
     def _invoke_level(self):
         levelSystem = levels.LevelSystem(
@@ -100,20 +103,29 @@ class Invoker:
 
     def _invoke_donator(self):
         if Utils.has_role(self.event.from_id, Roles.DONATOR):
-            expires, _ = Utils.get_donator_expire_date(self.event.from_id)
+            expires = Utils.get_donator_expire_date(self.event.from_id)
+            if not expires:
+                return
             now = datetime.datetime.now().timestamp()
-            if now > expires:
-                cmd = commandsList.commands_list.get("rm_donator")(self.event.from_id)
+            if now > expires[0]:
+                cmd = commandsList.commands_list.get(
+                    "rm_donator")(self.event.from_id)
                 msg = cmd.execute()
                 msg.message = f"Минус донатер у *id{self.event.from_id}"
                 self._send_message(msg)
 
-
     def invoke(self):
-        self._invoke_level()
-        self._invoke_donator()
-        if self._is_command():
-            self._set_key_value()
-            logging.info(f"Command: {self._key}")
-            self._get_command()
-            self._invoke_command()
+        if self.event.from_id < 0:
+            return
+        try:
+            if not Utils.is_level_disabled(self.event.peer_id):
+                self._invoke_level()
+            self._invoke_donator()
+            if self._is_command():
+                self._set_key_value()
+                logging.info(f"Command: {self._key}")
+                self._get_command()
+                self._invoke_command()
+        except Exception as e:
+            logging.error(self.event)
+            logging.error(e.args)
