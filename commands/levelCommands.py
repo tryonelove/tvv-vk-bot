@@ -55,3 +55,48 @@ class GetLeaderboard(ILevelCommand):
     def execute(self):
         message = self._get_leaderboard()
         return self.Message(message)
+
+
+class LevelToggler(ILevelCommand):
+    def __init__(self, user_id, chat_id, **kwargs):
+        super().__init__()
+        self._user_id = user_id
+        self._chat_id = chat_id
+
+    def _is_chat_admin(self):
+        admins = []
+        users = glob.vk.messages.getConversationMembers(peer_id=self._chat_id)
+        if not users:
+            return
+        for user in users["items"]:
+            if user.get("is_admin", False):
+                admins.append(user["member_id"])
+        return self._user_id in admins
+
+
+class DisableLevels(LevelToggler):
+    """
+    Disable levels command
+    """
+    def __init__(self, user_id, chat_id, **kwargs):
+        super().__init__(user_id, chat_id)
+
+    def execute(self):
+        if self._is_chat_admin():
+            glob.c.execute("INSERT OR IGNORE INTO disabled_level(chat_id) VALUES (?)", (self._chat_id,))
+            glob.db.commit()
+            return self.Message("Экспа была выключена в конфе.")
+
+
+class EnableLevels(LevelToggler):
+    """
+    Enable levels command
+    """
+    def __init__(self, user_id, chat_id, **kwargs):
+        super().__init__(user_id, chat_id)
+
+    def execute(self):
+        if self._is_chat_admin():
+            glob.c.execute("DELETE FROM disabled_level WHERE chat_id=?", (self._chat_id,))
+            glob.db.commit()
+            return self.Message("Экспа была включена в конфе.")

@@ -179,3 +179,7 @@ class Utils:
     @staticmethod
     def get_weather_city(user_id):
         return glob.c.execute("SELECT city FROM weather WHERE id=?", (user_id,)).fetchone()
+
+    @staticmethod
+    def is_level_disabled(chat_id):
+        return glob.c.execute("SELECT * FROM disabled_level WHERE chat_id=?", (chat_id,)).fetchone()

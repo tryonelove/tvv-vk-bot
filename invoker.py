@@ -7,9 +7,7 @@ from constants.roles import Roles
 from config import CREATOR_ID
 from constants.messageTypes import MessageTypes
 import datetime
-from threading import Lock
-
-lock = Lock()
+from helpers import exceptions
 
 class Invoker:
     def __init__(self, event):
@@ -56,21 +54,21 @@ class Invoker:
         elif issubclass(self.cmd, commands.interfaces.ICommandManager):
             logging.debug("Commands managing.")
             if not Utils.has_role(self.event.from_id, Roles.DONATOR | Roles.ADMIN):
-                return
+                raise exceptions.AccesDeniesError
             command_object = self.cmd(
                 message=self.event.text, attachments=self.event.attachments, author_id=self.event.from_id)
 
         elif issubclass(self.cmd, commands.interfaces.IAdminCommand):
             logging.debug("Admin managing.")
             if not Utils.is_creator(self.event.from_id):
-                return
+                raise exceptions.AccesDeniesError
             user_id = Utils.find_user_id(self.event.text)
             command_object = self.cmd(user_id, self.event.from_id)
 
         elif issubclass(self.cmd, commands.interfaces.IDonatorManager):
             logging.debug("Donator managing.")
             if not Utils.is_creator(self.event.from_id):
-                return
+                raise exceptions.AccesDeniesError
             command_object = self.cmd(self._value, self.event.from_id)
 
         elif issubclass(self.cmd, commands.interfaces.IOsuCommand):
@@ -120,10 +118,9 @@ class Invoker:
         if self.event.from_id < 0:
             return
         try:
-            lock.acquire(True)
-            self._invoke_level()
+            if not Utils.is_level_disabled(self.event.peer_id):
+                self._invoke_level()
             self._invoke_donator()
-            lock.release()
             if self._is_command():
                 self._set_key_value()
                 logging.info(f"Command: {self._key}")

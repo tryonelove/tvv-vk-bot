@@ -71,7 +71,7 @@ class MatchmakingStats(IOsuCommand):
     def execute(self):
         r = requests.get(self.API + self._username)
         if r.status_code != 200:
-            raise exceptions.APIRequestError()
+            raise exceptions.ApiRequestError
         js = r.json()
         username = js.get("osuName")
         country = js.get("countryCode")
@@ -107,10 +107,7 @@ class OsuSet(IOsuCommand):
         return username
 
     def execute(self):
-        try:
-            self._username = self._get_real_username()
-        except:
-            raise exceptions.UserNotFoundError()
+        self._username = self._get_real_username()
         glob.c.execute(
             "INSERT OR IGNORE INTO users(id) VALUES(?)", (self._user_id,))
         glob.c.execute("UPDATE users SET server=?, username=? WHERE id=?",
@@ -209,8 +206,10 @@ class BanchoTopScore:
 
     def get(self):
         api_response = self._api.get_user_best(
-            u=self._username, limit=self._limit)[self._limit-1]
-        return BanchoScore(self._username, api_response).get_response()
+                u=self._username, limit=self._limit)
+        if not api_response:
+            raise exceptions.ApiRequestError
+        return BanchoScore(self._username, api_response[self._limit-1]).get_response()
 
 
 class GatariTopScore:
@@ -258,8 +257,10 @@ class BanchoRecentScore:
 
     def get(self):
         api_response = self._api.get_user_recent(
-            u=self._username, limit=self._limit)[self._limit-1]
-        return BanchoScore(self._username, api_response).get_response()
+            u=self._username, limit=self._limit)
+        if not api_response:
+            raise exceptions.ApiRequestError
+        return BanchoScore(self._username, api_response[self._limit-1]).get_response()
 
 
 class GatariRecentScore:
