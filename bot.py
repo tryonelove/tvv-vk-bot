@@ -20,12 +20,15 @@ class Bot:
         glob.db = sqlite3.connect("database.db", check_same_thread=False)
         glob.c = glob.db.cursor()
 
+
     def start(self):
+        glob.c.executescript(config.DATABASE_INIT)
+        glob.db.commit()
         for event in self.longpoll.listen():
             if event.type == VkBotEventType.MESSAGE_NEW:
-                threading.Thread(target=invoker.Invoker(event).invoke).start()
+                invoker.Invoker(event).invoke()
 
 
 if __name__ == "__main__":
-    bot = Bot(config.API_KEY, config.GROUP_ID)
+    bot = Bot(config.API_KEY_TEST, config.GROUP_ID_TEST)
     bot.start()
