@@ -66,7 +66,7 @@ class Formatter:
             result+="UNSUBMITTED\n"
         result += f"{self.username} | {self.title} "
         if self.mods:
-            result+=f"{self.mods}"
+            result+=f"{self.mods} "
         result+=f"({self.accuracy}%) "
         if self.combo:
             result+=f"{self.combo} "
