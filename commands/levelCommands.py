@@ -2,6 +2,7 @@ from commands.interfaces import ILevelCommand
 from objects import glob
 from helpers.utils import Utils
 from constants.roles import Roles
+from helpers import exceptions
 
 class GetLevel(ILevelCommand):
     """
@@ -67,7 +68,7 @@ class LevelToggler(ILevelCommand):
         admins = []
         users = glob.vk.messages.getConversationMembers(peer_id=self._chat_id)
         if not users:
-            return
+            raise exceptions.AccesDeniesError
         for user in users["items"]:
             if user.get("is_admin", False):
                 admins.append(user["member_id"])

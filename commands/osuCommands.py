@@ -13,7 +13,7 @@ class StatsPicture(IOsuCommand):
     osu! picture generator
     """
     SIG_COLORS = ('black', 'red', 'orange', 'yellow', 'green',
-                  'blue', 'purple', 'pink', 'hex2255ee')
+                  'blue', 'purple', 'pink', '2255ee')
     SERVERS = {
         "gatari": "http://sig.gatari.pw/sig.php?colour={}&uname={}&xpbar&xpbarhex&darktriangles&pp=1&mode={}",
         "bancho": "http://134.122.83.254:5000/sig?colour={}&uname={}&xpbar&xpbarhex&darktriangles&pp=1&mode={}&{}"
@@ -100,6 +100,8 @@ class OsuSet(IOsuCommand):
 
     def _get_real_username(self):
         user = self._api.get_user(u=self._username)
+        if not user:
+            raise exceptions.UserNotFoundError
         if self._server == "bancho":
             username = user[0]["username"]
         else:
@@ -208,7 +210,7 @@ class BanchoTopScore:
         api_response = self._api.get_user_best(
                 u=self._username, limit=self._limit)
         if not api_response:
-            raise exceptions.ApiRequestError
+            raise exceptions.ScoreNotFoundError
         return BanchoScore(self._username, api_response[self._limit-1]).get_response()
 
 
@@ -220,6 +222,8 @@ class GatariTopScore:
 
     def get(self):
         user = self._api.get_user(self._username)
+        if not user:
+            raise exceptions.ApiRequestError
         if not user["users"]:
             raise exceptions.UserNotFoundError
         user_id = user["users"][0]["id"]
@@ -259,7 +263,7 @@ class BanchoRecentScore:
         api_response = self._api.get_user_recent(
             u=self._username, limit=self._limit)
         if not api_response:
-            raise exceptions.ApiRequestError
+            raise exceptions.ScoreNotFoundError
         return BanchoScore(self._username, api_response[self._limit-1]).get_response()
 
 
@@ -275,6 +279,8 @@ class GatariRecentScore:
 
     def get(self):
         user = self._api.get_user(self._username)
+        if not user:
+            raise exceptions.ApiRequestError
         if not user["users"]:
             raise exceptions.UserNotFoundError
         user_id = user["users"][0]["id"]
@@ -298,7 +304,9 @@ class Compare(IOsuCommand):
 
     def execute(self):
         api_response = self._api.get_scores(
-            b=self._beatmap_id, u=self._username, limit=self._limit)[self._limit-1]
-        api_response["beatmap_id"] = self._beatmap_id
-        score = BanchoScore(self._username, api_response).get_response()
+            b=self._beatmap_id, u=self._username, limit=self._limit)
+        if not api_response:
+            raise exceptions.ScoreNotFoundError
+        api_response[self._limit-1]["beatmap_id"] = self._beatmap_id
+        score = BanchoScore(self._username, api_response[self._limit-1]).get_response()
         return self.Message(*score)

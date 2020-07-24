@@ -53,5 +53,6 @@ class BanchoApi:
         params["k"] = self.key
         r = self.session.get(
             self.API + endpoint, params = params)
-        if r.status_code == 200:
-            return r.json()
+        if r.status_code != 200:
+            return {}
+        return r.json()

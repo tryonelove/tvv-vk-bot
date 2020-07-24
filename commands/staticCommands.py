@@ -15,6 +15,7 @@ class StaticCommand(ICommand):
         self._key = key
 
     def execute(self):
+        return self.Message(attachment="doc236965366_517908343")
         message = glob.c.execute(
             "SELECT message, attachment FROM commands WHERE key = ?",
             (self._key,)).fetchone()
