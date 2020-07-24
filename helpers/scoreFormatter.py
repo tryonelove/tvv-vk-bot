@@ -32,7 +32,7 @@ class Formatter:
 
     def format_combo(self, combo, max_combo):
         if int(combo) == int(max_combo):
-            combo = " "
+            combo = ""
         else:
             combo = " " + str(combo) + '/' + str(max_combo) + " "
         return combo
@@ -64,5 +64,13 @@ class Formatter:
         result = ""
         if self.rank == "F":
             result+="UNSUBMITTED\n"
-        result += f"{self.username} | {self.title} {self.mods} ({self.accuracy}%) {self.combo} {self.misses} | {self.pp}\nhttps://osu.ppy.sh/b/{self.beatmap_id}"
+        result += f"{self.username} | {self.title} "
+        if self.mods:
+            result+=f"{self.mods}"
+        result+=f"({self.accuracy}%) "
+        if self.combo:
+            result+=f"{self.combo} "
+        if self.misses:
+            result+=f"{self.misses} "
+        result+=f"| {self.pp}\nhttps://osu.ppy.sh/b/{self.beatmap_id}"
         return result 
