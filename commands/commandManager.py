@@ -8,6 +8,16 @@ class CommandManager(ICommandManager):
     def __init__(self, *args, **kwargs):
         super().__init__(**kwargs)
 
+    def _photo_handler(self):
+        largest_url = Utils.find_largest_attachment(
+                    self._attachments[0]["photo"]["sizes"])
+        logging.info("Uploading picture: "+largest_url)
+        self._attachments = Utils.upload_picture(largest_url)
+
+    def _video_handler(self):
+        self._attachments = f"video{self._attachments[0]['video']['owner_id']}_{self._attachments[0]['video']['id']}"
+
+
     def _set_values(self):
         """
         Split message into key: value format
@@ -17,13 +27,13 @@ class CommandManager(ICommandManager):
         if len(message) > 1:
             self._value = " ".join(message[2:])
         if self._attachments:
-            if self._attachments[0]["type"] != "photo":
+            if self._attachments[0]["type"] not in ["photo", "video"]:
                 self._attachments = None
                 return
-            largest_url = Utils.find_largest_attachment(
-                self._attachments[0]["photo"]["sizes"])
-            logging.info("Uploading picture: "+largest_url)
-            self._attachments = Utils.upload_picture(largest_url)
+            if self._attachments[0]["type"] == "video":
+                self._video_handler()
+            elif self._attachments[0]["type"] == "photo":
+                self._photo_handler()
         else:
             self._attachments = None
 
