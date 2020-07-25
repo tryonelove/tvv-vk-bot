@@ -98,9 +98,7 @@ class Invoker:
             executed = command_object.execute()
         except exceptions.exceptions as e:
             executed = message.MessageObject(e.message)
-            logging.error(self.event)
-            logging.error(e.args)
-        except:
+        except Exception as e:
             executed = message.MessageObject(e.args[0], message_type=MessageTypes.CREATOR)
             logging.error(self.event)
             logging.error(e.args)
