@@ -99,7 +99,8 @@ class Invoker:
         except exceptions.exceptions as e:
             executed = message.MessageObject(e.message)
         except Exception as e:
-            executed = message.MessageObject(e.args[0], message_type=MessageTypes.CREATOR)
+            message = f"Event: {self.event}\nError: {e.args[0]}"
+            executed = message.MessageObject(message, message_type=MessageTypes.CREATOR)
             logging.error(self.event)
             logging.error(e.args)
         if executed:
