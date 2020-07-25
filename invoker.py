@@ -93,8 +93,8 @@ class Invoker:
         logging.info(f"Got a {self.cmd}, message: {self.event.text}")
         if self.cmd is None or Utils.has_role(self.event.from_id, Roles.RESTRICTED):
             return
-        command_object = self._get_command_object()
         try:
+            command_object = self._get_command_object()
             executed = command_object.execute()
         except exceptions.exceptions as e:
             executed = message.MessageObject(e.message)
