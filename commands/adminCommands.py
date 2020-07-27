@@ -107,7 +107,7 @@ class RemoveDonator(IDonatorManager):
     SUCCESS = "Пользователь {} был удалён из списка донатеров."
     NOT_DONATOR = "Пользователь {} не является донатером."
 
-    def __init__(self, user_id):
+    def __init__(self, user_id, *args, **kwargs):
         super().__init__(user_id)
 
     def _remove_completely(self):
@@ -130,11 +130,8 @@ class RemoveDonator(IDonatorManager):
 class AddRole(IDonatorManager):
     def __init__(self, message, *args, **kwargs):
         super().__init__(message)
-        self._user_id = self._parse_user_id()
+        self._user_id = Utils.find_user_id(self.Message)
         self._role = self._parse_role_name()
-
-    def _parse_user_id(self):
-        return int(self._args[0])
 
     def _parse_role_name(self):
         return " ".join(self._args[1:])
