@@ -53,7 +53,7 @@ class Weather(ICommand):
             raise exceptions.ApiRequestError
         js = r.json()
         if not js or js["cod"] == "404":
-            raise exceptions.ApiRequestError()
+            raise exceptions.CityNotFoundError
         temperature = round(float(js['main']['temp']) - 273)
         wind = js['wind']['speed']
         descr = self.WEATHER_STATE.get(

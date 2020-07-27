@@ -33,5 +33,6 @@ commands_list = {
     "c": commands.osuCommands.Compare,
     "с": commands.osuCommands.Compare,
     "disable_levels": commands.levelCommands.DisableLevels,
-    "enable_levels": commands.levelCommands.EnableLevels
+    "enable_levels": commands.levelCommands.EnableLevels,
+    "add_role": commands.adminCommands.AddRole
 }

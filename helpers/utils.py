@@ -164,7 +164,7 @@ class Utils:
         """
         Return user_id from a message with a mention.
         """
-        user_id = re.search(r"id(\d+)", string).group(1)
+        user_id = re.search(r"(\d+)", string).group(1)
         return user_id
 
     @staticmethod

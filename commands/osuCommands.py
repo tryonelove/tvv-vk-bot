@@ -93,7 +93,7 @@ class OsuSet(IOsuCommand):
 
     def __init__(self, server, username, user_id, **kwargs):
         super().__init__()
-        self._server = server
+        self._server = server or "bancho"
         self._username = username
         self._user_id = user_id
         self._api = banchoApi.BanchoApi() if server == "bancho" else gatariApi.GatariApi()

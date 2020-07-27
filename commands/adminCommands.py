@@ -125,3 +125,22 @@ class RemoveDonator(IDonatorManager):
             return self.Message(self.NOT_DONATOR.format(self._user_id))
         self._remove_completely()
         return self.Message(self.SUCCESS.format(self._user_id))
+
+
+class AddRole(IDonatorManager):
+    def __init__(self, message, *args, **kwargs):
+        super().__init__(message)
+        self._user_id = self._parse_user_id()
+        self._role = self._parse_role_name()
+
+    def _parse_user_id(self):
+        return int(self._args[0])
+
+    def _parse_role_name(self):
+        return " ".join(self._args[1:])
+
+    def execute(self):
+        logging.info(f"Editing role: {self._user_id} -> {self._role}")
+        glob.c.execute("UPDATE donators SET role = ? WHERE id = ?", (self._role, self._user_id))
+        glob.db.commit()
+        return self.Message(f"Роль {self._user_id} была успешно изменена на {self._role}")
