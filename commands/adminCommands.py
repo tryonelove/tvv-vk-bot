@@ -26,14 +26,14 @@ class Op(AdminCommand):
         self.RESPONSE = f"Пользователь {self._user_id} был добавлен как админ."
 
 
-class Deop(IAdminCommand):
+class Deop(AdminCommand):
     def __init__(self, user_id, *args):
         super().__init__(user_id)
         self.role = Roles.USER.value
         self.RESPONSE = f"Пользователь {self._user_id} был удалён из админов."
 
 
-class Restrict(IAdminCommand):
+class Restrict(AdminCommand):
     """
     Restrict bot usage for users.
 
@@ -46,7 +46,7 @@ class Restrict(IAdminCommand):
         self.RESPONSE = f"Пользователь {self._user_id} больше не может юзать бота."
 
 
-class Unrestrict(IAdminCommand):
+class Unrestrict(AdminCommand):
     """
     Unrestrict bot usage for users.
 

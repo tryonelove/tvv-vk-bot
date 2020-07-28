@@ -25,6 +25,8 @@ commands_list = {
     "rm_donator": commands.adminCommands.RemoveDonator,
     "op": commands.adminCommands.Op,
     "deop": commands.adminCommands.Deop,
+    "restrict": commands.adminCommands.Restrict,
+    "unrestrict": commands.adminCommands.Unrestrict,
     "mm": commands.osuCommands.MatchmakingStats,
     "top": commands.osuCommands.TopScoreCommand,
     "last": commands.osuCommands.RecentScoreCommand,
