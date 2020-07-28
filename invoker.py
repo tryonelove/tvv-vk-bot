@@ -40,7 +40,11 @@ class Invoker:
         logging.debug(params)
         if params["message"] is None and params["attachment"] is None:
             return
-        glob.vk.messages.send(**params)
+        try:
+            glob.vk.messages.send(**params)
+        except:
+            params["peer_id"] = self.event.peer_id
+            glob.vk.messages.send(message="Ошибка при отправке сообщения, проверьте приватность и попробуйте написать в личные сообщения бота.")
 
     def _get_command_object(self):
         command_object = None
