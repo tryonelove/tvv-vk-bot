@@ -126,7 +126,7 @@ class Utils:
                   "limit": 1, "user_id": user_id}
         data = Utils.get_server_username(user_id)
         if string:
-            result = re.match(r"(bancho|gatari|банчо|гатари)?(.*?)?(\d+)?$", string)
+            result = re.match(r"(bancho|gatari|банчо|гатари)?(.*?)?(\s\d+)?$", string)
             params["server"] = result.group(1) or None
             params["username"] = result.group(2) or None
             params["limit"] = result.group(3) or 1
@@ -136,6 +136,7 @@ class Utils:
             params["username"] = data[1]
         params["server"] = params["server"].strip()
         params["username"] = params["username"].strip()
+        params["limit"] = int(params["limit"])
         return params
 
     @staticmethod
