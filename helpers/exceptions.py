@@ -7,6 +7,10 @@ class BotException(Exception):
         self.message = f"Ошибка: {message}"
         super().__init__(self.message)
 
+class OverwritingExistingCommand(BotException):
+    def __init__(self, message="Нельзя перезаписывать чужие команды"):
+        super().__init__(message)
+
 
 class UserNotFoundError(BotException):
     """

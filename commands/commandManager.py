@@ -2,7 +2,7 @@ from commands.interfaces import ICommandManager
 from objects import glob
 from helpers.utils import Utils
 import logging
-
+from helpers import exceptions 
 
 class CommandManager(ICommandManager):
     def __init__(self, *args, **kwargs):
@@ -52,6 +52,10 @@ class AddCommand(CommandManager):
 
     def execute(self):
         self._set_values()
+        author_id = glob.c.execute("SELECT author FROM commands WHERE key = ?", (self._key,)).fetchone()
+        if author_id is not None:
+            if author_id[0] != self._author_id:
+                raise exceptions.OverwritingExistingCommand
         q = "INSERT OR REPLACE INTO commands VALUES (?, ?, ?, ?)"
         glob.c.execute(q, (self._key, self._value,
                            self._attachments, self._author_id))

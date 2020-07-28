@@ -35,7 +35,7 @@ class GatariApi:
         })
         return data
 
-    def get_user_score(self, user_id, beatmap_id, mode = 0):
+    def get_scores(self, user_id, beatmap_id, mode = 0):
         data = self.__make_request(self.NEW_API, "beatmap/user/score", params = {
             "u" : user_id,
             "b" : beatmap_id,
