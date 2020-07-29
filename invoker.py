@@ -44,7 +44,8 @@ class Invoker:
             glob.vk.messages.send(**params)
         except:
             params["peer_id"] = self.event.peer_id
-            glob.vk.messages.send(message="Ошибка при отправке сообщения, проверьте приватность и попробуйте написать в личные сообщения бота.")
+            params["message"] = "Ошибка при отправке сообщения, проверьте приватность и попробуйте написать в личные сообщения бота."
+            glob.vk.messages.send(**params)
 
     def _get_command_object(self):
         command_object = None
