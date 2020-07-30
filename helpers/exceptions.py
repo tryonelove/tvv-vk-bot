@@ -59,4 +59,4 @@ class CityNotFoundError(Exception):
 
 exceptions = (UserNotFoundError, AccesDeniesError,
               ApiRequestError, CityNotFoundError, 
-              ScoreNotFoundError)
+              ScoreNotFoundError, OverwritingExistingCommand)
