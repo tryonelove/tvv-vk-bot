@@ -5,6 +5,7 @@ from helpers import banchoApi, gatariApi, scoreFormatter, exceptions, ppCalculat
 from helpers.utils import Utils
 from objects import glob
 from constants import servers
+from constants import osuConstants
 import requests
 
 
@@ -93,18 +94,20 @@ class OsuSet(IOsuCommand):
 
     def __init__(self, server, username, user_id, **kwargs):
         super().__init__()
-        self._server = server or "bancho"
+        self._server = "bancho" if server in osuConstants.server_acronyms["bancho"] else "gatari"
         self._username = username
         self._user_id = user_id
-        self._api = banchoApi.BanchoApi() if server == "bancho" else gatariApi.GatariApi()
+        self._api = banchoApi.BanchoApi() if server in osuConstants.server_acronyms["bancho"] else gatariApi.GatariApi()
 
     def _get_real_username(self):
         user = self._api.get_user(u=self._username)
-        if not user:
-            raise exceptions.UserNotFoundError
-        if self._server == "bancho":
+        if self._server in osuConstants.server_acronyms["bancho"]:
+            if not user:
+                raise exceptions.UserNotFoundError
             username = user[0]["username"]
         else:
+            if not user["users"]:
+                raise exceptions.UserNotFoundError
             username = user["users"][0]["username"]
         return username
 
@@ -242,7 +245,7 @@ class RecentScoreCommand(IOsuCommand):
         self._server = server
         self._username = username
         self._limit = limit or 1
-        self._api = BanchoRecentScore if server in ["bancho", "банчо"] else GatariRecentScore
+        self._api = BanchoRecentScore if server in osuConstants.server_acronyms["bancho"] else GatariRecentScore
 
     def execute(self):
         result = self._api(self._username, self._limit).get()
@@ -295,18 +298,55 @@ class Compare(IOsuCommand):
     Compare scores
     """
 
-    def __init__(self, username, beatmap_id, **kwargs):
+    def __init__(self, server, username, beatmap_id, **kwargs):
         super().__init__()
-        self._beatmap_id = beatmap_id
+        self._server = server
         self._username = username
+        self._beatmap_id = beatmap_id
         self._limit = 1
-        self._api = banchoApi.BanchoApi()
+        self._api = BanchoCompare if server in osuConstants.server_acronyms["bancho"] else GatariCompare
 
     def execute(self):
+        result = self._api(self._username, self._beatmap_id).get()
+        result["beatmap_id"] = self._beatmap_id
+        return self.Message(*result)
+
+
+class GatariCompare:
+    def __init__(self, username, beatmap_id, **kwargs):
+        self._username = username
+        self._beatmap_id = beatmap_id
+        self._limit = 1
+        self._api = gatariApi.GatariApi()
+
+    def get(self):
+        user = self._api.get_user(self._username)
+        if not user:
+            raise exceptions.ApiRequestError
+        if not user["users"]:
+            raise exceptions.UserNotFoundError
+        user_id = user["users"][0]["id"]
+        scores = self._api.get_scores(
+            user_id, self._beatmap_id)
+        score = scores["score"]
+        # API fix
+        score["ranking"] = score["rank"]
+        score["beatmap"] = {}
+        score["beatmap"]["beatmap_id"] = self._beatmap_id
+        return GatariScore(self._username, score).get_response()
+
+
+class BanchoCompare:
+    def __init__(self, username, beatmap_id, **kwargs):
+        self._username = username
+        self._beatmap_id = beatmap_id
+        self._limit = 1
+        self._api = banchoApi.BanchoApi() 
+
+    def get(self):
         api_response = self._api.get_scores(
             b=self._beatmap_id, u=self._username, limit=self._limit)
         if not api_response:
             raise exceptions.ScoreNotFoundError
         api_response[self._limit-1]["beatmap_id"] = self._beatmap_id
-        score = BanchoScore(self._username, api_response[self._limit-1]).get_response()
-        return self.Message(*score)
+        return BanchoScore(self._username, api_response[self._limit-1]).get_response()

@@ -67,8 +67,8 @@ class AddDonator(IDonatorManager):
 
     def __init__(self, message, *args, **kwargs):
         super().__init__(message)
-        self._donation_sum = self._parse_donation_sum()
-        self._role_name = self._parse_role_name() if len(self._args) > 2 else None
+        self._donation_sum = 25
+        self._role_name = None
 
     def _parse_donation_sum(self):
         return int(self._args[1])
@@ -77,6 +77,7 @@ class AddDonator(IDonatorManager):
         return " ".join(self._args[2:])
 
     def _add_new_donator(self):
+        
         duration = self._donation_sum // 25
         q = f"INSERT INTO donators VALUES(?, (SELECT strftime('%s','now', '+{duration} month')), ?)"
         glob.c.execute(q, (self._user_id, self._role_name))
@@ -90,6 +91,9 @@ class AddDonator(IDonatorManager):
         glob.db.commit()
 
     def execute(self):
+        self._donation_sum = self._parse_donation_sum()
+        if len(self._args) > 2:
+            self._role_name = self._parse_role_name()
         logging.info(f"Adding a donator: {self._user_id}.")
         if Utils.has_role(self._user_id, Roles.DONATOR):
             self._increase_duration()
@@ -130,13 +134,15 @@ class RemoveDonator(IDonatorManager):
 class AddRole(IDonatorManager):
     def __init__(self, message, *args, **kwargs):
         super().__init__(message)
-        self._user_id = Utils.find_user_id(self.Message)
-        self._role = self._parse_role_name()
+        self._user_id = None
+        self._role = None
 
     def _parse_role_name(self):
         return " ".join(self._args[1:])
 
     def execute(self):
+        self._user_id = Utils.find_user_id(self.Message)
+        self._role = self._parse_role_name()
         logging.info(f"Editing role: {self._user_id} -> {self._role}")
         glob.c.execute("UPDATE donators SET role = ? WHERE id = ?", (self._role, self._user_id))
         glob.db.commit()
