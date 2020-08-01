@@ -97,7 +97,8 @@ class OsuSet(IOsuCommand):
         self._server = "bancho" if server in osuConstants.server_acronyms["bancho"] else "gatari"
         self._username = username
         self._user_id = user_id
-        self._api = banchoApi.BanchoApi() if server in osuConstants.server_acronyms["bancho"] else gatariApi.GatariApi()
+        self._api = banchoApi.BanchoApi(
+        ) if server in osuConstants.server_acronyms["bancho"] else gatariApi.GatariApi()
 
     def _get_real_username(self):
         user = self._api.get_user(u=self._username)
@@ -192,11 +193,36 @@ class TopScoreCommand(IOsuCommand):
         self._server = server
         self._username = username
         self._limit = limit or 1
+        self._mode = 0
         self._api = BanchoTopScore if server in ["bancho", "банчо"] else GatariTopScore
 
     def execute(self):
-        result = self._api(self._username, self._limit).get()
+        result = self._api(self._username, self._limit, self._mode).get()
         return self.Message(*result)
+
+
+class OsuTopScore(TopScoreCommand):
+    def __init__(self, server, username, limit):
+        super().__init__(server, username, limit)
+        self._mode = 0
+
+
+class TaikoTopScore(TopScoreCommand):
+    def __init__(self, server, username, limit):
+        super().__init__(server, username, limit)
+        self._mode = 1
+
+
+class CtbTopScore(TopScoreCommand):
+    def __init__(self, server, username, limit):
+        super().__init__(server, username, limit)
+        self._mode = 2
+
+
+class ManuaTopScore(TopScoreCommand):
+    def __init__(self, server, username, limit):
+        super().__init__(server, username, limit)
+        self._mode = 3
 
 
 class BanchoTopScore:
@@ -204,21 +230,22 @@ class BanchoTopScore:
     Get bancho top score
     """
 
-    def __init__(self, username, limit):
+    def __init__(self, username, limit, mode):
         self._username = username
         self._limit = int(limit)
+        self._mode = mode
         self._api = banchoApi.BanchoApi()
 
     def get(self):
         api_response = self._api.get_user_best(
-                u=self._username, limit=self._limit)
+            u=self._username, limit=self._limit, m=self._mode)
         if not api_response:
             raise exceptions.ScoreNotFoundError
         return BanchoScore(self._username, api_response[self._limit-1]).get_response()
 
 
 class GatariTopScore:
-    def __init__(self, username, limit, **kwargs):
+    def __init__(self, username, limit, mode):
         self._username = username
         self._limit = int(limit)
         self._api = gatariApi.GatariApi()
@@ -235,7 +262,7 @@ class GatariTopScore:
         return GatariScore(self._username, score).get_response()
 
 
-class RecentScoreCommand(IOsuCommand):
+class RecentScoreCommandOsu(IOsuCommand):
     """
     Manager for recent score command
     """
@@ -245,10 +272,12 @@ class RecentScoreCommand(IOsuCommand):
         self._server = server
         self._username = username
         self._limit = limit or 1
-        self._api = BanchoRecentScore if server in osuConstants.server_acronyms["bancho"] else GatariRecentScore
+        self._mode = 0
+        self._api = BanchoRecentScore if server in osuConstants.server_acronyms[
+            "bancho"] else GatariRecentScore
 
     def execute(self):
-        result = self._api(self._username, self._limit).get()
+        result = self._api(self._username, self._limit, self._mode).get()
         return self.Message(*result)
 
 
@@ -257,14 +286,15 @@ class BanchoRecentScore:
     Get recent bancho score
     """
 
-    def __init__(self, username, limit, **kwargs):
+    def __init__(self, username, limit, mode):
         self._username = username
         self._limit = int(limit)
+        self._mode = mode
         self._api = banchoApi.BanchoApi()
 
     def get(self):
         api_response = self._api.get_user_recent(
-            u=self._username, limit=self._limit)
+            u=self._username, limit=self._limit, m=self._mode)
         if not api_response:
             raise exceptions.ScoreNotFoundError
         return BanchoScore(self._username, api_response[self._limit-1]).get_response()
@@ -298,21 +328,23 @@ class Compare(IOsuCommand):
     Compare scores
     """
 
-    def __init__(self, server, username, beatmap_id, **kwargs):
+    def __init__(self, username, beatmap_id, **kwargs):
         super().__init__()
-        self._server = server
         self._username = username
         self._beatmap_id = beatmap_id
         self._limit = 1
-        self._api = BanchoCompare if server in osuConstants.server_acronyms["bancho"] else GatariCompare
+        self._api = BanchoCompare 
+        #if server in osuConstants.server_acronyms[
+        #    "bancho"] else GatariCompare
 
     def execute(self):
         result = self._api(self._username, self._beatmap_id).get()
-        result["beatmap_id"] = self._beatmap_id
+        # result["beatmap_id"] = self._beatmap_id
         return self.Message(*result)
 
 
 class GatariCompare:
+    # TODO
     def __init__(self, username, beatmap_id, **kwargs):
         self._username = username
         self._beatmap_id = beatmap_id
@@ -341,7 +373,7 @@ class BanchoCompare:
         self._username = username
         self._beatmap_id = beatmap_id
         self._limit = 1
-        self._api = banchoApi.BanchoApi() 
+        self._api = banchoApi.BanchoApi()
 
     def get(self):
         api_response = self._api.get_scores(
