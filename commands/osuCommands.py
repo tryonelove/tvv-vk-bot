@@ -194,7 +194,7 @@ class TopScoreCommand(IOsuCommand):
         self._username = username
         self._limit = limit or 1
         self._mode = 0
-        self._api = BanchoTopScore if server in ["bancho", "банчо"] else GatariTopScore
+        self._api = BanchoTopScore if server in osuConstants.server_acronyms["bancho"] else GatariTopScore
 
     def execute(self):
         result = self._api(self._username, self._limit, self._mode).get()
@@ -305,7 +305,7 @@ class GatariRecentScore:
     Get recent gatari score
     """
 
-    def __init__(self, username, limit, **kwargs):
+    def __init__(self, username, limit, *args, **kwargs):
         self._username = username
         self._limit = int(limit)
         self._api = gatariApi.GatariApi()
@@ -339,7 +339,6 @@ class Compare(IOsuCommand):
 
     def execute(self):
         result = self._api(self._username, self._beatmap_id).get()
-        # result["beatmap_id"] = self._beatmap_id
         return self.Message(*result)
 
 
