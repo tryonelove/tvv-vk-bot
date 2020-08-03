@@ -74,6 +74,10 @@ class DeleteCommand(CommandManager):
 
     def execute(self):
         self._set_values()
+        author_id = glob.c.execute("SELECT author FROM commands WHERE key = ?", (self._key,)).fetchone()
+        if author_id is not None:
+            if author_id[0] != self._author_id:
+                raise exceptions.OverwritingExistingCommand
         q = "DELETE FROM commands WHERE key = ?"
         glob.c.execute(q, (self._key,))
         glob.db.commit()
