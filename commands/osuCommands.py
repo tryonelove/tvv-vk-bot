@@ -22,12 +22,17 @@ class StatsPicture(IOsuCommand):
 
     def __init__(self, server, username, **kwargs):
         super().__init__()
-        self._pictureUrl = self.SERVERS.get(server)
+        self._server = server
         self._username = username
         self._mode = None
 
     def execute(self):
-        pic = self._pictureUrl.format(random.choice(
+        if self._server in osuConstants.server_acronyms["bancho"]:
+            server = "bancho"
+        else:
+            server = "gatari"
+        pictureUrl = self.SERVERS.get(server)
+        pic = pictureUrl.format(random.choice(
             self.SIG_COLORS), self._username, self._mode, random.random())
         logging.debug(pic)
         picture = Utils.upload_picture(pic, decode_content=True)
