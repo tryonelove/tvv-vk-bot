@@ -3,6 +3,8 @@ from objects import glob
 from helpers.utils import Utils
 import logging
 from helpers import exceptions 
+from constants.roles import Roles
+
 
 class CommandManager(ICommandManager):
     def __init__(self, *args, **kwargs):
@@ -37,6 +39,13 @@ class CommandManager(ICommandManager):
         else:
             self._attachments = None
 
+    def check_author_or_admin(self):
+        author_id = glob.c.execute("SELECT author FROM commands WHERE key = ?", (self._key,)).fetchone()
+        if author_id is not None:
+            if not Utils.has_role(self._author_id, Roles.ADMIN) or author_id[0] != self._author_id:
+                raise exceptions.OverwritingExistingCommand
+        
+
 
 class AddCommand(CommandManager):
     """
@@ -52,10 +61,7 @@ class AddCommand(CommandManager):
 
     def execute(self):
         self._set_values()
-        author_id = glob.c.execute("SELECT author FROM commands WHERE key = ?", (self._key,)).fetchone()
-        if author_id is not None:
-            if author_id[0] != self._author_id:
-                raise exceptions.OverwritingExistingCommand
+        self.check_author_or_admin()
         q = "INSERT OR REPLACE INTO commands VALUES (?, ?, ?, ?)"
         glob.c.execute(q, (self._key, self._value,
                            self._attachments, self._author_id))
@@ -74,10 +80,7 @@ class DeleteCommand(CommandManager):
 
     def execute(self):
         self._set_values()
-        author_id = glob.c.execute("SELECT author FROM commands WHERE key = ?", (self._key,)).fetchone()
-        if author_id is not None:
-            if author_id[0] != self._author_id:
-                raise exceptions.OverwritingExistingCommand
+        self.check_author_or_admin()
         q = "DELETE FROM commands WHERE key = ?"
         glob.c.execute(q, (self._key,))
         glob.db.commit()
