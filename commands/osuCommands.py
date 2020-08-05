@@ -143,7 +143,7 @@ class BanchoScore:
         params["misses"] = self.api_response['countmiss']
         params["m"] = self.api_response['enabled_mods']
         params["ranking"] = self.api_response['rank']
-        params["accuracy"] = Utils.calculate_accuracy(
+        params["accuracy"] = Utils.calculate_accuracy_std(
             *map(int, (params["misses"], params["count50"], params["count100"], params["count300"])))
         beatmap = Utils().get_cached_beatmap(params["beatmap_id"])
         params["max_combo"] = beatmap["max_combo"]
