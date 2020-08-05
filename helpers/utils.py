@@ -43,7 +43,7 @@ class Utils:
 
         :param user_id: user_id
         """
-        return glob.c.execute("SELECT role FROM users WHERE id = ?", (user_id,)).fetchone()[0]
+        return glob.c.execute("SELECT role FROM users WHERE id = ?", (user_id,)).fetchone()
 
     @staticmethod
     def has_role(user_id, required_role):
@@ -54,7 +54,7 @@ class Utils:
         :param required_role: role to check
         """
         role = Utils.get_role(user_id)
-        return role & required_role.value > 0
+        return role[0] & required_role.value > 0
 
     @staticmethod
     def get_server_username(user_id):
@@ -155,9 +155,31 @@ class Utils:
         return beatmap_id
 
     @staticmethod
-    def calculate_accuracy(misses, count50, count100, count300):
+    def calculate_accuracy_std(misses, count50, count100, count300):
         accuracy = (50*count50+100*count100+300*count300) * \
             100/(300*(misses+count50+count100+count300))
+        return accuracy
+
+    @staticmethod
+    def calculate_accuracy_taiko(bad, good, great):
+        """
+        AFAIU 
+        bad - countMiss
+        good - count100
+        great - count300
+        """
+        accuracy = (0.5*good+great)/(bad+good+great)
+        return accuracy
+
+    @staticmethod
+    def calculate_accuracy_ctb(droplet, drop, fruit, missed_droplet, missed_drop, missed_fruit):
+        """
+        Note for API users: 
+        To calculate the accuracy in osu!catch, 
+        the number of droplets are under count50 
+        and the number of missed droplets are under countkatu
+        """
+        accuracy = (droplet+drop+fruit)/(missed_droplet+missed_drop+missed_fruit+droplet+drop+fruit)
         return accuracy
 
     @staticmethod

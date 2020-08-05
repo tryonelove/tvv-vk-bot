@@ -42,7 +42,7 @@ class CommandManager(ICommandManager):
     def check_author_or_admin(self):
         author_id = glob.c.execute("SELECT author FROM commands WHERE key = ?", (self._key,)).fetchone()
         if author_id is not None:
-            if not Utils.has_role(self._author_id, Roles.ADMIN) or author_id[0] != self._author_id:
+            if not Utils.has_role(self._author_id, Roles.ADMIN) and author_id[0] != self._author_id:
                 raise exceptions.OverwritingExistingCommand
         
 
@@ -75,8 +75,8 @@ class DeleteCommand(CommandManager):
 
     :param message: message containing key for removing command
     """
-    def __init__(self, message, **kwargs):
-        super().__init__(message=message)
+    def __init__(self, message, author_id, **kwargs):
+        super().__init__(message=message, author_id=author_id)
 
     def execute(self):
         self._set_values()
