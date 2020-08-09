@@ -126,7 +126,6 @@ class Utils:
                   "limit": 1, "user_id": user_id}
         data = Utils.get_server_username(user_id)
         if string:
-            string = " " + string # dsakjldasklj
             result = re.match(r"(bancho|gatari|банчо|гатари|g|b|г|б)?(.*?)?(\s+\d+)?$", string)
             params["server"] = result.group(1) or None
             params["username"] = result.group(2) or None
