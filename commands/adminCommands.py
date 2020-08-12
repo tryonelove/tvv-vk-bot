@@ -141,7 +141,7 @@ class AddRole(IDonatorManager):
         return " ".join(self._args[1:])
 
     def execute(self):
-        self._user_id = Utils.find_user_id(self.Message)
+        self._user_id = Utils.find_user_id(self._args[0])
         self._role = self._parse_role_name()
         logging.info(f"Editing role: {self._user_id} -> {self._role}")
         glob.c.execute("UPDATE donators SET role = ? WHERE id = ?", (self._role, self._user_id))
