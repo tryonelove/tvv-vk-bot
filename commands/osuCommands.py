@@ -163,7 +163,7 @@ class GatariScore:
         self.username = username
         self.api_response = api_response
 
-    def get_response(self):
+    def top(self):
         params = {}
         params["username"] = self.username
         params["beatmap_id"] = self.api_response["beatmap"]["beatmap_id"]
@@ -177,6 +177,33 @@ class GatariScore:
         params["count300"] = self.api_response["count_300"]
         beatmap = Utils().get_cached_beatmap(params["beatmap_id"])
         params["max_combo"] = self.api_response["beatmap"]["fc"]
+        params["title"] = f"{beatmap['artist']} - {beatmap['title']} [{beatmap['version']}]"
+        # Calculate pp
+        calculator = ppCalculator.PpCalculator(**params)
+        calculator.parse_map()
+        params["real_pp"] = calculator.get_real_pp()
+        params["pp_if_fc"] = calculator.get_if_fc_pp()
+        score_message = scoreFormatter.Formatter(**params)
+        score_background = beatmap["background_url"]
+        return score_message, score_background
+
+    def recent(self):
+        return self.top()
+
+    def compare(self):
+        params = {}
+        params["username"] = self.username
+        params["beatmap_id"] = self.api_response["beatmap"]["beatmap_id"]
+        params["combo"] = self.api_response['max_combo']
+        params["misses"] = self.api_response['count_miss']
+        params["m"] = self.api_response['mods']
+        params["ranking"] = self.api_response['ranking']
+        params["accuracy"] = self.api_response["accuracy"]
+        params["count50"] = self.api_response["count_50"]
+        params["count100"] = self.api_response["count_100"]
+        params["count300"] = self.api_response["count_300"]
+        beatmap = Utils().get_cached_beatmap(params["beatmap_id"])
+        params["max_combo"] = beatmap["max_combo"]
         params["title"] = f"{beatmap['artist']} - {beatmap['title']} [{beatmap['version']}]"
         # Calculate pp
         calculator = ppCalculator.PpCalculator(**params)
@@ -264,7 +291,7 @@ class GatariTopScore:
         user_id = user["users"][0]["id"]
         best_scores = self._api.get_user_best(user_id, self._limit)
         score = best_scores["scores"][self._limit-1]
-        return GatariScore(self._username, score).get_response()
+        return GatariScore(self._username, score).top()
 
 
 class RecentScoreCommandOsu(IOsuCommand):
@@ -325,7 +352,7 @@ class GatariRecentScore:
         best_scores = self._api.get_user_recent(
             user_id, self._limit, show_failed=True)
         score = best_scores["scores"][self._limit-1]
-        return GatariScore(self._username, score).get_response()
+        return GatariScore(self._username, score).recent()
 
 
 class Compare(IOsuCommand):
@@ -333,14 +360,12 @@ class Compare(IOsuCommand):
     Compare scores
     """
 
-    def __init__(self, username, beatmap_id, **kwargs):
+    def __init__(self, server, username, beatmap_id, **kwargs):
         super().__init__()
         self._username = username
         self._beatmap_id = beatmap_id
         self._limit = 1
-        self._api = BanchoCompare 
-        #if server in osuConstants.server_acronyms[
-        #    "bancho"] else GatariCompare
+        self._api = BanchoCompare if server in osuConstants.server_acronyms["bancho"] else GatariCompare
 
     def execute(self):
         result = self._api(self._username, self._beatmap_id).get()
@@ -364,12 +389,14 @@ class GatariCompare:
         user_id = user["users"][0]["id"]
         scores = self._api.get_scores(
             user_id, self._beatmap_id)
+        if scores.get("error"):
+            raise exceptions.ScoreNotFoundError
         score = scores["score"]
         # API fix
         score["ranking"] = score["rank"]
         score["beatmap"] = {}
         score["beatmap"]["beatmap_id"] = self._beatmap_id
-        return GatariScore(self._username, score).get_response()
+        return GatariScore(self._username, score).compare()
 
 
 class BanchoCompare:
