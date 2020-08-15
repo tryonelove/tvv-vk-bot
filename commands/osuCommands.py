@@ -7,6 +7,7 @@ from objects import glob
 from constants import servers
 from constants import osuConstants
 import requests
+from config import OSU_MATCHMAKING_KEY
 
 
 class StatsPicture(IOsuCommand):
@@ -72,10 +73,11 @@ class MatchmakingStats(IOsuCommand):
     def __init__(self, username, **kwargs):
         super().__init__()
         self._username = username
-        self.API = "https://oma.hwc.hr/api/users/"
+        self.API = "https://osumatchmaking.c7x.dev/api/users/"
 
     def execute(self):
-        r = requests.get(self.API + self._username)
+        r = requests.get(self.API + self._username,
+                         params={"key": OSU_MATCHMAKING_KEY, "rulesets": '["1v1","2v2"]'})
         if r.status_code != 200:
             raise exceptions.ApiRequestError
         js = r.json()
@@ -86,7 +88,10 @@ class MatchmakingStats(IOsuCommand):
         rating = round(stats.get("currentVisualRating"))
         wins = stats.get("wins")
         losses = stats.get("losses")
-        winrate = round((wins / (wins + losses)) * 100, 2)
+        try:
+            winrate = round((wins / (wins + losses)) * 100, 2)
+        except:
+            winrate = 0
         winstreak = stats.get("currentWinstreak")
         response = f"{country} | {username} #{rank}\nRating: {rating}\nW/L: {wins}/{losses} | WR: {winrate}%\nWinstreak: {winstreak}"
         return self.Message(response)
@@ -226,7 +231,8 @@ class TopScoreCommand(IOsuCommand):
         self._username = username
         self._limit = limit or 1
         self._mode = 0
-        self._api = BanchoTopScore if server in osuConstants.server_acronyms["bancho"] else GatariTopScore
+        self._api = BanchoTopScore if server in osuConstants.server_acronyms[
+            "bancho"] else GatariTopScore
 
     def execute(self):
         result = self._api(self._username, self._limit, self._mode).get()
@@ -365,7 +371,8 @@ class Compare(IOsuCommand):
         self._username = username
         self._beatmap_id = beatmap_id
         self._limit = 1
-        self._api = BanchoCompare if server in osuConstants.server_acronyms["bancho"] else GatariCompare
+        self._api = BanchoCompare if server in osuConstants.server_acronyms[
+            "bancho"] else GatariCompare
 
     def execute(self):
         result = self._api(self._username, self._beatmap_id).get()
@@ -373,7 +380,6 @@ class Compare(IOsuCommand):
 
 
 class GatariCompare:
-    # TODO
     def __init__(self, username, beatmap_id, **kwargs):
         self._username = username
         self._beatmap_id = beatmap_id
