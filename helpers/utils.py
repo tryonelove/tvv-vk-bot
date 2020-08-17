@@ -61,7 +61,7 @@ class Utils:
         """
         Return server and username from database
         """
-        return glob.c.execute("SELECT server, username FROM users WHERE id = ?", (user_id,)).fetchone()
+        return glob.c.execute("SELECT * FROM osu WHERE id = ?", (user_id,)).fetchone()
 
     def get_cached_beatmap(self, beatmap_id):
         """
@@ -131,9 +131,12 @@ class Utils:
             params["username"] = result.group(2) or None
             params["limit"] = result.group(3) or 1
         if not params["server"]:
-            params["server"] = data[0]
+            params["server"] = data[1]
         if not params["username"] or params["username"].isspace():
-            params["username"] = data[1]
+            if params["server"] in osuConstants.server_acronyms.get("bancho"):
+                params["username"] = data[2]
+            elif params["server"] in osuConstants.server_acronyms.get("gatari"):
+                params["username"] = data[3]
         params["server"] = params["server"].strip()
         params["username"] = params["username"].strip()
         params["limit"] = int(params["limit"])

@@ -125,8 +125,12 @@ class OsuSet(IOsuCommand):
     def execute(self):
         self._username = self._get_real_username()
         glob.c.execute(
-            "INSERT OR IGNORE INTO users(id) VALUES(?)", (self._user_id,))
-        glob.c.execute("UPDATE users SET server=?, username=? WHERE id=?",
+            "INSERT OR IGNORE INTO osu(id) VALUES(?)", (self._user_id,))
+        if self._server == "bancho":
+            glob.c.execute("UPDATE osu SET main_server=?, bancho_username=? WHERE id=?",
+                       (self._server, self._username, self._user_id))
+        elif self._server == "gatari":
+            glob.c.execute("UPDATE osu SET main_server=?, gatari_username=? WHERE id=?",
                        (self._server, self._username, self._user_id))
         glob.db.commit()
         return self.Message(f"Аккаунт {self._server} {self._username} был успешно привязан к вашему айди.")
