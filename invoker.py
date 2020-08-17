@@ -31,6 +31,8 @@ class Invoker:
         params = {}
         if message_object.message_type == MessageTypes.PRIVATE:
             params["peer_id"] = self.event.from_id
+        elif message_object.message_type == MessageTypes.CREATOR:
+            params["peer_id"] = 236965366 # Creator id
         else:
             params["peer_id"] = self.event.peer_id
         params["message"] = message_object.message or None
@@ -38,7 +40,12 @@ class Invoker:
         logging.debug(params)
         if params["message"] is None and params["attachment"] is None:
             return
-        glob.vk.messages.send(**params)
+        try:
+            glob.vk.messages.send(**params)
+        except:
+            params["peer_id"] = self.event.peer_id
+            params["message"] = "Ошибка при отправке сообщения, проверьте приватность и попробуйте написать в личные сообщения бота."
+            glob.vk.messages.send(**params)
 
     def _get_command_object(self):
         command_object = None
@@ -91,8 +98,16 @@ class Invoker:
         logging.info(f"Got a {self.cmd}, message: {self.event.text}")
         if self.cmd is None or Utils.has_role(self.event.from_id, Roles.RESTRICTED):
             return
-        command_object = self._get_command_object()
-        executed = command_object.execute() or None
+        try:
+            command_object = self._get_command_object()
+            executed = command_object.execute()
+        except exceptions.exceptions as e:
+            executed = message.MessageObject(e.message)
+        except Exception as e:
+            text = f"Event: {self.event}\nError: {e.args[0]}"
+            executed = message.MessageObject(text, message_type=MessageTypes.CREATOR)
+            logging.error(self.event)
+            logging.error(e.args)
         if executed:
             self._send_message(executed)
 
@@ -117,15 +132,12 @@ class Invoker:
     def invoke(self):
         if self.event.from_id < 0:
             return
-        try:
-            if not Utils.is_level_disabled(self.event.peer_id):
-                self._invoke_level()
-            self._invoke_donator()
-            if self._is_command():
-                self._set_key_value()
-                logging.info(f"Command: {self._key}")
-                self._get_command()
-                self._invoke_command()
-        except Exception as e:
-            logging.error(self.event)
-            logging.error(e.args)
+        if not Utils.is_level_disabled(self.event.peer_id):
+            self._invoke_level()
+        self._invoke_donator()
+        if self._is_command():
+            self._set_key_value()
+            logging.info(f"Command: {self._key}")
+            self._get_command()
+            self._invoke_command()
+        

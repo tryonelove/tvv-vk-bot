@@ -1,5 +1,5 @@
 import requests
-
+from helpers import exceptions
 
 class GatariApi:
     def __init__(self):
@@ -11,10 +11,8 @@ class GatariApi:
         r = self.session.get(
             API_VERSION + endpoint, params = params, timeout=3.0)
         if r.status_code != 200:
-            raise NotImplementedError()       
-        js = r.json()
-        if js:
-            return js
+            return {}      
+        return r.json()
 
     def get_user(self, u):
         data = self.__make_request(self.NEW_API, "users/get", params = {
@@ -37,7 +35,7 @@ class GatariApi:
         })
         return data
 
-    def get_user_score(self, user_id, beatmap_id, mode = 0):
+    def get_scores(self, user_id, beatmap_id, mode = 0):
         data = self.__make_request(self.NEW_API, "beatmap/user/score", params = {
             "u" : user_id,
             "b" : beatmap_id,

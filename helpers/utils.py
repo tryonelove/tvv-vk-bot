@@ -43,7 +43,7 @@ class Utils:
 
         :param user_id: user_id
         """
-        return glob.c.execute("SELECT role FROM users WHERE id = ?", (user_id,)).fetchone()[0]
+        return glob.c.execute("SELECT role FROM users WHERE id = ?", (user_id,)).fetchone()
 
     @staticmethod
     def has_role(user_id, required_role):
@@ -54,14 +54,14 @@ class Utils:
         :param required_role: role to check
         """
         role = Utils.get_role(user_id)
-        return role & required_role.value > 0
+        return role[0] & required_role.value > 0
 
     @staticmethod
     def get_server_username(user_id):
         """
         Return server and username from database
         """
-        return glob.c.execute("SELECT server, username FROM users WHERE id = ?", (user_id,)).fetchone()
+        return glob.c.execute("SELECT * FROM osu WHERE id = ?", (user_id,)).fetchone()
 
     def get_cached_beatmap(self, beatmap_id):
         """
@@ -126,16 +126,20 @@ class Utils:
                   "limit": 1, "user_id": user_id}
         data = Utils.get_server_username(user_id)
         if string:
-            result = re.match(r"(bancho|gatari|банчо|гатари)?(.*?)?(\d+)?$", string)
+            result = re.match(r"(bancho|gatari|банчо|гатари|g|b|г|б)?(.*?)?(\s+\d+)?$", string)
             params["server"] = result.group(1) or None
             params["username"] = result.group(2) or None
             params["limit"] = result.group(3) or 1
         if not params["server"]:
-            params["server"] = data[0]
+            params["server"] = data[1]
         if not params["username"] or params["username"].isspace():
-            params["username"] = data[1]
+            if params["server"] in osuConstants.server_acronyms.get("bancho"):
+                params["username"] = data[2]
+            elif params["server"] in osuConstants.server_acronyms.get("gatari"):
+                params["username"] = data[3]
         params["server"] = params["server"].strip()
         params["username"] = params["username"].strip()
+        params["limit"] = int(params["limit"])
         return params
 
     @staticmethod
@@ -154,9 +158,31 @@ class Utils:
         return beatmap_id
 
     @staticmethod
-    def calculate_accuracy(misses, count50, count100, count300):
+    def calculate_accuracy_std(misses, count50, count100, count300):
         accuracy = (50*count50+100*count100+300*count300) * \
             100/(300*(misses+count50+count100+count300))
+        return accuracy
+
+    @staticmethod
+    def calculate_accuracy_taiko(bad, good, great):
+        """
+        AFAIU 
+        bad - countMiss
+        good - count100
+        great - count300
+        """
+        accuracy = (0.5*good+great)/(bad+good+great)
+        return accuracy
+
+    @staticmethod
+    def calculate_accuracy_ctb(droplet, drop, fruit, missed_droplet, missed_drop, missed_fruit):
+        """
+        Note for API users: 
+        To calculate the accuracy in osu!catch, 
+        the number of droplets are under count50 
+        and the number of missed droplets are under countkatu
+        """
+        accuracy = (droplet+drop+fruit)/(missed_droplet+missed_drop+missed_fruit+droplet+drop+fruit)
         return accuracy
 
     @staticmethod
@@ -164,7 +190,7 @@ class Utils:
         """
         Return user_id from a message with a mention.
         """
-        user_id = re.search(r"id(\d+)", string).group(1)
+        user_id = re.search(r"(\d+)", string).group(1)
         return user_id
 
     @staticmethod

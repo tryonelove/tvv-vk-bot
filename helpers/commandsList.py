@@ -25,13 +25,16 @@ commands_list = {
     "rm_donator": commands.adminCommands.RemoveDonator,
     "op": commands.adminCommands.Op,
     "deop": commands.adminCommands.Deop,
+    "restrict": commands.adminCommands.Restrict,
+    "unrestrict": commands.adminCommands.Unrestrict,
     "mm": commands.osuCommands.MatchmakingStats,
     "top": commands.osuCommands.TopScoreCommand,
-    "last": commands.osuCommands.RecentScoreCommand,
-    "ласт": commands.osuCommands.RecentScoreCommand,
+    "last": commands.osuCommands.RecentScoreCommandOsu,
+    "ласт": commands.osuCommands.RecentScoreCommandOsu,
     "compare": commands.osuCommands.Compare,
     "c": commands.osuCommands.Compare,
     "с": commands.osuCommands.Compare,
     "disable_levels": commands.levelCommands.DisableLevels,
-    "enable_levels": commands.levelCommands.EnableLevels
+    "enable_levels": commands.levelCommands.EnableLevels,
+    "add_role": commands.adminCommands.AddRole
 }
