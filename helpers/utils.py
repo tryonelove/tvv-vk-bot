@@ -131,7 +131,7 @@ class Utils:
             params["username"] = result.group(2) or None
             params["limit"] = result.group(3) or 1
         if not params["server"]:
-            params["server"] = data[1]
+            params["server"] = data[1] if data is not None else "bancho"
         if not params["username"] or params["username"].isspace():
             if params["server"] in osuConstants.server_acronyms.get("bancho"):
                 params["username"] = data[2]
