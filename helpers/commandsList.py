@@ -28,6 +28,7 @@ commands_list = {
     "restrict": commands.adminCommands.Restrict,
     "unrestrict": commands.adminCommands.Unrestrict,
     "mm": commands.osuCommands.MatchmakingStats,
+    "mm2": commands.osuCommands.MatchmakingStatsDuo,
     "top": commands.osuCommands.TopScoreCommand,
     "last": commands.osuCommands.RecentScoreCommandOsu,
     "ласт": commands.osuCommands.RecentScoreCommandOsu,

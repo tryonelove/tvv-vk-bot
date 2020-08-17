@@ -74,16 +74,17 @@ class MatchmakingStats(IOsuCommand):
         super().__init__()
         self._username = username
         self.API = "https://osumatchmaking.c7x.dev/api/users/"
+        self._ruleset = "1v1"
 
     def execute(self):
         r = requests.get(self.API + self._username,
-                         params={"key": OSU_MATCHMAKING_KEY, "rulesets": '["1v1","2v2"]'})
+                         params={"key": OSU_MATCHMAKING_KEY, "rulesets": f'["{self._ruleset}"]'})
         if r.status_code != 200:
             raise exceptions.ApiRequestError
         js = r.json()
         username = js.get("osuName")
         country = js.get("countryCode")
-        stats = js.get("stats")["1v1"]
+        stats = js.get("stats")[self._ruleset]
         rank = stats.get("rank")
         rating = round(stats.get("currentVisualRating"))
         wins = stats.get("wins")
@@ -93,9 +94,19 @@ class MatchmakingStats(IOsuCommand):
         except:
             winrate = 0
         winstreak = stats.get("currentWinstreak")
-        response = f"{country} | {username} #{rank}\nRating: {rating}\nW/L: {wins}/{losses} | WR: {winrate}%\nWinstreak: {winstreak}"
+        response = f"{self._ruleset}\n{country} | {username} #{rank}\nRating: {rating}\nW/L: {wins}/{losses} | WR: {winrate}%\nWinstreak: {winstreak}"
         return self.Message(response)
 
+
+
+class MatchmakingStatsDuo(MatchmakingStats):
+    """
+    Get osu! matchchmaking stats
+    """
+    def __init__(self, username, **kwargs):
+        super().__init__(username)
+        self._ruleset = "2v2"
+        
 
 class OsuSet(IOsuCommand):
     """
