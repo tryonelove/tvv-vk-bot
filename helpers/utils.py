@@ -6,6 +6,7 @@ from config import OSU_API_KEY
 import re
 import datetime
 from helpers import banchoApi
+from helpers import exceptions
 
 class Utils:
     def __init__(self):
@@ -137,9 +138,12 @@ class Utils:
                 params["username"] = data[2]
             elif params["server"] in osuConstants.server_acronyms.get("gatari"):
                 params["username"] = data[3]
-        params["server"] = params["server"].strip()
-        params["username"] = params["username"].strip()
-        params["limit"] = int(params["limit"])
+        try:
+            params["server"] = params["server"].strip()
+            params["username"] = params["username"].strip()
+            params["limit"] = int(params["limit"])
+        except:
+            raise exceptions.AccountNotLinked
         return params
 
     @staticmethod
