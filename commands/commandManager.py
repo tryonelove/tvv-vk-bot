@@ -25,7 +25,7 @@ class CommandManager(ICommandManager):
         Split message into key: value format
         """
         message = self._message.split()
-        self._key = message[1]
+        self._key = message[1].lower()
         if len(message) > 1:
             self._value = " ".join(message[2:])
         if self._attachments:
