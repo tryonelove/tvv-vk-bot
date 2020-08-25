@@ -67,6 +67,13 @@ class AccountNotLinked(BotException):
         super().__init__(message)
 
 
+class CommandLimitReached(BotException):
+    """
+    Command limit reached
+    """
+    def __init__(self, message="Достигнут лимит команд, обновите свою роль донатера."):
+        super().__init__(message)
+
 exceptions = (UserNotFoundError, AccesDeniesError,
               ApiRequestError, CityNotFoundError,
-              ScoreNotFoundError, OverwritingExistingCommand, AccountNotLinked)
+              ScoreNotFoundError, OverwritingExistingCommand, AccountNotLinked,CommandLimitReached)

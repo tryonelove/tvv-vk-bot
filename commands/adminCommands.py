@@ -77,17 +77,15 @@ class AddDonator(IDonatorManager):
         return " ".join(self._args[2:])
 
     def _add_new_donator(self):
-        
-        duration = self._donation_sum // 25
-        q = f"INSERT INTO donators VALUES(?, (SELECT strftime('%s','now', '+{duration} month')), ?)"
+        q = f"INSERT INTO donators VALUES(?, 10, ?)"
         glob.c.execute(q, (self._user_id, self._role_name))
         glob.c.execute("UPDATE users SET role = ? WHERE id=?", (Roles.DONATOR.value, self._user_id))
         glob.db.commit()
 
     def _increase_duration(self):
-        duration = self._donation_sum // 25
-        q = f"SELECT strftime('%s', (SELECT expires FROM donators WHERE id={self._user_id}), '+{duration} month')"
-        glob.c.execute(q)
+        duration = self._donation_sum // 2.5
+        q = f"UPDATE donators SET expires=expires+{duration} WHERE id = ?"
+        glob.c.execute(q, (self._user_id,))
         glob.db.commit()
 
     def execute(self):
@@ -116,7 +114,7 @@ class RemoveDonator(IDonatorManager):
 
     def _remove_completely(self):
         glob.c.execute("DELETE FROM donators WHERE id=?", (self._user_id,))
-        glob.c.execute("UPDATE users SET role=1 WHERE id=?",(self._user_id,))
+        glob.c.execute(f"UPDATE users SET role=1 WHERE id=?",(self._user_id,))
         glob.db.commit()
 
     def _decrease_duration(self):

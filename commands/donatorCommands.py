@@ -30,8 +30,7 @@ class GetRole(ICommand):
             expires, role = Utils.get_donator_expire_date(self._user_id)
             if role is None:
                 role = "донатер"
-            expires = datetime.datetime.fromtimestamp(expires)
-            role += f"\nВы будете донатером до {expires}"
+            role += f"\nУ вас осталось {expires} команд"
         else:
             role = "юзер"
         message += role

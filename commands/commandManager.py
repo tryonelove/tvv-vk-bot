@@ -19,6 +19,15 @@ class CommandManager(ICommandManager):
     def _video_handler(self):
         self._attachments = f"video{self._attachments[0]['video']['owner_id']}_{self._attachments[0]['video']['id']}"
 
+    def is_command_limit_reached(self):
+        q = "SELECT expires FROM donators WHERE id=?"
+        limit = glob.c.execute(q, (self._author_id,)).fetchone()
+        if not limit:
+            return True
+        limit = limit[0]
+        if limit <= 0:
+            return True
+        return False
 
     def _set_values(self):
         """
@@ -59,13 +68,21 @@ class AddCommand(CommandManager):
     def __init__(self, message, attachments, author_id):
         super().__init__(message=message, attachments=attachments, author_id=author_id)
 
+    def decrease_command_limit(self):
+        q = f"UPDATE donators SET expires=expires-1 WHERE id = ?"
+        glob.c.execute(q, (self._author_id,))
+        glob.db.commit()
+
     def execute(self):
         self._set_values()
         self.check_author_or_admin()
+        if self.is_command_limit_reached():
+            raise exceptions.CommandLimitReached
         q = "INSERT OR REPLACE INTO commands VALUES (?, ?, ?, ?)"
         glob.c.execute(q, (self._key, self._value,
                            self._attachments, self._author_id))
         glob.db.commit()
+        self.decrease_command_limit()
         return self.Message(f"Команда {self._key} была успешно добавлена!")
 
 
@@ -81,6 +98,8 @@ class DeleteCommand(CommandManager):
     def execute(self):
         self._set_values()
         self.check_author_or_admin()
+        if self.is_command_limit_reached():
+            raise exceptions.CommandLimitReached
         q = "DELETE FROM commands WHERE key = ?"
         glob.c.execute(q, (self._key,))
         glob.db.commit()
