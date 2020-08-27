@@ -4,11 +4,13 @@ from helpers.utils import Utils
 from constants.roles import Roles
 from helpers import exceptions
 
+
 class GetLevel(ILevelCommand):
     """
     Get user level and experience
     """
     KEYS = ["level", "lvl", "лвл"]
+
     def __init__(self, chat_id, user_id):
         super().__init__(chat_id=chat_id, user_id=user_id)
 
@@ -34,6 +36,7 @@ class GetLeaderboard(ILevelCommand):
     Get chat experience leaderboard
     """
     KEYS = ["лидерборд", "leaderboard"]
+
     def __init__(self, chat_id, **kwargs):
         super().__init__(chat_id=chat_id)
 
@@ -49,7 +52,7 @@ class GetLeaderboard(ILevelCommand):
             rank = user_index+1
             full_name = f"{users[user_index]['first_name']} {users[user_index]['last_name']}"
             if Utils.has_role(users[user_index]["id"], Roles.DONATOR):
-                full_name+="⭐"
+                full_name += "⭐"
             exp = leaderboard[user_index][1]
             level = leaderboard[user_index][2]
             text += f'#{rank} {full_name} {exp}XP ({level}lvl)\n'
@@ -82,12 +85,14 @@ class DisableLevels(LevelToggler):
     Disable levels command
     """
     KEYS = ["disable_levels"]
+
     def __init__(self, user_id, chat_id, **kwargs):
         super().__init__(user_id, chat_id)
 
     def execute(self):
         if self._is_chat_admin():
-            glob.c.execute("INSERT OR IGNORE INTO disabled_level(chat_id) VALUES (?)", (self._chat_id,))
+            glob.c.execute(
+                "INSERT OR IGNORE INTO disabled_level(chat_id) VALUES (?)", (self._chat_id,))
             glob.db.commit()
             return self.Message("Экспа была выключена в конфе.")
 
@@ -97,11 +102,13 @@ class EnableLevels(LevelToggler):
     Enable levels command
     """
     KEYS = ["enable_levels"]
+
     def __init__(self, user_id, chat_id, **kwargs):
         super().__init__(user_id, chat_id)
 
     def execute(self):
         if self._is_chat_admin():
-            glob.c.execute("DELETE FROM disabled_level WHERE chat_id=?", (self._chat_id,))
+            glob.c.execute(
+                "DELETE FROM disabled_level WHERE chat_id=?", (self._chat_id,))
             glob.db.commit()
             return self.Message("Экспа была включена в конфе.")

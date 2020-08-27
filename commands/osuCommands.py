@@ -332,7 +332,7 @@ class RecentScoreCommandOsu(IOsuCommand):
     Manager for recent score command
     """
 
-    KEYS = ["last"]
+    KEYS = ["last", "ласт"]
 
     def __init__(self, server, username, limit, **kwargs):
         super().__init__()
