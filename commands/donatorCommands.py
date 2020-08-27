@@ -2,7 +2,7 @@ from commands.interfaces import ICommand
 import datetime
 from objects import glob
 from constants.roles import Roles
-from helpers.utils import Utils 
+from helpers.utils import Utils
 import logging
 
 
@@ -13,6 +13,7 @@ class GetRole(ICommand):
     :param user_id: target_user_id
     :param from_id: from_id (in case user_id is empty)
     """
+    KEYS = ["role", "роль"]
 
     def __init__(self, user_id, from_id, **kwargs):
         super().__init__()
@@ -35,4 +36,3 @@ class GetRole(ICommand):
             role = "юзер"
         message += role
         return self.Message(message)
-

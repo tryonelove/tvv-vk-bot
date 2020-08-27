@@ -18,9 +18,14 @@ class Invoker:
         return self.event.text.startswith("!")
 
     def _get_command(self):
-        self.cmd = commandsList.commands_list.get(
-            self._key, commands.staticCommands.StaticCommand)
+        for command in commandsList.commands_list:
+            if self._key in command.KEYS:
+                self.cmd = command
+                break
+        else:
+            self.cmd = commands.staticCommands.StaticCommand
         logging.debug(self.cmd)
+
 
     def _set_key_value(self):
         message = self.event.text.split()

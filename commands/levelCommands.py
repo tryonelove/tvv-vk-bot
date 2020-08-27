@@ -8,6 +8,7 @@ class GetLevel(ILevelCommand):
     """
     Get user level and experience
     """
+    KEYS = ["level", "lvl", "лвл"]
     def __init__(self, chat_id, user_id):
         super().__init__(chat_id=chat_id, user_id=user_id)
 
@@ -32,6 +33,7 @@ class GetLeaderboard(ILevelCommand):
     """
     Get chat experience leaderboard
     """
+    KEYS = ["лидерборд", "leaderboard"]
     def __init__(self, chat_id, **kwargs):
         super().__init__(chat_id=chat_id)
 
@@ -79,6 +81,7 @@ class DisableLevels(LevelToggler):
     """
     Disable levels command
     """
+    KEYS = ["disable_levels"]
     def __init__(self, user_id, chat_id, **kwargs):
         super().__init__(user_id, chat_id)
 
@@ -93,6 +96,7 @@ class EnableLevels(LevelToggler):
     """
     Enable levels command
     """
+    KEYS = ["enable_levels"]
     def __init__(self, user_id, chat_id, **kwargs):
         super().__init__(user_id, chat_id)
 

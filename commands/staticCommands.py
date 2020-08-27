@@ -27,6 +27,7 @@ class HelpCommand(ICommand):
     Get a list of commands
     """
     RESPONSE = "Страница {}"
+    KEYS = ["help"]
 
     def __init__(self, page, *args, **kwargs):
         super().__init__()

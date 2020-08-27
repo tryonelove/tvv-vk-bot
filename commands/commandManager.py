@@ -2,7 +2,7 @@ from commands.interfaces import ICommandManager
 from objects import glob
 from helpers.utils import Utils
 import logging
-from helpers import exceptions 
+from helpers import exceptions
 from constants.roles import Roles
 
 
@@ -12,7 +12,7 @@ class CommandManager(ICommandManager):
 
     def _photo_handler(self):
         largest_url = Utils.find_largest_attachment(
-                    self._attachments[0]["photo"]["sizes"])
+            self._attachments[0]["photo"]["sizes"])
         logging.info("Uploading picture: "+largest_url)
         self._attachments = Utils.upload_picture(largest_url)
 
@@ -49,11 +49,11 @@ class CommandManager(ICommandManager):
             self._attachments = None
 
     def check_author_or_admin(self):
-        author_id = glob.c.execute("SELECT author FROM commands WHERE key = ?", (self._key,)).fetchone()
+        author_id = glob.c.execute(
+            "SELECT author FROM commands WHERE key = ?", (self._key,)).fetchone()
         if author_id is not None:
             if not Utils.has_role(self._author_id, Roles.ADMIN) and author_id[0] != self._author_id:
                 raise exceptions.OverwritingExistingCommand
-        
 
 
 class AddCommand(CommandManager):
@@ -64,6 +64,7 @@ class AddCommand(CommandManager):
     :param attachments: command attachments
     :param author_id: user_id the message has been sent from 
     """
+    KEYS = ["addcom"]
 
     def __init__(self, message, attachments, author_id):
         super().__init__(message=message, attachments=attachments, author_id=author_id)
@@ -92,6 +93,8 @@ class DeleteCommand(CommandManager):
 
     :param message: message containing key for removing command
     """
+    KEYS = ["delcom"]
+
     def __init__(self, message, author_id, **kwargs):
         super().__init__(message=message, author_id=author_id)
 
