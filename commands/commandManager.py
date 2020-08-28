@@ -49,7 +49,10 @@ class CommandManager(ICommandManager):
         author_id = glob.c.execute(
             "SELECT author FROM commands WHERE key = ?", (self._key,)).fetchone()
         if author_id is not None:
-            return Utils.has_role(self._author_id, Roles.ADMIN) and author_id[0] != self._author_id
+            if Utils.has_role(self._author_id, Roles.ADMIN):
+                return True
+            return author_id[0] == self._author_id
+        return True
 
 
 class AddCommand(CommandManager):
@@ -72,11 +75,8 @@ class AddCommand(CommandManager):
 
     def execute(self):
         self._set_values()
-        if not self.check_author_or_admin():
-            if self.is_command_limit_reached():
-                raise exceptions.CommandLimitReached
-            else:
-                raise exceptions.OverwritingExistingCommand
+        if not self.check_author_or_admin() and self.is_command_limit_reached():
+            raise exceptions.AccesDeniesError
         q = "INSERT OR REPLACE INTO commands VALUES (?, ?, ?, ?)"
         glob.c.execute(q, (self._key, self._value,
                            self._attachments, self._author_id))
