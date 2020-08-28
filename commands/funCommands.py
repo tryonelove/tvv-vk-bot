@@ -8,15 +8,18 @@ from helpers.utils import Utils
 
 
 class WeatherSet(ICommand):
+    KEYS = ["weatherset"]
+
     def __init__(self, city, user_id, *args, **kwargs):
         super().__init__()
         self._city = city
         self._user_id = user_id
 
-
     def execute(self):
-        glob.c.execute("INSERT OR IGNORE INTO weather VALUES (?, ?)", (self._user_id, self._city))
-        glob.c.execute("UPDATE weather SET city=? WHERE id=?", (self._city, self._user_id))
+        glob.c.execute("INSERT OR IGNORE INTO weather VALUES (?, ?)",
+                       (self._user_id, self._city))
+        glob.c.execute("UPDATE weather SET city=? WHERE id=?",
+                       (self._city, self._user_id))
         glob.db.commit()
         return self.Message(f"Город {self._city} был успешно привязан.")
 
@@ -35,6 +38,7 @@ class Weather(ICommand):
         "Fog": "Туман 🌫",
         "Snow": "Снег ❄"
     }
+    KEYS = ["weather", "погода"]
 
     def __init__(self, city, user_id, *args, **kwargs):
         super().__init__()
@@ -68,6 +72,8 @@ class Roll(ICommand):
     """
     Roll a random number command
     """
+    KEYS = ["roll", "ролл"]
+
     def __init__(self, limit, *args):
         super().__init__()
         self._limit = self.__check_value(limit)

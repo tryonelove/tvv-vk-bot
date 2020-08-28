@@ -18,9 +18,14 @@ class Invoker:
         return self.event.text.startswith("!")
 
     def _get_command(self):
-        self.cmd = commandsList.commands_list.get(
-            self._key, commands.staticCommands.StaticCommand)
+        for command in commandsList.commands_list:
+            if self._key in command.KEYS:
+                self.cmd = command
+                break
+        else:
+            self.cmd = commands.staticCommands.StaticCommand
         logging.debug(self.cmd)
+
 
     def _set_key_value(self):
         message = self.event.text.split()
@@ -116,25 +121,11 @@ class Invoker:
             self.event.from_id, self.event.peer_id)
         levelSystem.level_check(self.event.text)
 
-    def _invoke_donator(self):
-        if Utils.has_role(self.event.from_id, Roles.DONATOR):
-            expires = Utils.get_donator_expire_date(self.event.from_id)
-            if not expires:
-                return
-            now = datetime.datetime.now().timestamp()
-            if now > expires[0]:
-                cmd = commandsList.commands_list.get(
-                    "rm_donator")(self.event.from_id)
-                msg = cmd.execute()
-                msg.message = f"Минус донатер у *id{self.event.from_id}"
-                self._send_message(msg)
-
     def invoke(self):
         if self.event.from_id < 0:
             return
         if not Utils.is_level_disabled(self.event.peer_id):
             self._invoke_level()
-        self._invoke_donator()
         if self._is_command():
             self._set_key_value()
             logging.info(f"Command: {self._key}")

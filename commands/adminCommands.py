@@ -2,7 +2,7 @@ from commands.interfaces import IAdminCommand, IDonatorManager
 from objects import glob
 from constants.roles import Roles
 import logging
-from helpers.utils import Utils 
+from helpers.utils import Utils
 
 
 class AdminCommand(IAdminCommand):
@@ -20,6 +20,8 @@ class AdminCommand(IAdminCommand):
 
 
 class Op(AdminCommand):
+    KEYS = ["op"]
+
     def __init__(self, user_id, *args):
         super().__init__(user_id)
         self.role = Roles.ADMIN.value
@@ -27,6 +29,8 @@ class Op(AdminCommand):
 
 
 class Deop(AdminCommand):
+    KEYS = ["deop"]
+
     def __init__(self, user_id, *args):
         super().__init__(user_id)
         self.role = Roles.USER.value
@@ -39,6 +43,7 @@ class Restrict(AdminCommand):
 
     :param user_id: target user_id
     """
+    KEYS = ["restrict"]
 
     def __init__(self, user_id, *args):
         super().__init__(user_id)
@@ -52,6 +57,7 @@ class Unrestrict(AdminCommand):
 
     :param user_id: target user_id
     """
+    KEYS = ["unrestrict"]
 
     def __init__(self, user_id, *args):
         super().__init__(user_id)
@@ -64,6 +70,7 @@ class AddDonator(IDonatorManager):
     Add donator command
     """
     RESPONSE = "Пользователь {} получил роль донатера."
+    KEYS = ["add_donator"]
 
     def __init__(self, message, *args, **kwargs):
         super().__init__(message)
@@ -77,17 +84,16 @@ class AddDonator(IDonatorManager):
         return " ".join(self._args[2:])
 
     def _add_new_donator(self):
-        
-        duration = self._donation_sum // 25
-        q = f"INSERT INTO donators VALUES(?, (SELECT strftime('%s','now', '+{duration} month')), ?)"
+        q = f"INSERT INTO donators VALUES(?, 10, ?)"
         glob.c.execute(q, (self._user_id, self._role_name))
-        glob.c.execute("UPDATE users SET role = ? WHERE id=?", (Roles.DONATOR.value, self._user_id))
+        glob.c.execute("UPDATE users SET role = ? WHERE id=?",
+                       (Roles.DONATOR.value, self._user_id))
         glob.db.commit()
 
     def _increase_duration(self):
-        duration = self._donation_sum // 25
-        q = f"SELECT strftime('%s', (SELECT expires FROM donators WHERE id={self._user_id}), '+{duration} month')"
-        glob.c.execute(q)
+        duration = self._donation_sum // 2.5
+        q = f"UPDATE donators SET expires=expires+{duration} WHERE id = ?"
+        glob.c.execute(q, (self._user_id,))
         glob.db.commit()
 
     def execute(self):
@@ -110,13 +116,14 @@ class RemoveDonator(IDonatorManager):
     """
     SUCCESS = "Пользователь {} был удалён из списка донатеров."
     NOT_DONATOR = "Пользователь {} не является донатером."
+    KEYS = ["rm_donator"]
 
     def __init__(self, user_id, *args, **kwargs):
         super().__init__(user_id)
 
     def _remove_completely(self):
         glob.c.execute("DELETE FROM donators WHERE id=?", (self._user_id,))
-        glob.c.execute("UPDATE users SET role=1 WHERE id=?",(self._user_id,))
+        glob.c.execute(f"UPDATE users SET role=1 WHERE id=?", (self._user_id,))
         glob.db.commit()
 
     def _decrease_duration(self):
@@ -132,6 +139,8 @@ class RemoveDonator(IDonatorManager):
 
 
 class AddRole(IDonatorManager):
+    KEYS = ["add_role"]
+
     def __init__(self, message, *args, **kwargs):
         super().__init__(message)
         self._user_id = None
@@ -144,6 +153,7 @@ class AddRole(IDonatorManager):
         self._user_id = Utils.find_user_id(self._args[0])
         self._role = self._parse_role_name()
         logging.info(f"Editing role: {self._user_id} -> {self._role}")
-        glob.c.execute("UPDATE donators SET role = ? WHERE id = ?", (self._role, self._user_id))
+        glob.c.execute("UPDATE donators SET role = ? WHERE id = ?",
+                       (self._role, self._user_id))
         glob.db.commit()
         return self.Message(f"Роль {self._user_id} была успешно изменена на {self._role}")

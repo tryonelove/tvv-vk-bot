@@ -42,24 +42,32 @@ class StatsPicture(IOsuCommand):
 
 
 class OsuPicture(StatsPicture):
+    KEYS = ["osu", "осу"]
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._mode = 0
 
 
 class TaikoPicture(StatsPicture):
+    KEYS = ["taiko", "тайко"]
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._mode = 1
 
 
 class CtbPicture(StatsPicture):
+    KEYS = ["ctb", "ктб"]
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._mode = 2
 
 
 class ManiaPicture(StatsPicture):
+    KEYS = ["mania", "мания"]
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._mode = 3
@@ -69,21 +77,23 @@ class MatchmakingStats(IOsuCommand):
     """
     Get osu! matchchmaking stats
     """
+    KEYS = ["mm"]
 
     def __init__(self, username, **kwargs):
         super().__init__()
         self._username = username
         self.API = "https://osumatchmaking.c7x.dev/api/users/"
+        self._ruleset = "1v1"
 
     def execute(self):
         r = requests.get(self.API + self._username,
-                         params={"key": OSU_MATCHMAKING_KEY, "rulesets": '["1v1","2v2"]'})
+                         params={"key": OSU_MATCHMAKING_KEY, "rulesets": f'["{self._ruleset}"]'})
         if r.status_code != 200:
             raise exceptions.ApiRequestError
         js = r.json()
         username = js.get("osuName")
         country = js.get("countryCode")
-        stats = js.get("stats")["1v1"]
+        stats = js.get("stats")[self._ruleset]
         rank = stats.get("rank")
         rating = round(stats.get("currentVisualRating"))
         wins = stats.get("wins")
@@ -93,14 +103,26 @@ class MatchmakingStats(IOsuCommand):
         except:
             winrate = 0
         winstreak = stats.get("currentWinstreak")
-        response = f"{country} | {username} #{rank}\nRating: {rating}\nW/L: {wins}/{losses} | WR: {winrate}%\nWinstreak: {winstreak}"
+        response = f"{self._ruleset}\n{country} | {username} #{rank}\nRating: {rating}\nW/L: {wins}/{losses} | WR: {winrate}%\nWinstreak: {winstreak}"
         return self.Message(response)
+
+
+class MatchmakingStatsDuo(MatchmakingStats):
+    """
+    Get osu! matchchmaking stats
+    """
+    KEYS = ["mm2"]
+
+    def __init__(self, username, **kwargs):
+        super().__init__(username)
+        self._ruleset = "2v2"
 
 
 class OsuSet(IOsuCommand):
     """
     Connect user_id to osu! account
     """
+    KEYS = ["osuset"]
 
     def __init__(self, server, username, user_id, **kwargs):
         super().__init__()
@@ -128,10 +150,10 @@ class OsuSet(IOsuCommand):
             "INSERT OR IGNORE INTO osu(id) VALUES(?)", (self._user_id,))
         if self._server == "bancho":
             glob.c.execute("UPDATE osu SET main_server=?, bancho_username=? WHERE id=?",
-                       (self._server, self._username, self._user_id))
+                           (self._server, self._username, self._user_id))
         elif self._server == "gatari":
             glob.c.execute("UPDATE osu SET main_server=?, gatari_username=? WHERE id=?",
-                       (self._server, self._username, self._user_id))
+                           (self._server, self._username, self._user_id))
         glob.db.commit()
         return self.Message(f"Аккаунт {self._server} {self._username} был успешно привязан к вашему айди.")
 
@@ -228,6 +250,7 @@ class TopScoreCommand(IOsuCommand):
     """
     Manager for top score command
     """
+    KEYS = ["top"]
 
     def __init__(self, server, username, limit, **kwargs):
         super().__init__()
@@ -309,6 +332,8 @@ class RecentScoreCommandOsu(IOsuCommand):
     Manager for recent score command
     """
 
+    KEYS = ["last", "ласт"]
+
     def __init__(self, server, username, limit, **kwargs):
         super().__init__()
         self._server = server
@@ -369,6 +394,7 @@ class Compare(IOsuCommand):
     """
     Compare scores
     """
+    KEYS = ["c", "с", "compare"]
 
     def __init__(self, server, username, beatmap_id, **kwargs):
         super().__init__()

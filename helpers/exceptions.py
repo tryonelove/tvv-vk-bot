@@ -7,6 +7,7 @@ class BotException(Exception):
         self.message = f"Ошибка: {message}"
         super().__init__(self.message)
 
+
 class OverwritingExistingCommand(BotException):
     def __init__(self, message="Нельзя перезаписывать чужие команды"):
         super().__init__(message)
@@ -57,6 +58,22 @@ class CityNotFoundError(Exception):
         super().__init__(message)
 
 
+class AccountNotLinked(BotException):
+    """
+    API request error.
+    """
+
+    def __init__(self, message="Не удалось определить стандартные значения для сервера и юзернейма. Попробуйте привязать аккаунт с помощью команды !osuset."):
+        super().__init__(message)
+
+
+class CommandLimitReached(BotException):
+    """
+    Command limit reached
+    """
+    def __init__(self, message="Достигнут лимит команд, обновите свою роль донатера."):
+        super().__init__(message)
+
 exceptions = (UserNotFoundError, AccesDeniesError,
-              ApiRequestError, CityNotFoundError, 
-              ScoreNotFoundError, OverwritingExistingCommand)
+              ApiRequestError, CityNotFoundError,
+              ScoreNotFoundError, OverwritingExistingCommand, AccountNotLinked,CommandLimitReached)
