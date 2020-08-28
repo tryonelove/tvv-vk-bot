@@ -38,8 +38,10 @@ class HelpCommand(ICommand):
         self.overall_pages = 0
 
     def get_default_commands(self):
-        commands = list(dict.fromkeys(helpers.commandsList.commands_list))
-        return commands
+        command_list = []
+        for command in helpers.commandsList.commands_list:
+            command_list+=command.KEYS
+        return command_list
 
     def get_static_commands(self):
         k = 50  # Number of commands per page

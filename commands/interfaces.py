@@ -7,7 +7,7 @@ class ICommand(ABC):
     """
     Base command interface
     """
-    KEYS = None
+    KEYS = []
 
     def __init__(self, *args, **kwargs):
         self.Message = message.MessageObject
