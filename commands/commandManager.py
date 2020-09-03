@@ -45,14 +45,12 @@ class CommandManager(ICommandManager):
         else:
             self._attachments = None
 
-    def check_author_or_admin(self):
+    def is_author(self):
         author_id = glob.c.execute(
             "SELECT author FROM commands WHERE key = ?", (self._key,)).fetchone()
         if author_id is not None:
-            if Utils.has_role(self._author_id, Roles.ADMIN):
-                return True
             return author_id[0] == self._author_id
-        return True
+        return True       
 
 
 class AddCommand(CommandManager):
@@ -75,8 +73,11 @@ class AddCommand(CommandManager):
 
     def execute(self):
         self._set_values()
-        if not self.check_author_or_admin() and self.is_command_limit_reached():
+        is_author = self.is_author()
+        if not is_author and not Utils.has_role(self._author_id, Roles.ADMIN):
             raise exceptions.AccesDeniesError
+        if is_author and self.is_command_limit_reached():
+            raise exceptions.CommandLimitReached
         q = "INSERT OR REPLACE INTO commands VALUES (?, ?, ?, ?)"
         glob.c.execute(q, (self._key, self._value,
                            self._attachments, self._author_id))
@@ -98,8 +99,10 @@ class DeleteCommand(CommandManager):
 
     def execute(self):
         self._set_values()
-        self.check_author_or_admin()
-        if self.is_command_limit_reached():
+        is_author = self.is_author()
+        if not is_author and not Utils.has_role(self._author_id, Roles.ADMIN):
+            raise exceptions.AccesDeniesError
+        if is_author and self.is_command_limit_reached():
             raise exceptions.CommandLimitReached
         q = "DELETE FROM commands WHERE key = ?"
         glob.c.execute(q, (self._key,))
