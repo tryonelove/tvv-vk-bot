@@ -1,4 +1,5 @@
 import os
+
 CREATOR_ID = 236965366
 
 GROUP_ID_TEST = os.getenv("GROUP_ID_TEST")
