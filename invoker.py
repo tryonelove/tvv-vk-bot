@@ -8,6 +8,7 @@ from config import CREATOR_ID
 from constants.messageTypes import MessageTypes
 import datetime
 from helpers import exceptions
+import time
 
 class Invoker:
     def __init__(self, event):
@@ -42,6 +43,7 @@ class Invoker:
             params["peer_id"] = self.event.peer_id
         params["message"] = message_object.message or None
         params["attachment"] = message_object.attachment or None
+        params["random_id"] = time.time()
         logging.debug(params)
         if params["message"] is None and params["attachment"] is None:
             return

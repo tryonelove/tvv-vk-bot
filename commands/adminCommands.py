@@ -84,8 +84,8 @@ class AddDonator(IDonatorManager):
         return " ".join(self._args[2:])
 
     def _add_new_donator(self):
-        q = f"INSERT INTO donators VALUES(?, 10, ?)"
-        glob.c.execute(q, (self._user_id, self._role_name))
+        q = f"INSERT INTO donators VALUES(?, ?, ?)"
+        glob.c.execute(q, (self._user_id, 10, self._role_name))
         glob.c.execute("UPDATE users SET role = ? WHERE id=?",
                        (Roles.DONATOR.value, self._user_id))
         glob.db.commit()
