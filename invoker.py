@@ -124,7 +124,6 @@ class Invoker:
         levelSystem.level_check(self.event.text)
 
     def invoke(self):
-        print(self.event)
         if self.event.from_id < 0:
             return
         if not Utils.is_level_disabled(self.event.peer_id):
