@@ -8,7 +8,7 @@ from config import CREATOR_ID
 from constants.messageTypes import MessageTypes
 import datetime
 from helpers import exceptions
-import time
+from vk_api.utils import get_random_id
 
 class Invoker:
     def __init__(self, event):
@@ -43,7 +43,7 @@ class Invoker:
             params["peer_id"] = self.event.peer_id
         params["message"] = message_object.message or None
         params["attachment"] = message_object.attachment or None
-        params["random_id"] = time.time()
+        params["random_id"] = get_random_id()
         logging.debug(params)
         if params["message"] is None and params["attachment"] is None:
             return
@@ -124,6 +124,7 @@ class Invoker:
         levelSystem.level_check(self.event.text)
 
     def invoke(self):
+        print(self.event)
         if self.event.from_id < 0:
             return
         if not Utils.is_level_disabled(self.event.peer_id):

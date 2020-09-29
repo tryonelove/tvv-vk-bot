@@ -1,7 +1,7 @@
 from objects import glob
 from helpers import utils
 import logging
-
+from vk_api.utils import get_random_id
 
 class LevelSystem:
     def __init__(self, user_id, chat_id):
@@ -43,7 +43,10 @@ class LevelSystem:
             data = glob.vk.users.get(user_id=int(self._user_id), name_case = "nom")[0]
             if lvl_end>=7:
                 username =  f"{data['first_name']} {data['last_name']}"
-                glob.vk.messages.send(peer_id = self._chat_id, message="{} апнул {} лвл!".format(username, lvl_end))
+                glob.vk.messages.send(
+                    peer_id = self._chat_id, 
+                    message=f"{username} апнул {lvl_end} лвл!",
+                    random_id = get_random_id())
             glob.c.execute(q_upd, (self._user_id,))
 
     @staticmethod
