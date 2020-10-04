@@ -74,6 +74,15 @@ class CommandLimitReached(BotException):
     def __init__(self, message="Достигнут лимит команд, обновите свою роль донатера."):
         super().__init__(message)
 
+class MissingForwardedMessage(BotException):
+    """
+    Required to reply to a message 
+    with the score you want to compare with
+    """
+    def __init__(self, message="Необходимо переслать сообщение со скором."):
+        super().__init__(message)
+
 exceptions = (UserNotFoundError, AccesDeniesError,
               ApiRequestError, CityNotFoundError,
-              ScoreNotFoundError, OverwritingExistingCommand, AccountNotLinked,CommandLimitReached)
+              ScoreNotFoundError, OverwritingExistingCommand, AccountNotLinked,CommandLimitReached,
+              MissingForwardedMessage)

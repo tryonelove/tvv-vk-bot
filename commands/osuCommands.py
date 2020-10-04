@@ -396,15 +396,17 @@ class Compare(IOsuCommand):
     """
     KEYS = ["c", "с", "compare"]
 
-    def __init__(self, server, username, beatmap_id, **kwargs):
+    def __init__(self, server, username, **kwargs):
         super().__init__()
         self._username = username
-        self._beatmap_id = beatmap_id
+        self._beatmap_id = kwargs.get("beatmap_id")
         self._limit = 1
         self._api = BanchoCompare if server in osuConstants.server_acronyms[
             "bancho"] else GatariCompare
 
     def execute(self):
+        if self._beatmap_id is None:
+            raise exceptions.MissingForwardedMessage
         result = self._api(self._username, self._beatmap_id).get()
         return self.Message(*result)
 

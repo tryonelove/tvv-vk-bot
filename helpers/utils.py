@@ -213,3 +213,12 @@ class Utils:
     @staticmethod
     def is_level_disabled(chat_id):
         return glob.c.execute("SELECT * FROM disabled_level WHERE chat_id=?", (chat_id,)).fetchone()
+
+    @staticmethod
+    def get_reply_message_from_event(event):
+        fwd_message = None
+        if event.get("reply_message") is not None:
+            fwd_message = event.reply_message
+        if event.fwd_messages: 
+            fwd_message = event.fwd_messages[-1]
+        return fwd_message

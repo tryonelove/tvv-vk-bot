@@ -90,8 +90,9 @@ class Invoker:
             # Need to get server and username from db
             # server, username, user_id dict
             params = Utils.get_osu_params(self._value, self.event.from_id)
-            if self.event.fwd_messages:
-                fwd_message = self.event.fwd_messages[-1]
+            logging.debug(self.event)
+            fwd_message = Utils.get_reply_message_from_event(self.event)
+            if fwd_message is not None:
                 params["beatmap_id"] = Utils.find_beatmap_id(
                     fwd_message["text"])
             command_object = self.cmd(**params)
