@@ -6,7 +6,7 @@ from helpers.utils import Utils
 
 
 class AdminCommand(IAdminCommand):
-    RESPONSE = ""
+    RESPONSE: str = None
 
     def __init__(self, user_id, *args):
         super().__init__(user_id)

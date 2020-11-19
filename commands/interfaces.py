@@ -7,9 +7,10 @@ class ICommand(ABC):
     """
     Base command interface
     """
-    KEYS = []
+    KEYS: list = None
 
     def __init__(self, *args, **kwargs):
+        self.KEYS = []
         self.Message = message.MessageObject
 
     @abstractmethod
