@@ -19,6 +19,7 @@ commands_list = [
     commands.levelCommands.GetLeaderboard,
     commands.levelCommands.DisableLevels,
     commands.levelCommands.EnableLevels,
+    commands.levelCommands.WipeLevels,
     commands.donatorCommands.GetRole,
     commands.commandManager.AddCommand,
     commands.commandManager.DeleteCommand,

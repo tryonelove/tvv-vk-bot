@@ -112,3 +112,16 @@ class EnableLevels(LevelToggler):
                 "DELETE FROM disabled_level WHERE chat_id=?", (self._chat_id,))
             glob.db.commit()
             return self.Message("Экспа была включена в конфе.")
+
+
+class WipeLevels(LevelToggler):
+    KEYS = ["wipelevels"]
+
+    def __init__(self, user_id, chat_id, **kwargs):
+        super().__init__(user_id, chat_id)
+
+    def execute(self):
+        if self._is_chat_admin():
+            glob.c.execute(f"DELETE FROM konfa_{self._chat_id}")
+            glob.db.commit()
+            return self.Message("Лидерборд конфы был очищен. SPAM !анал CHAT")
