@@ -3,7 +3,7 @@ from objects import glob
 from helpers.utils import Utils
 from constants.roles import Roles
 from helpers import exceptions
-
+import config
 
 class GetLevel(ILevelCommand):
     """
@@ -77,7 +77,7 @@ class LevelToggler(ILevelCommand):
         for user in users["items"]:
             if user.get("is_admin", False):
                 admins.append(user["member_id"])
-        return self._user_id in admins
+        return self._user_id in admins or self._user_id == config.CREATOR_ID
 
 
 class DisableLevels(LevelToggler):
