@@ -5,13 +5,29 @@ from constants.roles import Roles
 from helpers import exceptions
 import config
 
-class GetLevel(ILevelCommand):
+
+class LevelCommand(ILevelCommand):
+    def __init__(self, chat_id, user_id):
+        super().__init__(chat_id=chat_id, user_id=user_id)
+
+    def _is_chat_admin(self):
+        admins = []
+        users = glob.vk.messages.getConversationMembers(peer_id=self._chat_id)
+        if not users:
+            raise exceptions.AccesDeniesError
+        for user in users["items"]:
+            if user.get("is_admin", False):
+                admins.append(user["member_id"])
+        return self._user_id in admins or self._user_id == config.CREATOR_ID
+
+
+class GetLevel(LevelCommand):
     """
     Get user level and experience
     """
     KEYS = ["level", "lvl", "лвл"]
 
-    def __init__(self, chat_id, user_id):
+    def __init__(self, chat_id, user_id, **kwargs):
         super().__init__(chat_id=chat_id, user_id=user_id)
 
     def _get_level(self):
@@ -31,7 +47,7 @@ class GetLevel(ILevelCommand):
         return self.Message(message)
 
 
-class GetLeaderboard(ILevelCommand):
+class GetLeaderboard(LevelCommand):
     """
     Get chat experience leaderboard
     """
@@ -63,24 +79,7 @@ class GetLeaderboard(ILevelCommand):
         return self.Message(message)
 
 
-class LevelToggler(ILevelCommand):
-    def __init__(self, user_id, chat_id, **kwargs):
-        super().__init__()
-        self._user_id = user_id
-        self._chat_id = chat_id
-
-    def _is_chat_admin(self):
-        admins = []
-        users = glob.vk.messages.getConversationMembers(peer_id=self._chat_id)
-        if not users:
-            raise exceptions.AccesDeniesError
-        for user in users["items"]:
-            if user.get("is_admin", False):
-                admins.append(user["member_id"])
-        return self._user_id in admins or self._user_id == config.CREATOR_ID
-
-
-class DisableLevels(LevelToggler):
+class DisableLevels(LevelCommand):
     """
     Disable levels command
     """
@@ -90,14 +89,15 @@ class DisableLevels(LevelToggler):
         super().__init__(user_id, chat_id)
 
     def execute(self):
-        if self._is_chat_admin():
-            glob.c.execute(
-                "INSERT OR IGNORE INTO disabled_level(chat_id) VALUES (?)", (self._chat_id,))
-            glob.db.commit()
-            return self.Message("Экспа была выключена в конфе.")
+        if not self._is_chat_admin():
+            raise exceptions.AccesDeniesError
+        glob.c.execute(
+            "INSERT OR IGNORE INTO disabled_level(chat_id) VALUES (?)", (self._chat_id,))
+        glob.db.commit()
+        return self.Message("Экспа была выключена в конфе.")
 
 
-class EnableLevels(LevelToggler):
+class EnableLevels(LevelCommand):
     """
     Enable levels command
     """
@@ -107,21 +107,39 @@ class EnableLevels(LevelToggler):
         super().__init__(user_id, chat_id)
 
     def execute(self):
-        if self._is_chat_admin():
-            glob.c.execute(
-                "DELETE FROM disabled_level WHERE chat_id=?", (self._chat_id,))
-            glob.db.commit()
-            return self.Message("Экспа была включена в конфе.")
+        if not self._is_chat_admin():
+            raise exceptions.AccesDeniesError
+        glob.c.execute(
+            "DELETE FROM disabled_level WHERE chat_id=?", (self._chat_id,))
+        glob.db.commit()
+        return self.Message("Экспа была включена в конфе.")
 
 
-class WipeLevels(LevelToggler):
+class WipeLevels(LevelCommand):
     KEYS = ["wipelevels"]
 
     def __init__(self, user_id, chat_id, **kwargs):
-        super().__init__(user_id, chat_id)
+        super().__init__(user_id=user_id, chat_id=chat_id)
 
     def execute(self):
-        if self._is_chat_admin():
-            glob.c.execute(f"DELETE FROM konfa_{self._chat_id}")
-            glob.db.commit()
-            return self.Message("Лидерборд конфы был очищен. SPAM !анал CHAT")
+        if not self._is_chat_admin():
+            raise exceptions.AccesDeniesError
+        glob.c.execute(f"DELETE FROM konfa_{self._chat_id}")
+        glob.db.commit()
+        return self.Message("Лидерборд конфы был очищен. SPAM !анал CHAT")
+
+
+class EditExperience(LevelCommand):
+    KEYS = ["edit_exp"]
+
+    def __init__(self, user_id, chat_id, target_id, amount, **kwargs):
+        super().__init__(user_id=user_id, chat_id=chat_id)
+        self._amount = amount
+        self._target_id = target_id
+
+    def execute(self):
+        if not self._is_chat_admin():
+            raise exceptions.AccesDeniesError
+        user_id, exp = glob.c.execute(f"SELECT id, experience FROM konfa_{self._chat_id}").fetchone()
+        glob.c.execute(f"UPDATE konfa_{self._chat_id} SET experience=experience+{self._amount} WHERE id=?", (self._user_id,))
+        return self.Message(f"Экспа челика {self._user_id} была обновлена.")

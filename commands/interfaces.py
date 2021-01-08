@@ -47,6 +47,9 @@ class ILevelCommand(ICommand):
         self._user_id = kwargs.get("user_id")
         self._chat_id = kwargs.get("chat_id")
 
+    def _is_chat_admin(self):
+        pass
+
 
 class ICommandManager(ICommand):
     """

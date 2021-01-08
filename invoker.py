@@ -38,7 +38,7 @@ class Invoker:
         if message_object.message_type == MessageTypes.PRIVATE:
             params["peer_id"] = self.event.from_id
         elif message_object.message_type == MessageTypes.CREATOR:
-            params["peer_id"] = 236965366 # Creator id
+            params["peer_id"] = CREATOR_ID # Creator id
         else:
             params["peer_id"] = self.event.peer_id
         params["message"] = message_object.message or None
@@ -63,7 +63,8 @@ class Invoker:
         elif issubclass(self.cmd, commands.interfaces.ILevelCommand):
             logging.debug("Level command.")
             command_object = self.cmd(
-                user_id=self.event.from_id, chat_id=self.event.peer_id)
+                user_id=self.event.from_id, chat_id=self.event.peer_id, 
+                target_id=Utils.find_user_id(self._value), amount=Utils.get_experience_amount(self._value))
 
         elif issubclass(self.cmd, commands.interfaces.ICommandManager):
             logging.debug("Commands managing.")

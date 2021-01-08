@@ -111,7 +111,7 @@ class Utils:
         return user_id == 236965366
 
     @staticmethod
-    def get_osu_params(string, user_id):
+    def get_osu_params(message, user_id):
         """
         Get a dictionary, containing 
         server, username, score limit and user_id
@@ -120,8 +120,8 @@ class Utils:
         params = {"server": None, "username": None,
                   "limit": 1, "user_id": user_id}
         data = Utils.get_server_username(user_id)
-        if string:
-            result = re.match(r"(bancho|gatari|банчо|гатари|g|b|г|б)?(.*?)?(\s+\d+)?$", string)
+        if message:
+            result = re.match(r"(bancho|gatari|банчо|гатари|g|b|г|б)?(.*?)?(\s+\d+)?$", message)
             params["server"] = result.group(1) or None
             params["username"] = result.group(2) or None
             params["limit"] = result.group(3) or 1
@@ -141,17 +141,17 @@ class Utils:
         return params
 
     @staticmethod
-    def find_beatmap_id(string):
+    def find_beatmap_id(message):
         """
         Return beatmap id from a text message
         """
         beatmap_id = None
         if "beatmapsets" in string:
             result = re.search(
-                r"^https?:\/\/?osu.ppy.sh\/beatmapsets\/(\d+)(#\w+)\/(\d+)?", string)
+                r"^https?:\/\/?osu.ppy.sh\/beatmapsets\/(\d+)(#\w+)\/(\d+)?", message)
             beatmap_id = result.group(3)
-        elif "/b/" in string:
-            result = re.search(r".*\/b/(\d+)", string)
+        elif "/b/" in message:
+            result = re.search(r".*\/b/(\d+)", message)
             beatmap_id = result.group(1)
         return beatmap_id
 
@@ -184,11 +184,14 @@ class Utils:
         return accuracy
 
     @staticmethod
-    def find_user_id(string):
+    def find_user_id(message):
         """
         Return user_id from a message with a mention.
         """
-        user_id = re.search(r"(\d+)", string).group(1)
+        try:
+            user_id = re.search(r"(\d+)", message).group(1)
+        except:
+            user_id = 0
         return user_id
 
     @staticmethod
@@ -216,3 +219,13 @@ class Utils:
         if event.fwd_messages: 
             fwd_message = event.fwd_messages[-1]
         return fwd_message
+
+    @staticmethod
+    def get_experience_amount(message):
+        try:
+            result = re.search(
+                r"(\+|\-)\d+", message)
+            amount = result.group(0)
+        except:
+            amount = 0
+        return amount
