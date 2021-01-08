@@ -146,7 +146,7 @@ class Utils:
         Return beatmap id from a text message
         """
         beatmap_id = None
-        if "beatmapsets" in string:
+        if "beatmapsets" in message:
             result = re.search(
                 r"^https?:\/\/?osu.ppy.sh\/beatmapsets\/(\d+)(#\w+)\/(\d+)?", message)
             beatmap_id = result.group(3)
