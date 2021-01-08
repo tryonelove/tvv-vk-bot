@@ -31,7 +31,7 @@ class LevelSystem:
 
     def level_up(self):
         q = f"SELECT experience, level FROM konfa_{self._chat_id} WHERE id=?"
-        q_upd = f"UPDATE konfa_{self._chat_id} SET level=level+1 WHERE id=?"
+        q_upd = f"UPDATE konfa_{self._chat_id} SET level=? WHERE id=?"
         experience, lvl_start = glob.c.execute(q, (self._user_id,)).fetchone()
         if experience is None or lvl_start is None:
             # temp fix
@@ -47,7 +47,7 @@ class LevelSystem:
                     peer_id = self._chat_id, 
                     message=f"{username} апнул {lvl_end} лвл!",
                     random_id = get_random_id())
-            glob.c.execute(q_upd, (self._user_id,))
+            glob.c.execute(q_upd, (lvl_end, self._user_id))
 
     @staticmethod
     def calc_exp(message):

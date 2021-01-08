@@ -53,8 +53,8 @@ class GetLeaderboard(LevelCommand):
     """
     KEYS = ["лидерборд", "leaderboard"]
 
-    def __init__(self, chat_id, **kwargs):
-        super().__init__(chat_id=chat_id)
+    def __init__(self, chat_id, user_id, **kwargs):
+        super().__init__(chat_id=chat_id, user_id=user_id)
 
     def _get_leaderboard(self):
         text = "Топ 10 конфы:\n\n"
@@ -116,7 +116,7 @@ class EnableLevels(LevelCommand):
 
 
 class WipeLevels(LevelCommand):
-    KEYS = ["wipelevels"]
+    KEYS = ["wipe_levels"]
 
     def __init__(self, user_id, chat_id, **kwargs):
         super().__init__(user_id=user_id, chat_id=chat_id)
@@ -142,4 +142,5 @@ class EditExperience(LevelCommand):
             raise exceptions.AccesDeniesError
         user_id, exp = glob.c.execute(f"SELECT id, experience FROM konfa_{self._chat_id}").fetchone()
         glob.c.execute(f"UPDATE konfa_{self._chat_id} SET experience=experience+{self._amount} WHERE id=?", (self._user_id,))
+        glob.db.commit()
         return self.Message(f"Экспа челика {self._user_id} была обновлена.")
