@@ -339,7 +339,7 @@ class RecentScoreCommandOsu(IOsuCommand):
         self._server = server
         self._username = username
         self._limit = limit or 1
-        self._mode = 0
+        self._mode = osuConstants.Mode.OSU
         self._api = BanchoRecentScore if server in osuConstants.SERVER_ACRONYMS[
             "bancho"] else GatariRecentScore
 
