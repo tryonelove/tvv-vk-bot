@@ -18,7 +18,6 @@ class StatsPicture(IOsuCommand):
                   'blue', 'purple', 'pink', '2255ee')
     SERVERS = {
         "gatari": "http://sig.gatari.pw/sig.php?colour={}&uname={}&xpbar&xpbarhex&darktriangles&pp=1&mode={}",
-        # "bancho": "http://134.122.83.254:5000/sig?colour={}&uname={}&xpbar&xpbarhex&darktriangles&pp=1&mode={}&{}"
         "bancho": "http://tryonelove.codes/score?username={1}&limit=1&type=1&mode={2}"
     }
 
@@ -29,7 +28,7 @@ class StatsPicture(IOsuCommand):
         self._mode = None
 
     def execute(self):
-        if self._server in osuConstants.server_acronyms["bancho"]:
+        if self._server in osuConstants.SERVER_ACRONYMS["bancho"]:
             server = "bancho"
         else:
             server = "gatari"
@@ -47,7 +46,7 @@ class OsuPicture(StatsPicture):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._mode = 0
+        self._mode = osuConstants.Mode.OSU
 
 
 class TaikoPicture(StatsPicture):
@@ -55,7 +54,7 @@ class TaikoPicture(StatsPicture):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._mode = 1
+        self._mode = osuConstants.Mode.TAIKO
 
 
 class CtbPicture(StatsPicture):
@@ -63,7 +62,7 @@ class CtbPicture(StatsPicture):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._mode = 2
+        self._mode = osuConstants.Mode.CATCH
 
 
 class ManiaPicture(StatsPicture):
@@ -71,7 +70,7 @@ class ManiaPicture(StatsPicture):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._mode = 3
+        self._mode = osuConstants.Mode.MANIA
 
 
 class MatchmakingStats(IOsuCommand):
@@ -127,15 +126,15 @@ class OsuSet(IOsuCommand):
 
     def __init__(self, server, username, user_id, **kwargs):
         super().__init__()
-        self._server = "bancho" if server in osuConstants.server_acronyms["bancho"] else "gatari"
+        self._server = "bancho" if server in osuConstants.SERVER_ACRONYMS["bancho"] else "gatari"
         self._username = username
         self._user_id = user_id
         self._api = banchoApi.BanchoApi(
-        ) if server in osuConstants.server_acronyms["bancho"] else gatariApi.GatariApi()
+        ) if server in osuConstants.SERVER_ACRONYMS["bancho"] else gatariApi.GatariApi()
 
     def _get_real_username(self):
         user = self._api.get_user(u=self._username)
-        if self._server in osuConstants.server_acronyms["bancho"]:
+        if self._server in osuConstants.SERVER_ACRONYMS["bancho"]:
             if not user:
                 raise exceptions.UserNotFoundError
             username = user[0]["username"]
@@ -258,8 +257,8 @@ class TopScoreCommand(IOsuCommand):
         self._server = server
         self._username = username
         self._limit = limit or 1
-        self._mode = 0
-        self._api = BanchoTopScore if server in osuConstants.server_acronyms[
+        self._mode = osuConstants.Mode.OSU
+        self._api = BanchoTopScore if server in osuConstants.SERVER_ACRONYMS[
             "bancho"] else GatariTopScore
 
     def execute(self):
@@ -270,25 +269,25 @@ class TopScoreCommand(IOsuCommand):
 class OsuTopScore(TopScoreCommand):
     def __init__(self, server, username, limit):
         super().__init__(server, username, limit)
-        self._mode = 0
+        self._mode = osuConstants.Mode.OSU
 
 
 class TaikoTopScore(TopScoreCommand):
     def __init__(self, server, username, limit):
         super().__init__(server, username, limit)
-        self._mode = 1
+        self._mode = osuConstants.Mode.TAIKO
 
 
 class CtbTopScore(TopScoreCommand):
     def __init__(self, server, username, limit):
         super().__init__(server, username, limit)
-        self._mode = 2
+        self._mode = osuConstants.Mode.CATCH
 
 
 class ManuaTopScore(TopScoreCommand):
     def __init__(self, server, username, limit):
         super().__init__(server, username, limit)
-        self._mode = 3
+        self._mode = osuConstants.Mode.MANIA
 
 
 class BanchoTopScore:
@@ -341,7 +340,7 @@ class RecentScoreCommandOsu(IOsuCommand):
         self._username = username
         self._limit = limit or 1
         self._mode = 0
-        self._api = BanchoRecentScore if server in osuConstants.server_acronyms[
+        self._api = BanchoRecentScore if server in osuConstants.SERVER_ACRONYMS[
             "bancho"] else GatariRecentScore
 
     def execute(self):
@@ -402,7 +401,7 @@ class Compare(IOsuCommand):
         self._username = username
         self._beatmap_id = kwargs.get("beatmap_id")
         self._limit = 1
-        self._api = BanchoCompare if server in osuConstants.server_acronyms[
+        self._api = BanchoCompare if server in osuConstants.SERVER_ACRONYMS[
             "bancho"] else GatariCompare
 
     def execute(self):

@@ -43,11 +43,11 @@ class Formatter:
         """
         mods_a = []
         mods = int(mods)
-        for k, v in osuConstants.mod_to_int.items():
-            if v & mods == v:
-                mods_a.append(k)
+        for mod in osuConstants.Mods:
+            if mod.value & mods == mod.value:
+                mods_a.append(mod.name)
         ordered_mods = list(
-            filter(lambda m: m in mods_a, osuConstants.mod_order))
+            filter(lambda m: m in mods_a, osuConstants.MOD_ORDER))
         "NC" in ordered_mods and ordered_mods.remove("DT")
         "PF" in ordered_mods and ordered_mods.remove("SD")
 

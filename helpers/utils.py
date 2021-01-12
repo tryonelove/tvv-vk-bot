@@ -128,9 +128,9 @@ class Utils:
         if not params["server"]:
             params["server"] = data[1] if data is not None else "bancho"
         if not params["username"] or params["username"].isspace():
-            if params["server"] in osuConstants.server_acronyms.get("bancho"):
+            if params["server"] in osuConstants.SERVER_ACRONYMS.get("bancho"):
                 params["username"] = data[2]
-            elif params["server"] in osuConstants.server_acronyms.get("gatari"):
+            elif params["server"] in osuConstants.SERVER_ACRONYMS.get("gatari"):
                 params["username"] = data[3]
         try:
             params["server"] = params["server"].strip()

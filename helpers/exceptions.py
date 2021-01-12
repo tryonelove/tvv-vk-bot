@@ -67,6 +67,14 @@ class AccountNotLinked(BotException):
         super().__init__(message)
 
 
+class CityNotLinked(BotException):
+    """
+    API request error.
+    """
+
+    def __init__(self, message="Вы не привязали город, попробуйте воспользоваться командой !weatherset <город> и попробовать заново."):
+        super().__init__(message)
+
 class CommandLimitReached(BotException):
     """
     Command limit reached
@@ -85,4 +93,4 @@ class MissingForwardedMessage(BotException):
 exceptions = (UserNotFoundError, AccesDeniesError,
               ApiRequestError, CityNotFoundError,
               ScoreNotFoundError, OverwritingExistingCommand, AccountNotLinked,CommandLimitReached,
-              MissingForwardedMessage)
+              MissingForwardedMessage, CityNotLinked)

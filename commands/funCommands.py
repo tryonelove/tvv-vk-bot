@@ -45,12 +45,12 @@ class Weather(ICommand):
         self._city = city
         self._user_id = user_id
 
-    def _check_value(self):
-        if not self._city:
-            self._city = Utils.get_weather_city(self._user_id)[0]
-
     def execute(self):
-        self._check_value()
+        if not self._city:
+            try:
+                self._city = Utils.get_weather_city(self._user_id)[0]
+            except:
+                raise exceptions.CityNotLinked
         r = requests.get("http://api.openweathermap.org/data/2.5/weather",
                          params={"q": self._city, "APPID": "81d59d3e4bcd5bd5b69f6f95250213ee"})
         if r.status_code != 200:
