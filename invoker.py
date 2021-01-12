@@ -109,7 +109,7 @@ class Invoker:
         try:
             command_object = self._get_command_object()
             executed = command_object.execute()
-        except exceptions.BotException.__subclasses__ as e:
+        except exceptions.exceptions as e:
             executed = message.MessageObject(e.message)
         except Exception as e:
             text = f"Command: {self.cmd.__name__}\nError: {e.args[0]}"
