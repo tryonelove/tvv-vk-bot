@@ -40,6 +40,6 @@ class GatariApi:
         data = self.__make_request(self.NEW_API, "beatmap/user/score", params = {
             "u" : user_id,
             "b" : beatmap_id,
-            "mode" : mode
+            "mode" : mode.value
         })
         return data
