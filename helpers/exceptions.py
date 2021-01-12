@@ -89,8 +89,3 @@ class MissingForwardedMessage(BotException):
     """
     def __init__(self, message="Необходимо переслать сообщение со скором."):
         super().__init__(message)
-
-exceptions = (UserNotFoundError, AccesDeniesError,
-              ApiRequestError, CityNotFoundError,
-              ScoreNotFoundError, OverwritingExistingCommand, AccountNotLinked,CommandLimitReached,
-              MissingForwardedMessage, CityNotLinked)
