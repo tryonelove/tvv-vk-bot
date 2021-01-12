@@ -27,7 +27,6 @@ class Invoker:
             self.cmd = commands.staticCommands.StaticCommand
         logging.debug(self.cmd)
 
-
     def _set_key_value(self):
         message = self.event.text.split()
         self._key = message[0][1:].lower()
@@ -104,7 +103,7 @@ class Invoker:
         return command_object
 
     def _invoke_command(self):
-        logging.info(f"Got a {self.cmd}, message: {self.event.text}")
+        logging.info(f"Got a {self.cmd.__name__}, message: {self.event.text}")
         if self.cmd is None or Utils.has_role(self.event.from_id, Roles.RESTRICTED):
             return
         try:
@@ -113,7 +112,7 @@ class Invoker:
         except exceptions.exceptions as e:
             executed = message.MessageObject(e.message)
         except Exception as e:
-            text = f"Event: {self.event}\nError: {e.args[0]}"
+            text = f"Command: {self.cmd.__name__}\nError: {e.args[0]}"
             executed = message.MessageObject(text, message_type=MessageTypes.CREATOR)
             logging.error(self.event)
             logging.error(e.args)
