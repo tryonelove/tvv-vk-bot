@@ -29,7 +29,7 @@ class Utils:
         Find the largest attached image
         :param attachments: attachments list
         """
-        return max(attachments, key=lambda size: (size.width * size.height))
+        return max(attachments, key=lambda size: (size["width"] * size["height"])).get("url")
 
     @staticmethod
     def get_role(user_id):

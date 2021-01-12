@@ -81,7 +81,6 @@ class AddCommand(CommandManager):
         q = "INSERT OR REPLACE INTO commands VALUES (?, ?, ?, ?)"
         glob.c.execute(q, (self._key, self._value,
                            self._attachments, self._author_id))
-        glob.db.commit()
         self.decrease_command_limit()
         return self.Message(f"Команда {self._key} была успешно добавлена!")
 
