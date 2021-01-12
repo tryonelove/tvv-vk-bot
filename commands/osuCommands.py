@@ -34,7 +34,7 @@ class StatsPicture(IOsuCommand):
             server = "gatari"
         pictureUrl = self.SERVERS.get(server)
         pic = pictureUrl.format(random.choice(
-            self.SIG_COLORS), self._username, self._mode, random.random())
+            self.SIG_COLORS), self._username, self._mode.value, random.random())
         logging.debug(pic)
         picture = Utils.upload_picture(pic, decode_content=True)
         logging.info("Uploaded picture URL: "+picture)
