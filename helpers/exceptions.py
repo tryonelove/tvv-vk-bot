@@ -67,6 +67,14 @@ class AccountNotLinked(BotException):
         super().__init__(message)
 
 
+class CommandLimitReached(BotException):
+    """
+    Command limit reached
+    """
+    def __init__(self, message="Достигнут лимит команд, обновите свою роль донатера."):
+        super().__init__(message)
+
+
 class CityNotLinked(BotException):
     """
     API request error.
@@ -75,12 +83,6 @@ class CityNotLinked(BotException):
     def __init__(self, message="Вы не привязали город, попробуйте воспользоваться командой !weatherset <город> и попробовать заново."):
         super().__init__(message)
 
-class CommandLimitReached(BotException):
-    """
-    Command limit reached
-    """
-    def __init__(self, message="Достигнут лимит команд, обновите свою роль донатера."):
-        super().__init__(message)
 
 class MissingForwardedMessage(BotException):
     """
