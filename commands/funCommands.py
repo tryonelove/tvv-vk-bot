@@ -50,7 +50,7 @@ class Weather(ICommand):
             try:
                 self._city = Utils.get_weather_city(self._user_id)[0]
             except:
-                raise exceptions.CityNotLinked
+                raise exceptions.CityNotLinkedError
 
         r = requests.get("http://api.openweathermap.org/data/2.5/weather",
                          params={"q": self._city, "APPID": "81d59d3e4bcd5bd5b69f6f95250213ee"})
