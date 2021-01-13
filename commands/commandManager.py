@@ -32,6 +32,8 @@ class CommandManager(ICommandManager):
         Split message into key: value format
         """
         message = self._message.split(" ")
+        if len(message) < 2:
+            raise exceptions.InvalidArgumentsError
         self._key = message[1].lower()
         if not self._message and not self._attachments:
             raise exceptions.InvalidArgumentsError
@@ -82,8 +84,10 @@ class AddCommand(CommandManager):
         is_author = self.is_author()
         if not is_author and not Utils.has_role(self._author_id, Roles.ADMIN):
             raise exceptions.AccesDeniesError
+    
         if is_author and self.is_command_limit_reached():
             raise exceptions.CommandLimitReachedError
+    
         q = "INSERT OR REPLACE INTO commands VALUES (?, ?, ?, ?)"
         glob.c.execute(q, (self._key, self._value,
                            self._attachments, self._author_id))
