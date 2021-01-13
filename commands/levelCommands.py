@@ -143,4 +143,4 @@ class EditExperience(LevelCommand):
         user_id, exp = glob.c.execute(f"SELECT id, experience FROM konfa_{self._chat_id}").fetchone()
         glob.c.execute(f"UPDATE konfa_{self._chat_id} SET experience=experience+{self._amount} WHERE id=?", (self._target_id,))
         glob.db.commit()
-        return self.Message(f"Экспа челика {self._user_id} была обновлена.")
+        return self.Message(f"Экспа челика {self._target_id} была обновлена.")
