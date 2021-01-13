@@ -51,13 +51,16 @@ class Weather(ICommand):
                 self._city = Utils.get_weather_city(self._user_id)[0]
             except:
                 raise exceptions.CityNotLinked
+
         r = requests.get("http://api.openweathermap.org/data/2.5/weather",
                          params={"q": self._city, "APPID": "81d59d3e4bcd5bd5b69f6f95250213ee"})
         if r.status_code != 200:
             raise exceptions.ApiRequestError
+
         js = r.json()
         if not js or js["cod"] == "404":
             raise exceptions.CityNotFoundError
+
         temperature = round(float(js['main']['temp']) - 273)
         wind = js['wind']['speed']
         descr = self.WEATHER_STATE.get(

@@ -24,6 +24,7 @@ class CommandManager(ICommandManager):
         limit = glob.c.execute(q, (self._author_id,)).fetchone()
         if not limit:
             return True
+
         return limit[0] <= 0
 
     def _set_values(self):
@@ -32,12 +33,17 @@ class CommandManager(ICommandManager):
         """
         message = self._message.split(" ")
         self._key = message[1].lower()
+        if not self._message and not self._attachments:
+            raise exceptions.InvalidArgumentsError
+
         if len(message) > 1:
             self._value = " ".join(message[2:])
+    
         if self._attachments:
             if self._attachments[0]["type"] not in ["photo", "video"]:
                 self._attachments = None
                 return
+
             if self._attachments[0]["type"] == "video":
                 self._video_handler()
             elif self._attachments[0]["type"] == "photo":
@@ -77,7 +83,7 @@ class AddCommand(CommandManager):
         if not is_author and not Utils.has_role(self._author_id, Roles.ADMIN):
             raise exceptions.AccesDeniesError
         if is_author and self.is_command_limit_reached():
-            raise exceptions.CommandLimitReached
+            raise exceptions.CommandLimitReachedError
         q = "INSERT OR REPLACE INTO commands VALUES (?, ?, ?, ?)"
         glob.c.execute(q, (self._key, self._value,
                            self._attachments, self._author_id))
@@ -102,7 +108,7 @@ class DeleteCommand(CommandManager):
         if not is_author and not Utils.has_role(self._author_id, Roles.ADMIN):
             raise exceptions.AccesDeniesError
         if is_author and self.is_command_limit_reached():
-            raise exceptions.CommandLimitReached
+            raise exceptions.CommandLimitReachedError
         q = "DELETE FROM commands WHERE key = ?"
         glob.c.execute(q, (self._key,))
         glob.db.commit()

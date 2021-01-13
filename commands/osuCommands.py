@@ -4,7 +4,6 @@ from commands.interfaces import IOsuCommand
 from helpers import banchoApi, gatariApi, scoreFormatter, exceptions, ppCalculator
 from helpers.utils import Utils
 from objects import glob
-from constants import servers
 from constants import osuConstants
 import requests
 from config import OSU_MATCHMAKING_KEY
@@ -406,7 +405,7 @@ class Compare(IOsuCommand):
 
     def execute(self):
         if self._beatmap_id is None:
-            raise exceptions.MissingForwardedMessage
+            raise exceptions.MissingForwardedMessageError
         result = self._api(self._username, self._beatmap_id).get()
         return self.Message(*result)
 

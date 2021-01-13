@@ -8,7 +8,7 @@ class BotException(Exception):
         super().__init__(self.message)
 
 
-class OverwritingExistingCommand(BotException):
+class OverwritingExistingCommandError(BotException):
     def __init__(self, message="Нельзя перезаписывать чужие команды"):
         super().__init__(message)
 
@@ -58,7 +58,7 @@ class CityNotFoundError(Exception):
         super().__init__(message)
 
 
-class AccountNotLinked(BotException):
+class AccountNotLinkedError(BotException):
     """
     API request error.
     """
@@ -67,7 +67,7 @@ class AccountNotLinked(BotException):
         super().__init__(message)
 
 
-class CommandLimitReached(BotException):
+class CommandLimitReachedError(BotException):
     """
     Command limit reached
     """
@@ -75,7 +75,7 @@ class CommandLimitReached(BotException):
         super().__init__(message)
 
 
-class CityNotLinked(BotException):
+class CityNotLinkedError(BotException):
     """
     API request error.
     """
@@ -84,7 +84,7 @@ class CityNotLinked(BotException):
         super().__init__(message)
 
 
-class MissingForwardedMessage(BotException):
+class MissingForwardedMessageError(BotException):
     """
     Required to reply to a message 
     with the score you want to compare with
@@ -93,7 +93,15 @@ class MissingForwardedMessage(BotException):
         super().__init__(message)
 
 
+class InvalidArgumentsError(BotException):
+    """
+    Required to reply to a message 
+    with the score you want to compare with
+    """
+    def __init__(self, message="Неверные аргументы команды."):
+        super().__init__(message)
+
 exceptions = (UserNotFoundError, AccesDeniesError,
               ApiRequestError, CityNotFoundError,
-              ScoreNotFoundError, OverwritingExistingCommand, AccountNotLinked,CommandLimitReached,
-              MissingForwardedMessage, CityNotLinked)
+              ScoreNotFoundError, OverwritingExistingCommandError, AccountNotLinkedError,CommandLimitReachedError,
+              MissingForwardedMessageError, CityNotLinkedError)

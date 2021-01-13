@@ -137,7 +137,7 @@ class Utils:
             params["username"] = params["username"].strip()
             params["limit"] = int(params["limit"])
         except:
-            raise exceptions.AccountNotLinked
+            raise exceptions.AccountNotLinkedError
         return params
 
     @staticmethod
