@@ -104,4 +104,4 @@ class InvalidArgumentsError(BotException):
 exceptions = (UserNotFoundError, AccesDeniesError,
               ApiRequestError, CityNotFoundError,
               ScoreNotFoundError, OverwritingExistingCommandError, AccountNotLinkedError,CommandLimitReachedError,
-              MissingForwardedMessageError, CityNotLinkedError)
+              MissingForwardedMessageError, CityNotLinkedError, InvalidArgumentsError)
