@@ -21,6 +21,14 @@ DATABASE_INIT = """
         PRIMARY KEY("id")
     );
 
+    CREATE TABLE IF NOT EXISTS "users_experience" (
+        "chat_id" INTEGER,
+        "user_id" INTEGER,
+        "experience" FLOAT DEFAULT 0,
+        "level" INTEGER DEFAULT 1,
+        FOREIGN KEY(user_id) REFERENCES "users"("id")
+    );
+
     CREATE TABLE IF NOT EXISTS "osu" (
         "id" INTEGER NOT NULL UNIQUE,
         "main_server" TEXT,
@@ -60,8 +68,5 @@ DATABASE_INIT = """
         "max_combo"	INTEGER,
         PRIMARY KEY("beatmap_id"),
         FOREIGN KEY("beatmapset_id") REFERENCES "beatmapsets"("beatmapset_id")
-    );
-    CREATE TABLE IF NOT EXISTS "disabled_level" (
-        "chat_id"	INTEGER NOT NULL UNIQUE
     );
 """

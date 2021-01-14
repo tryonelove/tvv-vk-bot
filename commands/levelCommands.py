@@ -31,10 +31,10 @@ class GetLevel(LevelCommand):
         super().__init__(chat_id=chat_id, user_id=user_id)
 
     def _get_level(self):
-        q = f"SELECT * FROM konfa_{self._chat_id} WHERE id=?"
-        executed = glob.c.execute(q, (self._user_id,)).fetchone()
+        q = f"SELECT * FROM users_experience WHERE user_id=? AND chat_id=?"
+        executed = glob.c.execute(q, (self._user_id, self._chat_id)).fetchone()
         if executed:
-            _, experience, lvl_start = executed
+            _,_, experience, lvl_start = executed
             exp_required = (lvl_start+1)**3
             user_info = glob.vk.users.get(
                 user_id=int(self._user_id), name_case="nom")[0]
@@ -59,9 +59,9 @@ class GetLeaderboard(LevelCommand):
     def _get_leaderboard(self):
         text = "Топ 10 конфы:\n\n"
         leaderboard = glob.c.execute("""
-                SELECT id, experience, level FROM konfa_{0} 
+                SELECT user_id, experience, level FROM users_experience WHERE chat_id=?
                 ORDER BY experience DESC LIMIT 10 
-            """.format(self._chat_id)).fetchall()
+            """, (self._chat_id,)).fetchall()
         user_ids = [user[0] for user in leaderboard]
         users = glob.vk.users.get(user_ids=user_ids)
         for user_index, _ in enumerate(leaderboard):
@@ -124,7 +124,7 @@ class WipeLevels(LevelCommand):
     def execute(self):
         if not self._is_chat_admin():
             raise exceptions.AccesDeniesError
-        glob.c.execute(f"DELETE FROM konfa_{self._chat_id}")
+        glob.c.execute(f"DELETE FROM users_experience WHERE chat_id=?", (self._chat_id,))
         glob.db.commit()
         return self.Message("Лидерборд конфы был очищен. SPAM !анал CHAT")
 
@@ -140,7 +140,7 @@ class EditExperience(LevelCommand):
     def execute(self):
         if not self._is_chat_admin():
             raise exceptions.AccesDeniesError
-        user_id, exp = glob.c.execute(f"SELECT id, experience FROM konfa_{self._chat_id}").fetchone()
-        glob.c.execute(f"UPDATE konfa_{self._chat_id} SET experience=experience+{self._amount}, level=0 WHERE id=?", (self._target_id,))
+        user_id, exp = glob.c.execute(f"SELECT user_id, experience FROM users_experience").fetchone()
+        glob.c.execute(f"UPDATE users_experience SET experience = experience+?, level = 0 WHERE user_id=? AND chat_id=?", (self._amount, self._target_id, self._chat_id))
         glob.db.commit()
         return self.Message(f"Экспа челика {self._target_id} была обновлена.")
