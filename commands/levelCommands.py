@@ -140,7 +140,6 @@ class EditExperience(LevelCommand):
     def execute(self):
         if not self._is_chat_admin():
             raise exceptions.AccesDeniesError
-        user_id, exp = glob.c.execute(f"SELECT user_id, experience FROM users_experience").fetchone()
         glob.c.execute(f"UPDATE users_experience SET experience = experience+?, level = 0 WHERE user_id=? AND chat_id=?", (self._amount, self._target_id, self._chat_id))
         glob.db.commit()
         return self.Message(f"Экспа челика {self._target_id} была обновлена.")
