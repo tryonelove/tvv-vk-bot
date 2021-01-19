@@ -1,4 +1,4 @@
-from commands.interfaces import ILevelCommand
+from interfaces.commands import ILevelCommand
 from objects import glob
 from helpers.utils import Utils
 from constants.roles import Roles
