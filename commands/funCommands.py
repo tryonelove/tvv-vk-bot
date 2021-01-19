@@ -1,6 +1,5 @@
-import json
 import random
-from commands.interfaces import ICommand
+from interfaces.commands import * 
 import requests
 from helpers import exceptions
 from objects import glob

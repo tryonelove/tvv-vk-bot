@@ -1,6 +1,6 @@
 import random
 import logging
-from commands.interfaces import IOsuCommand
+from interfaces.commands import * 
 from helpers import banchoApi, gatariApi, scoreFormatter, exceptions, ppCalculator
 from helpers.utils import Utils
 from objects import glob

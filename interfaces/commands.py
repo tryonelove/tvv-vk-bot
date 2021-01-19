@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-import requests
 from objects import message
 
 
@@ -83,3 +82,4 @@ class IDonatorManager(ICommand):
             self._user_id = int(self._args[0]) if self._args else None
         except:
             self._user_id = args
+
