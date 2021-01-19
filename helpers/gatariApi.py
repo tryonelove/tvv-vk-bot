@@ -1,5 +1,6 @@
 import requests
 from helpers import exceptions
+from constants import osuConstants
 
 class GatariApi:
     def __init__(self):
@@ -35,10 +36,10 @@ class GatariApi:
         })
         return data
 
-    def get_scores(self, user_id, beatmap_id, mode = 0):
+    def get_scores(self, user_id, beatmap_id, mode = osuConstants.Mode.OSU):
         data = self.__make_request(self.NEW_API, "beatmap/user/score", params = {
             "u" : user_id,
             "b" : beatmap_id,
-            "mode" : mode
+            "mode" : mode.value
         })
         return data

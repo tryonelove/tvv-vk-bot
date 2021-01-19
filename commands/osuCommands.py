@@ -1,10 +1,9 @@
 import random
 import logging
-from commands.interfaces import IOsuCommand
+from interfaces.commands import * 
 from helpers import banchoApi, gatariApi, scoreFormatter, exceptions, ppCalculator
 from helpers.utils import Utils
 from objects import glob
-from constants import servers
 from constants import osuConstants
 import requests
 from config import OSU_MATCHMAKING_KEY
@@ -18,7 +17,7 @@ class StatsPicture(IOsuCommand):
                   'blue', 'purple', 'pink', '2255ee')
     SERVERS = {
         "gatari": "http://sig.gatari.pw/sig.php?colour={}&uname={}&xpbar&xpbarhex&darktriangles&pp=1&mode={}",
-        "bancho": "http://134.122.83.254:5000/sig?colour={}&uname={}&xpbar&xpbarhex&darktriangles&pp=1&mode={}&{}"
+        "bancho": "http://tryonelove.codes/score?username={1}&limit=1&type=1&mode={2}"
     }
 
     def __init__(self, server, username, **kwargs):
@@ -28,13 +27,13 @@ class StatsPicture(IOsuCommand):
         self._mode = None
 
     def execute(self):
-        if self._server in osuConstants.server_acronyms["bancho"]:
+        if self._server in osuConstants.SERVER_ACRONYMS["bancho"]:
             server = "bancho"
         else:
             server = "gatari"
         pictureUrl = self.SERVERS.get(server)
         pic = pictureUrl.format(random.choice(
-            self.SIG_COLORS), self._username, self._mode, random.random())
+            self.SIG_COLORS), self._username, self._mode.value, random.random())
         logging.debug(pic)
         picture = Utils.upload_picture(pic, decode_content=True)
         logging.info("Uploaded picture URL: "+picture)
@@ -46,7 +45,7 @@ class OsuPicture(StatsPicture):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._mode = 0
+        self._mode = osuConstants.Mode.OSU
 
 
 class TaikoPicture(StatsPicture):
@@ -54,7 +53,7 @@ class TaikoPicture(StatsPicture):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._mode = 1
+        self._mode = osuConstants.Mode.TAIKO
 
 
 class CtbPicture(StatsPicture):
@@ -62,7 +61,7 @@ class CtbPicture(StatsPicture):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._mode = 2
+        self._mode = osuConstants.Mode.CATCH
 
 
 class ManiaPicture(StatsPicture):
@@ -70,7 +69,7 @@ class ManiaPicture(StatsPicture):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._mode = 3
+        self._mode = osuConstants.Mode.MANIA
 
 
 class MatchmakingStats(IOsuCommand):
@@ -126,15 +125,15 @@ class OsuSet(IOsuCommand):
 
     def __init__(self, server, username, user_id, **kwargs):
         super().__init__()
-        self._server = "bancho" if server in osuConstants.server_acronyms["bancho"] else "gatari"
+        self._server = "bancho" if server in osuConstants.SERVER_ACRONYMS["bancho"] else "gatari"
         self._username = username
         self._user_id = user_id
         self._api = banchoApi.BanchoApi(
-        ) if server in osuConstants.server_acronyms["bancho"] else gatariApi.GatariApi()
+        ) if server in osuConstants.SERVER_ACRONYMS["bancho"] else gatariApi.GatariApi()
 
     def _get_real_username(self):
         user = self._api.get_user(u=self._username)
-        if self._server in osuConstants.server_acronyms["bancho"]:
+        if self._server in osuConstants.SERVER_ACRONYMS["bancho"]:
             if not user:
                 raise exceptions.UserNotFoundError
             username = user[0]["username"]
@@ -257,8 +256,8 @@ class TopScoreCommand(IOsuCommand):
         self._server = server
         self._username = username
         self._limit = limit or 1
-        self._mode = 0
-        self._api = BanchoTopScore if server in osuConstants.server_acronyms[
+        self._mode = osuConstants.Mode.OSU
+        self._api = BanchoTopScore if server in osuConstants.SERVER_ACRONYMS[
             "bancho"] else GatariTopScore
 
     def execute(self):
@@ -269,25 +268,25 @@ class TopScoreCommand(IOsuCommand):
 class OsuTopScore(TopScoreCommand):
     def __init__(self, server, username, limit):
         super().__init__(server, username, limit)
-        self._mode = 0
+        self._mode = osuConstants.Mode.OSU
 
 
 class TaikoTopScore(TopScoreCommand):
     def __init__(self, server, username, limit):
         super().__init__(server, username, limit)
-        self._mode = 1
+        self._mode = osuConstants.Mode.TAIKO
 
 
 class CtbTopScore(TopScoreCommand):
     def __init__(self, server, username, limit):
         super().__init__(server, username, limit)
-        self._mode = 2
+        self._mode = osuConstants.Mode.CATCH
 
 
 class ManuaTopScore(TopScoreCommand):
     def __init__(self, server, username, limit):
         super().__init__(server, username, limit)
-        self._mode = 3
+        self._mode = osuConstants.Mode.MANIA
 
 
 class BanchoTopScore:
@@ -339,8 +338,8 @@ class RecentScoreCommandOsu(IOsuCommand):
         self._server = server
         self._username = username
         self._limit = limit or 1
-        self._mode = 0
-        self._api = BanchoRecentScore if server in osuConstants.server_acronyms[
+        self._mode = osuConstants.Mode.OSU
+        self._api = BanchoRecentScore if server in osuConstants.SERVER_ACRONYMS[
             "bancho"] else GatariRecentScore
 
     def execute(self):
@@ -396,15 +395,17 @@ class Compare(IOsuCommand):
     """
     KEYS = ["c", "с", "compare"]
 
-    def __init__(self, server, username, beatmap_id, **kwargs):
+    def __init__(self, server, username, **kwargs):
         super().__init__()
         self._username = username
-        self._beatmap_id = beatmap_id
+        self._beatmap_id = kwargs.get("beatmap_id")
         self._limit = 1
-        self._api = BanchoCompare if server in osuConstants.server_acronyms[
+        self._api = BanchoCompare if server in osuConstants.SERVER_ACRONYMS[
             "bancho"] else GatariCompare
 
     def execute(self):
+        if self._beatmap_id is None:
+            raise exceptions.MissingForwardedMessageError
         result = self._api(self._username, self._beatmap_id).get()
         return self.Message(*result)
 

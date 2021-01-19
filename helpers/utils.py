@@ -29,13 +29,7 @@ class Utils:
         Find the largest attached image
         :param attachments: attachments list
         """
-        largest = 0
-        for image in attachments:
-            larger = image["width"]*image["height"]
-            if larger > largest:
-                largest = larger
-                largest_pic = image["url"]
-        return largest_pic
+        return max(attachments, key=lambda size: (size["width"] * size["height"])).get("url")
 
     @staticmethod
     def get_role(user_id):
@@ -117,7 +111,7 @@ class Utils:
         return user_id == 236965366
 
     @staticmethod
-    def get_osu_params(string, user_id):
+    def get_osu_params(message, user_id):
         """
         Get a dictionary, containing 
         server, username, score limit and user_id
@@ -126,38 +120,38 @@ class Utils:
         params = {"server": None, "username": None,
                   "limit": 1, "user_id": user_id}
         data = Utils.get_server_username(user_id)
-        if string:
-            result = re.match(r"(bancho|gatari|банчо|гатари|g|b|г|б)?(.*?)?(\s+\d+)?$", string)
+        if message:
+            result = re.match(r"(bancho|gatari|банчо|гатари|g|b|г|б)?(.*?)?(\s+\d+)?$", message)
             params["server"] = result.group(1) or None
             params["username"] = result.group(2) or None
             params["limit"] = result.group(3) or 1
         if not params["server"]:
             params["server"] = data[1] if data is not None else "bancho"
         if not params["username"] or params["username"].isspace():
-            if params["server"] in osuConstants.server_acronyms.get("bancho"):
-                params["username"] = data[2]
-            elif params["server"] in osuConstants.server_acronyms.get("gatari"):
-                params["username"] = data[3]
+            if params["server"] in osuConstants.SERVER_ACRONYMS.get("bancho"):
+                params["username"] = data[2] if data is not None else None
+            elif params["server"] in osuConstants.SERVER_ACRONYMS.get("gatari"):
+                params["username"] = data[3] if data is not None else None
         try:
             params["server"] = params["server"].strip()
             params["username"] = params["username"].strip()
             params["limit"] = int(params["limit"])
         except:
-            raise exceptions.AccountNotLinked
+            raise exceptions.AccountNotLinkedError
         return params
 
     @staticmethod
-    def find_beatmap_id(string):
+    def find_beatmap_id(message):
         """
         Return beatmap id from a text message
         """
         beatmap_id = None
-        if "beatmapsets" in string:
+        if "beatmapsets" in message:
             result = re.search(
-                r"^https?:\/\/?osu.ppy.sh\/beatmapsets\/(\d+)(#\w+)\/(\d+)?", string)
+                r"^https?:\/\/?osu.ppy.sh\/beatmapsets\/(\d+)(#\w+)\/(\d+)?", message)
             beatmap_id = result.group(3)
-        elif "/b/" in string:
-            result = re.search(r".*\/b/(\d+)", string)
+        elif "/b/" in message:
+            result = re.search(r".*\/b/(\d+)", message)
             beatmap_id = result.group(1)
         return beatmap_id
 
@@ -190,11 +184,14 @@ class Utils:
         return accuracy
 
     @staticmethod
-    def find_user_id(string):
+    def find_user_id(message):
         """
         Return user_id from a message with a mention.
         """
-        user_id = re.search(r"(\d+)", string).group(1)
+        try:
+            user_id = re.search(r"(\d+)", message).group(1)
+        except:
+            user_id = 0
         return user_id
 
     @staticmethod
@@ -213,3 +210,22 @@ class Utils:
     @staticmethod
     def is_level_disabled(chat_id):
         return glob.c.execute("SELECT * FROM disabled_level WHERE chat_id=?", (chat_id,)).fetchone()
+
+    @staticmethod
+    def get_reply_message_from_event(event):
+        fwd_message = None
+        if event.get("reply_message") is not None:
+            fwd_message = event.reply_message
+        if event.fwd_messages: 
+            fwd_message = event.fwd_messages[-1]
+        return fwd_message
+
+    @staticmethod
+    def get_experience_amount(message):
+        try:
+            result = re.search(
+                r"(\+|\-)\d+", message)
+            amount = result.group(0)
+        except:
+            amount = 0
+        return amount

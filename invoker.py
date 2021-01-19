@@ -8,7 +8,7 @@ from config import CREATOR_ID
 from constants.messageTypes import MessageTypes
 import datetime
 from helpers import exceptions
-import time
+from vk_api.utils import get_random_id
 
 class Invoker:
     def __init__(self, event):
@@ -27,7 +27,6 @@ class Invoker:
             self.cmd = commands.staticCommands.StaticCommand
         logging.debug(self.cmd)
 
-
     def _set_key_value(self):
         message = self.event.text.split()
         self._key = message[0][1:].lower()
@@ -38,12 +37,12 @@ class Invoker:
         if message_object.message_type == MessageTypes.PRIVATE:
             params["peer_id"] = self.event.from_id
         elif message_object.message_type == MessageTypes.CREATOR:
-            params["peer_id"] = 236965366 # Creator id
+            params["peer_id"] = CREATOR_ID # Creator id
         else:
             params["peer_id"] = self.event.peer_id
         params["message"] = message_object.message or None
         params["attachment"] = message_object.attachment or None
-        params["random_id"] = time.time()
+        params["random_id"] = get_random_id()
         logging.debug(params)
         if params["message"] is None and params["attachment"] is None:
             return
@@ -63,7 +62,8 @@ class Invoker:
         elif issubclass(self.cmd, commands.interfaces.ILevelCommand):
             logging.debug("Level command.")
             command_object = self.cmd(
-                user_id=self.event.from_id, chat_id=self.event.peer_id)
+                user_id=self.event.from_id, chat_id=self.event.peer_id, 
+                target_id=Utils.find_user_id(self._value), amount=Utils.get_experience_amount(self._value))
 
         elif issubclass(self.cmd, commands.interfaces.ICommandManager):
             logging.debug("Commands managing.")
@@ -90,8 +90,9 @@ class Invoker:
             # Need to get server and username from db
             # server, username, user_id dict
             params = Utils.get_osu_params(self._value, self.event.from_id)
-            if self.event.fwd_messages:
-                fwd_message = self.event.fwd_messages[-1]
+            logging.debug(self.event)
+            fwd_message = Utils.get_reply_message_from_event(self.event)
+            if fwd_message is not None:
                 params["beatmap_id"] = Utils.find_beatmap_id(
                     fwd_message["text"])
             command_object = self.cmd(**params)
@@ -102,7 +103,7 @@ class Invoker:
         return command_object
 
     def _invoke_command(self):
-        logging.info(f"Got a {self.cmd}, message: {self.event.text}")
+        logging.info(f"Got a {self.cmd.__name__}, message: {self.event.text}")
         if self.cmd is None or Utils.has_role(self.event.from_id, Roles.RESTRICTED):
             return
         try:
@@ -111,7 +112,7 @@ class Invoker:
         except exceptions.exceptions as e:
             executed = message.MessageObject(e.message)
         except Exception as e:
-            text = f"Event: {self.event}\nError: {e.args[0]}"
+            text = f"Command: {self.cmd.__name__}\nError: {e.args[0]}"
             executed = message.MessageObject(text, message_type=MessageTypes.CREATOR)
             logging.error(self.event)
             logging.error(e.args)

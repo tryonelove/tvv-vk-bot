@@ -1,7 +1,7 @@
 from objects import glob
 from helpers import utils
 import logging
-
+from vk_api.utils import get_random_id
 
 class LevelSystem:
     def __init__(self, user_id, chat_id):
@@ -17,12 +17,6 @@ class LevelSystem:
         # Skip private vonversations
         if self._chat_id < 2000000000:
             return
-        glob.c.execute("""
-            CREATE TABLE IF NOT EXISTS konfa_{} 
-            (id INTEGER PRIMARY KEY, experience FLOAT DEFAULT 0, level INTEGER DEFAULT 1, 
-            FOREIGN KEY(id) REFERENCES users(id)
-            ON DELETE CASCADE ON UPDATE CASCADE)
-        """.format(self._chat_id))
         self.update_data()
         k = self.calc_exp(message)
         self.add_exp(k)
@@ -30,21 +24,25 @@ class LevelSystem:
         glob.db.commit()
 
     def level_up(self):
-        q = f"SELECT experience, level FROM konfa_{self._chat_id} WHERE id=?"
-        q_upd = f"UPDATE konfa_{self._chat_id} SET level=level+1 WHERE id=?"
-        experience, lvl_start = glob.c.execute(q, (self._user_id,)).fetchone()
+        q = f"SELECT experience, level FROM users_experience WHERE user_id=? AND chat_id=?"
+        q_upd = f"UPDATE users_experience SET level=? WHERE user_id=? AND chat_id=?"
+        experience, lvl_start = glob.c.execute(q, (self._user_id, self._chat_id)).fetchone()
         if experience is None or lvl_start is None:
             # temp fix
-            glob.c.execute(f"UPDATE konfa_{self._chat_id} SET experience=0, level=1 WHERE id=?", (self._user_id,))
+            glob.c.execute(f"UPDATE users_experience SET experience=0, level=1 WHERE user_id=? AND chat_id=?", (self._user_id, self._chat_id))
             experience = 0
             lvl_start = 1
+
         lvl_end = int(experience ** (1/3))
         if lvl_start < lvl_end:
             data = glob.vk.users.get(user_id=int(self._user_id), name_case = "nom")[0]
             if lvl_end>=7:
                 username =  f"{data['first_name']} {data['last_name']}"
-                glob.vk.messages.send(peer_id = self._chat_id, message="{} апнул {} лвл!".format(username, lvl_end))
-            glob.c.execute(q_upd, (self._user_id,))
+                glob.vk.messages.send(
+                    peer_id = self._chat_id, 
+                    message=f"{username} апнул {lvl_end} лвл!",
+                    random_id = get_random_id())
+            glob.c.execute(q_upd, (lvl_end, self._user_id))
 
     @staticmethod
     def calc_exp(message):
@@ -52,6 +50,7 @@ class LevelSystem:
         message = message.split()
         if len(message)>100:
             return 0
+
         for word in message:
             length = len(word)
             if length<=4:
@@ -63,11 +62,11 @@ class LevelSystem:
         return k
 
     def update_data(self):
-        q = f"SELECT * FROM konfa_{self._chat_id} WHERE id=?"
-        glob.c.execute(q, (self._user_id,))
+        q = f"SELECT * FROM users_experience WHERE user_id=? AND chat_id=?"
+        glob.c.execute(q, (self._user_id, self._chat_id))
         if not glob.c.fetchall():
-            glob.c.execute(f"INSERT OR IGNORE INTO konfa_{self._chat_id}(id) VALUES(?)", (self._user_id,))
+            glob.c.execute(f"INSERT OR IGNORE INTO users_experience(user_id, chat_id) VALUES(?, ?)", (self._user_id, self._chat_id))
 
     def add_exp(self, exp):
-        q = f"UPDATE konfa_{self._chat_id} SET experience=experience + ? WHERE id=?"
-        glob.c.execute(q, (exp, self._user_id))
+        q = f"UPDATE users_experience SET experience = experience + ? WHERE user_id=? AND chat_id=?"
+        glob.c.execute(q, (exp, self._user_id, self._chat_id))

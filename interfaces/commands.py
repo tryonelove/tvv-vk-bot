@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-import requests
 from objects import message
 
 
@@ -7,9 +6,10 @@ class ICommand(ABC):
     """
     Base command interface
     """
-    KEYS = []
+    KEYS: list = None
 
     def __init__(self, *args, **kwargs):
+        self.KEYS = []
         self.Message = message.MessageObject
 
     @abstractmethod
@@ -46,6 +46,9 @@ class ILevelCommand(ICommand):
         self._user_id = kwargs.get("user_id")
         self._chat_id = kwargs.get("chat_id")
 
+    def _is_chat_admin(self):
+        pass
+
 
 class ICommandManager(ICommand):
     """
@@ -79,3 +82,4 @@ class IDonatorManager(ICommand):
             self._user_id = int(self._args[0]) if self._args else None
         except:
             self._user_id = args
+

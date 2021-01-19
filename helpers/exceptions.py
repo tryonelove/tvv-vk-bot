@@ -8,7 +8,7 @@ class BotException(Exception):
         super().__init__(self.message)
 
 
-class OverwritingExistingCommand(BotException):
+class OverwritingExistingCommandError(BotException):
     def __init__(self, message="Нельзя перезаписывать чужие команды"):
         super().__init__(message)
 
@@ -58,7 +58,7 @@ class CityNotFoundError(Exception):
         super().__init__(message)
 
 
-class AccountNotLinked(BotException):
+class AccountNotLinkedError(BotException):
     """
     API request error.
     """
@@ -67,13 +67,41 @@ class AccountNotLinked(BotException):
         super().__init__(message)
 
 
-class CommandLimitReached(BotException):
+class CommandLimitReachedError(BotException):
     """
     Command limit reached
     """
     def __init__(self, message="Достигнут лимит команд, обновите свою роль донатера."):
         super().__init__(message)
 
+
+class CityNotLinkedError(BotException):
+    """
+    API request error.
+    """
+
+    def __init__(self, message="Вы не привязали город, попробуйте воспользоваться командой !weatherset <город> и попробовать заново."):
+        super().__init__(message)
+
+
+class MissingForwardedMessageError(BotException):
+    """
+    Required to reply to a message 
+    with the score you want to compare with
+    """
+    def __init__(self, message="Необходимо переслать сообщение со скором."):
+        super().__init__(message)
+
+
+class InvalidArgumentsError(BotException):
+    """
+    Required to reply to a message 
+    with the score you want to compare with
+    """
+    def __init__(self, message="Неверные аргументы команды."):
+        super().__init__(message)
+
 exceptions = (UserNotFoundError, AccesDeniesError,
               ApiRequestError, CityNotFoundError,
-              ScoreNotFoundError, OverwritingExistingCommand, AccountNotLinked,CommandLimitReached)
+              ScoreNotFoundError, OverwritingExistingCommandError, AccountNotLinkedError,CommandLimitReachedError,
+              MissingForwardedMessageError, CityNotLinkedError, InvalidArgumentsError)
