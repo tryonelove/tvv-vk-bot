@@ -1,4 +1,4 @@
-from commands.interfaces import ICommandManager
+from interfaces.commands import ICommandManager
 from objects import glob
 from helpers.utils import Utils
 import logging

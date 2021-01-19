@@ -1,6 +1,8 @@
 import logging
-import commands
-from objects import glob, message
+from os import stat
+from interfaces import commands
+from commands import staticCommands
+from objects import glob
 from helpers import commandsList, levels
 from helpers.utils import Utils
 from constants.roles import Roles
@@ -24,7 +26,7 @@ class Invoker:
                 self.cmd = command
                 break
         else:
-            self.cmd = commands.staticCommands.StaticCommand
+            self.cmd = staticCommands.StaticCommand
         logging.debug(self.cmd)
 
     def _set_key_value(self):
@@ -55,37 +57,37 @@ class Invoker:
 
     def _get_command_object(self):
         command_object = None
-        if issubclass(self.cmd, commands.staticCommands.StaticCommand):
+        if issubclass(self.cmd, staticCommands.StaticCommand):
             logging.debug("Static command.")
             command_object = self.cmd(key=self._key)
 
-        elif issubclass(self.cmd, commands.interfaces.ILevelCommand):
+        elif issubclass(self.cmd, commands.ILevelCommand):
             logging.debug("Level command.")
             command_object = self.cmd(
                 user_id=self.event.from_id, chat_id=self.event.peer_id, 
                 target_id=Utils.find_user_id(self._value), amount=Utils.get_experience_amount(self._value))
 
-        elif issubclass(self.cmd, commands.interfaces.ICommandManager):
+        elif issubclass(self.cmd, commands.ICommandManager):
             logging.debug("Commands managing.")
             if not Utils.has_role(self.event.from_id, Roles.DONATOR | Roles.ADMIN):
                 raise exceptions.AccesDeniesError
             command_object = self.cmd(
                 message=self.event.text, attachments=self.event.attachments, author_id=self.event.from_id)
 
-        elif issubclass(self.cmd, commands.interfaces.IAdminCommand):
+        elif issubclass(self.cmd, commands.IAdminCommand):
             logging.debug("Admin managing.")
             if not Utils.is_creator(self.event.from_id):
                 raise exceptions.AccesDeniesError
             user_id = Utils.find_user_id(self.event.text)
             command_object = self.cmd(user_id, self.event.from_id)
 
-        elif issubclass(self.cmd, commands.interfaces.IDonatorManager):
+        elif issubclass(self.cmd, commands.IDonatorManager):
             logging.debug("Donator managing.")
             if not Utils.is_creator(self.event.from_id):
                 raise exceptions.AccesDeniesError
             command_object = self.cmd(self._value, self.event.from_id)
 
-        elif issubclass(self.cmd, commands.interfaces.IOsuCommand):
+        elif issubclass(self.cmd, commands.IOsuCommand):
             logging.debug("osu! command")
             # Need to get server and username from db
             # server, username, user_id dict

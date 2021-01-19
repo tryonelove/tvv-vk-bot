@@ -1,4 +1,4 @@
-from commands.interfaces import ICommand
+from interfaces.commands import ICommand
 from objects import glob
 from math import ceil
 from constants.messageTypes import MessageTypes

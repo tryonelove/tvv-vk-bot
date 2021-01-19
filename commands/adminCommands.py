@@ -1,4 +1,4 @@
-from commands.interfaces import IAdminCommand, IDonatorManager
+from interfaces.commands import IAdminCommand, IDonatorManager
 from objects import glob
 from constants.roles import Roles
 import logging

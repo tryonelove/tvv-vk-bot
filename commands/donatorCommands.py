@@ -1,4 +1,4 @@
-from commands.interfaces import ICommand
+from interfaces.commands import ICommand
 import datetime
 from objects import glob
 from constants.roles import Roles
