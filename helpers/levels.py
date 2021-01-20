@@ -1,6 +1,4 @@
 from objects import glob
-from helpers import utils
-import logging
 from vk_api.utils import get_random_id
 
 class LevelSystem:
@@ -42,7 +40,7 @@ class LevelSystem:
                     peer_id = self._chat_id, 
                     message=f"{username} апнул {lvl_end} лвл!",
                     random_id = get_random_id())
-            glob.c.execute(q_upd, (lvl_end, self._user_id))
+            glob.c.execute(q_upd, (lvl_end, self._user_id, self._chat_id))
 
     @staticmethod
     def calc_exp(message):
@@ -64,7 +62,7 @@ class LevelSystem:
     def update_data(self):
         q = f"SELECT * FROM users_experience WHERE user_id=? AND chat_id=?"
         glob.c.execute(q, (self._user_id, self._chat_id))
-        if not glob.c.fetchall():
+        if not glob.c.fetchone():
             glob.c.execute(f"INSERT OR IGNORE INTO users_experience(user_id, chat_id) VALUES(?, ?)", (self._user_id, self._chat_id))
 
     def add_exp(self, exp):
