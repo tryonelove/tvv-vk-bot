@@ -90,3 +90,22 @@ class Roll(ICommand):
     def execute(self):
         value = str(random.randint(1, self._limit))
         return self.Message(value)
+
+
+class Bitcoin(ICommand):
+    """
+    Get current bitcoin price
+    """
+    KEYS = ["биткоин", "bitcoin"]
+
+    def __init__(self, *args):
+        super().__init__()
+    
+    def execute(self):
+        r = requests.get("https://api.coindesk.com/v1/bpi/currentprice.json")
+        js = r.json()
+        message = f"LAST UPDATE: {js['time']['updated']}\n"
+        message+= f"PRICE:"
+        for currency, value in js['bpi'].items():
+            message+=f"\n{currency}: {value['rate']}"
+        return self.Message(message)

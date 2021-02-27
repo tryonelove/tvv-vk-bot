@@ -5,6 +5,7 @@ commands_list = [
     commands.funCommands.Roll,
     commands.funCommands.Weather,
     commands.funCommands.WeatherSet,
+    commands.funCommands.Bitcoin,
     commands.osuCommands.OsuSet,
     commands.osuCommands.OsuPicture,
     commands.osuCommands.TaikoPicture,
@@ -30,5 +31,5 @@ commands_list = [
     commands.adminCommands.Deop,
     commands.adminCommands.Restrict,
     commands.adminCommands.Unrestrict,
-    commands.adminCommands.AddRole
+    commands.adminCommands.AddRole,
 ]
