@@ -31,6 +31,7 @@ class StatsPicture(IOsuCommand):
             server = "bancho"
         else:
             server = "gatari"
+            raise exceptions.ApiRequestError("Гатари пикчи поломаны")
         pictureUrl = self.SERVERS.get(server)
         pic = pictureUrl.format(random.choice(
             self.SIG_COLORS), self._username, self._mode.value, random.random())
@@ -322,6 +323,8 @@ class GatariTopScore:
             raise exceptions.UserNotFoundError
         user_id = user["users"][0]["id"]
         best_scores = self._api.get_user_best(user_id, self._limit)
+        if not best_scores:
+            raise exceptions.ApiRequestError
         score = best_scores["scores"][self._limit-1]
         return GatariScore(self._username, score).top()
 
@@ -385,6 +388,8 @@ class GatariRecentScore:
         user_id = user["users"][0]["id"]
         best_scores = self._api.get_user_recent(
             user_id, self._limit, show_failed=True)
+        if not best_scores:
+            raise exceptions.ApiRequestError
         score = best_scores["scores"][self._limit-1]
         return GatariScore(self._username, score).recent()
 
