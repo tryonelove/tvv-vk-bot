@@ -17,7 +17,7 @@ class StatsPicture(IOsuCommand):
                   'blue', 'purple', 'pink', '2255ee')
     SERVERS = {
         "gatari": "http://sig.gatari.pw/sig.php?colour={}&uname={}&xpbar&xpbarhex&darktriangles&pp=1&mode={}",
-        "bancho": "http://tryonelove.codes/score?username={1}&limit=1&type=1&mode={2}"
+        "bancho": "http://46.101.187.40:1337/score?username={1}&limit=1&type=1&mode={2}"
     }
 
     def __init__(self, server, username, **kwargs):
