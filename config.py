@@ -10,6 +10,7 @@ API_KEY = os.getenv("API_KEY")
 OSU_API_KEY = os.getenv("OSU_API_KEY")
 OSU_MATCHMAKING_KEY = os.getenv("OSU_MATCHMAKING_KEY") 
 
+RESTRICTED_HIGHLIGHTS = ["@all", "@online", "@тут", "@все"]
 
 DATABASE_INIT = """
     CREATE TABLE IF NOT EXISTS "users" (

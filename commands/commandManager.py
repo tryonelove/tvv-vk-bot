@@ -4,6 +4,7 @@ from helpers.utils import Utils
 import logging
 from helpers import exceptions
 from constants.roles import Roles
+from config import OSU_MATCHMAKING_KEY
 
 
 class CommandManager(ICommandManager):
@@ -88,6 +89,10 @@ class AddCommand(CommandManager):
         if is_author and self.is_command_limit_reached():
             raise exceptions.CommandLimitReachedError
     
+        for word in RESTRICTED_HIGHLIGHTS:
+            if word in self._value:
+                raise exceptions.AccesDeniesError
+
         q = "INSERT OR REPLACE INTO commands VALUES (?, ?, ?, ?)"
         glob.c.execute(q, (self._key, self._value,
                            self._attachments, self._author_id))
