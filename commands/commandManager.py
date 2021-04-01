@@ -4,7 +4,7 @@ from helpers.utils import Utils
 import logging
 from helpers import exceptions
 from constants.roles import Roles
-from config import OSU_MATCHMAKING_KEY
+from config import OSU_MATCHMAKING_KEY, RESTRICTED_HIGHLIGHTS
 
 
 class CommandManager(ICommandManager):
